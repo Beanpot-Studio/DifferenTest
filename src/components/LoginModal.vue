@@ -23,7 +23,7 @@
             v-model="email"
             type="email" 
             id="email" 
-            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
             required
           />
         </div>
@@ -34,14 +34,14 @@
             v-model="password"
             type="password" 
             id="password" 
-            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
             required
           />
         </div>
         
         <button 
           type="submit" 
-          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500 transition"
           :disabled="loading"
         >
           {{ loading ? 'Logging in...' : 'Log In' }}
@@ -54,7 +54,7 @@
           <a 
             href="#" 
             @click.prevent="switchToRegister" 
-            class="text-indigo-600 hover:text-indigo-800"
+            class="text-primary-600 hover:text-primary-800"
           >
             Sign up
           </a>

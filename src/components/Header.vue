@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-indigo-600 text-white shadow-md">
+  <header class="bg-primary-900 text-white shadow-md">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center">
         <a href="/" class="text-2xl font-bold">DifferenTest</a>
@@ -7,13 +7,13 @@
       
       <div class="flex items-center space-x-4">
         <nav class="hidden md:flex space-x-6">
-          <a href="/" class="hover:text-indigo-200 transition">Home</a>
+          <a href="/" class="hover:text-primary-200 transition">Home</a>
           
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
-            <a href="/dashboard" class="hover:text-indigo-200 transition">Dashboard</a>
-            <a v-if="userRole === 'teacher'" href="/teacher" class="hover:text-indigo-200 transition">Teacher Portal</a>
-            <a v-if="userRole === 'student'" href="/student" class="hover:text-indigo-200 transition">Student Portal</a>
+            <a href="/dashboard" class="hover:text-primary-200 transition">Dashboard</a>
+            <a v-if="userRole === 'teacher'" href="/teacher" class="hover:text-primary-200 transition">Teacher Portal</a>
+            <a v-if="userRole === 'student'" href="/student" class="hover:text-primary-200 transition">Student Portal</a>
           </template>
         </nav>
         

@@ -1,28 +1,36 @@
 ---
-import MainLayout from '../../layouts/MainLayout.astro';
-import RoleBasedContent from '../../components/RoleBasedContent.vue';
+import MainLayout from "../../layouts/MainLayout.astro";
+import RoleBasedContent from "../../components/RoleBasedContent.vue";
 ---
 
 <MainLayout title="Student Portal">
   <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Student Portal</h1>
-    
+
     <RoleBasedContent client:load>
       <div class="bg-white rounded-lg shadow-md p-6">
         <div class="mb-6">
           <h2 class="text-2xl font-bold mb-2">Your Learning Dashboard</h2>
-          <p class="text-gray-600">Welcome back to your student portal. Here's an overview of your courses and progress.</p>
+          <p class="text-gray-600">
+            Welcome back to your student portal. Here's an overview of your
+            courses and progress.
+          </p>
         </div>
-        
+
         <div class="mb-8">
           <h3 class="text-lg font-semibold mb-4">Your Enrolled Courses</h3>
-          
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Course Cards (Would be dynamically populated in a real app) -->
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+            <div
+              class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+            >
               <div class="flex justify-between items-start">
                 <h4 class="font-semibold">Mathematics 101</h4>
-                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">In Progress</span>
+                <span
+                  class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded"
+                  >In Progress</span
+                >
               </div>
               <p class="text-gray-600 text-sm mt-2">Prof. Johnson</p>
               <div class="mt-3 bg-gray-100 h-2 rounded-full overflow-hidden">
@@ -30,14 +38,23 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
               </div>
               <div class="mt-2 flex justify-between items-center">
                 <span class="text-xs text-gray-500">75% Complete</span>
-                <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">Continue →</a>
+                <a
+                  href="#"
+                  class="text-primary-600 hover:text-primary-800 text-sm"
+                  >Continue →</a
+                >
               </div>
             </div>
-            
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+
+            <div
+              class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+            >
               <div class="flex justify-between items-start">
                 <h4 class="font-semibold">Introduction to Physics</h4>
-                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">In Progress</span>
+                <span
+                  class="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded"
+                  >In Progress</span
+                >
               </div>
               <p class="text-gray-600 text-sm mt-2">Prof. Martinez</p>
               <div class="mt-3 bg-gray-100 h-2 rounded-full overflow-hidden">
@@ -45,23 +62,31 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
               </div>
               <div class="mt-2 flex justify-between items-center">
                 <span class="text-xs text-gray-500">40% Complete</span>
-                <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">Continue →</a>
+                <a
+                  href="#"
+                  class="text-primary-600 hover:text-primary-800 text-sm"
+                  >Continue →</a
+                >
               </div>
             </div>
           </div>
-          
+
           <div class="mt-4">
-            <a href="#" class="text-indigo-600 hover:text-indigo-800">Browse All Courses →</a>
+            <a href="#" class="text-primary-600 hover:text-primary-800"
+              >Browse All Courses →</a
+            >
           </div>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Upcoming Assignments -->
           <div>
             <h3 class="text-lg font-semibold mb-4">Upcoming Assignments</h3>
             <ul class="space-y-3">
               <li class="flex items-start border-b border-gray-100 pb-3">
-                <div class="flex-shrink-0 w-10 h-10 bg-red-100 text-red-600 flex items-center justify-center rounded">
+                <div
+                  class="flex-shrink-0 w-10 h-10 bg-red-100 text-red-600 flex items-center justify-center rounded"
+                >
                   <span class="font-semibold">15</span>
                 </div>
                 <div class="ml-3">
@@ -70,7 +95,9 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
                 </div>
               </li>
               <li class="flex items-start border-b border-gray-100 pb-3">
-                <div class="flex-shrink-0 w-10 h-10 bg-yellow-100 text-yellow-600 flex items-center justify-center rounded">
+                <div
+                  class="flex-shrink-0 w-10 h-10 bg-yellow-100 text-yellow-600 flex items-center justify-center rounded"
+                >
                   <span class="font-semibold">20</span>
                 </div>
                 <div class="ml-3">
@@ -79,7 +106,9 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
                 </div>
               </li>
               <li class="flex items-start">
-                <div class="flex-shrink-0 w-10 h-10 bg-green-100 text-green-600 flex items-center justify-center rounded">
+                <div
+                  class="flex-shrink-0 w-10 h-10 bg-green-100 text-green-600 flex items-center justify-center rounded"
+                >
                   <span class="font-semibold">28</span>
                 </div>
                 <div class="ml-3">
@@ -89,22 +118,30 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
               </li>
             </ul>
             <div class="mt-4">
-              <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">View All Assignments →</a>
+              <a
+                href="#"
+                class="text-primary-600 hover:text-primary-800 text-sm"
+                >View All Assignments →</a
+              >
             </div>
           </div>
-          
+
           <!-- Recent Grades -->
           <div>
             <h3 class="text-lg font-semibold mb-4">Recent Grades</h3>
             <div class="space-y-3">
-              <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div
+                class="flex justify-between items-center border-b border-gray-100 pb-3"
+              >
                 <div>
                   <p class="font-medium">Weekly Math Quiz</p>
                   <p class="text-sm text-gray-500">Mathematics 101</p>
                 </div>
                 <span class="font-bold text-green-600">92%</span>
               </div>
-              <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+              <div
+                class="flex justify-between items-center border-b border-gray-100 pb-3"
+              >
                 <div>
                   <p class="font-medium">Physics Problem Set</p>
                   <p class="text-sm text-gray-500">Introduction to Physics</p>
@@ -120,7 +157,11 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
               </div>
             </div>
             <div class="mt-4">
-              <a href="#" class="text-indigo-600 hover:text-indigo-800 text-sm">View All Grades →</a>
+              <a
+                href="#"
+                class="text-primary-600 hover:text-primary-800 text-sm"
+                >View All Grades →</a
+              >
             </div>
           </div>
         </div>
@@ -131,31 +172,30 @@ import RoleBasedContent from '../../components/RoleBasedContent.vue';
 
 <script>
   // Client-side script for student portal
-  import { onAuthStateChanged } from 'firebase/auth';
-  import { doc, getDoc } from 'firebase/firestore';
-  import { auth, db } from '../../lib/firebase';
+  import { onAuthStateChanged } from "firebase/auth";
+  import { doc, getDoc } from "firebase/firestore";
+  import { auth, db } from "../../lib/firebase";
   // This script will redirect non-student users away from this page
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       // If not logged in, redirect to home page
-      window.location.href = '/?auth=required';
+      window.location.href = "/?auth=required";
       return;
     }
-    
+
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+
       if (userDoc.exists()) {
         const role = userDoc.data().role;
-        console.log(role)
-        if (role !== 'student') {
+        console.log(role);
+        if (role !== "student") {
           // If not a student, redirect to dashboard
-          window.location.href = '/dashboard?access=denied';
+          window.location.href = "/dashboard?access=denied";
         }
       }
     } catch (error) {
-      console.error('Error checking user role:', error);
+      console.error("Error checking user role:", error);
     }
   });
-  
 </script>

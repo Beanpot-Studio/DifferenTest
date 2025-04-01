@@ -2,7 +2,7 @@
   <div>
     <!-- Loading state -->
     <div v-if="loading" class="p-6 flex justify-center items-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary-600"></div>
     </div>
     
     <!-- Not logged in state -->
@@ -16,7 +16,7 @@
         <div class="mt-4">
           <button 
             @click="$emit('login')" 
-            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500"
           >
             Log In
           </button>
