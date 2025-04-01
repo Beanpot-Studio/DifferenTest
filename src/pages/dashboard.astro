@@ -6,6 +6,7 @@ import RoleBasedContent from '../components/RoleBasedContent.vue';
 <MainLayout title="Dashboard">
   <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+  
     
     <RoleBasedContent client:load>
       <div class="bg-white rounded-lg shadow-md p-6">
@@ -66,7 +67,7 @@ import RoleBasedContent from '../components/RoleBasedContent.vue';
           </div>
         </div>
       </div>
-    </RoleBasedContent :is-logged-in="isLoggedIn">
+    </RoleBasedContent>
   </div>
 </MainLayout>
 
@@ -75,7 +76,7 @@ import RoleBasedContent from '../components/RoleBasedContent.vue';
   import { doc, getDoc } from 'firebase/firestore';
   import { auth, db } from '../lib/firebase';
   import { ref } from 'vue';
-  
+
   // Show/hide the appropriate role-specific links
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -84,7 +85,21 @@ import RoleBasedContent from '../components/RoleBasedContent.vue';
         if (userDoc.exists()) {
           const role = userDoc.data().role;
           let isLoggedIn = ref(false)
-          // Show or hide role-specific links
+          
+          // Create a user object with the data you want to pass
+          const userData = {
+            uid: user.uid,
+            role: role,
+            ...userDoc.data() // spread any additional user data
+          }
+
+          // Find your RoleBasedContent component and pass the user data
+          const roleBasedContent = document.querySelector('role-based-content');
+          if (roleBasedContent) {
+            roleBasedContent.setAttribute('user', JSON.stringify(userData));
+          }
+
+          // Your existing code for showing/hiding links
           const teacherLink = document.querySelector('.teacher-link');
           const studentLink = document.querySelector('.student-link');
           

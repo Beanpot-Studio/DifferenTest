@@ -55,8 +55,8 @@ export default {
       default: false
     },
     userRole: {
-      type: String,
-      default: null
+      type: Object,
+      required: true
     },
     requiredRoles: {
       type: Array,
@@ -69,9 +69,10 @@ export default {
   },
   emits: ['login'],
   computed: {
+   
     hasAccess() {
       // If no specific roles are required, any authenticated user has access
-      console.log(this.requiredRoles)
+      //console.log(this.requiredRoles,this.user.role)
       if (this.requiredRoles.length === 0) {
         return true;
       }
