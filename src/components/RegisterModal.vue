@@ -1,0 +1,145 @@
+<template>
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg w-full max-w-md p-6 relative">
+      <button 
+        @click="$emit('close')" 
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Create Account</h2>
+      
+      <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        {{ error }}
+      </div>
+      
+      <form @submit.prevent="handleRegister">
+        <div class="mb-4">
+          <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+          <input 
+            v-model="email"
+            type="email" 
+            id="email" 
+            class="w-full text-gray-700 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            required
+          />
+        </div>
+        
+        <div class="mb-4">
+          <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+          <input 
+            v-model="password"
+            type="password" 
+            id="password" 
+            class="w-full text-gray-700 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            required
+            minlength="6"
+          />
+          <p class="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
+        </div>
+        
+        <div class="mb-6">
+          <label class="block text-gray-700 text-sm font-bold mb-2">I am a:</label>
+          <div class="flex space-x-4">
+            <label class="flex items-center text-gray-700">
+              <input 
+                type="radio" 
+                v-model="role" 
+                value="student" 
+                class="mr-2 text-gray-700"
+                required
+              />
+              Student
+            </label>
+            <label class="flex items-center text-gray-700">
+              <input 
+                type="radio" 
+                v-model="role" 
+                value="teacher" 
+                class="mr-2 text-gray-700"
+              />
+              Teacher
+            </label>
+          </div>
+        </div>
+        
+        <button 
+          type="submit" 
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          :disabled="loading"
+        >
+          {{ loading ? 'Creating account...' : 'Sign Up' }}
+        </button>
+      </form>
+      
+      <div class="mt-4 text-center">
+        <p class="text-gray-600">
+          Already have an account? 
+          <a 
+            href="#" 
+            @click.prevent="switchToLogin" 
+            class="text-indigo-600 hover:text-indigo-800"
+          >
+            Log in
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref } from 'vue';
+import { registerUser } from '../lib/auth';
+
+export default {
+  name: 'RegisterModal',
+  emits: ['close', 'register-success', 'switch-to-login'],
+  
+  setup(props, { emit }) {
+    const email = ref('');
+    const password = ref('');
+    const role = ref('student'); // Default role
+    const loading = ref(false);
+    const error = ref('');
+    
+    const handleRegister = async () => {
+      loading.value = true;
+      error.value = '';
+      
+      try {
+        const { success, error: registerError } = await registerUser(email.value, password.value, role.value);
+        
+        if (success) {
+          emit('register-success');
+        } else {
+          error.value = registerError.message || 'Failed to create account. Please try again.';
+        }
+      } catch (err) {
+        error.value = 'An unexpected error occurred. Please try again.';
+        console.error('Register error:', err);
+      } finally {
+        loading.value = false;
+      }
+    };
+    
+    const switchToLogin = () => {
+      emit('close');
+      emit('switch-to-login');
+    };
+    
+    return {
+      email,
+      password,
+      role,
+      loading,
+      error,
+      handleRegister,
+      switchToLogin
+    };
+  }
+};
+</script>

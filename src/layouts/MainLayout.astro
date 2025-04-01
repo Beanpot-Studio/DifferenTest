@@ -1,0 +1,48 @@
+---
+import Header from '../components/Header.vue';
+import Footer from '../components/Footer.vue';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} | EduPortal</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body class="flex flex-col min-h-screen bg-gray-50 text-gray-900 font-sans">
+    <Header client:load />
+    
+    <main class="flex-grow py-8">
+      <div class="container mx-auto px-4">
+        <slot />
+      </div>
+    </main>
+    
+    <Footer />
+
+    <script>
+      // Check if user is being redirected after authentication
+      import { auth } from '../lib/firebase';
+      import { onAuthStateChanged } from 'firebase/auth';
+      
+      // Listen for auth state changes
+      onAuthStateChanged(auth, (user) => {
+        // Authentication state is available here
+        console.log("Auth state changed", user ? "User logged in" : "User logged out");
+      });
+    </script>
+  </body>
+</html>

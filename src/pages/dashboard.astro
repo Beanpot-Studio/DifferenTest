@@ -1,0 +1,103 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import RoleBasedContent from '../components/RoleBasedContent.vue';
+---
+
+<MainLayout title="Dashboard">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+    
+    <RoleBasedContent client:load>
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-4">Welcome to Your Dashboard</h2>
+        <p class="text-gray-600 mb-6">This is your personal dashboard where you can access your content and manage your account.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Dashboard Cards -->
+          <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+            <h3 class="text-lg font-semibold mb-2">Your Profile</h3>
+            <p class="text-gray-600 mb-3">View and edit your personal information</p>
+            <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium">
+              View Profile →
+            </a>
+          </div>
+          
+          <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+            <h3 class="text-lg font-semibold mb-2">Your Courses</h3>
+            <p class="text-gray-600 mb-3">Access your enrolled or created courses</p>
+            <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium">
+              View Courses →
+            </a>
+          </div>
+          
+          <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+            <h3 class="text-lg font-semibold mb-2">Messages</h3>
+            <p class="text-gray-600 mb-3">Check your messages and notifications</p>
+            <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium">
+              View Messages →
+            </a>
+          </div>
+          
+          <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+            <h3 class="text-lg font-semibold mb-2">Help Center</h3>
+            <p class="text-gray-600 mb-3">Get help and support for using the platform</p>
+            <a href="#" class="text-indigo-600 hover:text-indigo-800 font-medium">
+              Get Help →
+            </a>
+          </div>
+        </div>
+        
+        <!-- Role-specific Portals -->
+        <div class="mt-8">
+          <h3 class="text-xl font-bold mb-4">Quick Access</h3>
+          <div class="flex space-x-4">
+            <a 
+              href="/teacher" 
+              class="py-2 px-6 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition teacher-link hidden"
+            >
+              Teacher Portal
+            </a>
+            <a 
+              href="/student" 
+              class="py-2 px-6 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition student-link hidden"
+            >
+              Student Portal
+            </a>
+          </div>
+        </div>
+      </div>
+    </RoleBasedContent>
+  </div>
+</MainLayout>
+
+<script>
+  import { onAuthStateChanged } from 'firebase/auth';
+  import { doc, getDoc } from 'firebase/firestore';
+  import { auth, db } from '../lib/firebase';
+  
+  // Show/hide the appropriate role-specific links
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const role = userDoc.data().role;
+          
+          // Show or hide role-specific links
+          const teacherLink = document.querySelector('.teacher-link');
+          const studentLink = document.querySelector('.student-link');
+          
+          if (teacherLink && studentLink) {
+            if (role === 'teacher') {
+              teacherLink.classList.remove('hidden');
+            } else if (role === 'student') {
+              studentLink.classList.remove('hidden');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error getting user role:', error);
+      }
+    }
+  });
+</script>
