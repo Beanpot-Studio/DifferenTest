@@ -2,7 +2,7 @@
   <header class="bg-indigo-600 text-white shadow-md">
     <div class="container mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center">
-        <a href="/" class="text-2xl font-bold">EduPortal</a>
+        <a href="/" class="text-2xl font-bold">DifferenTest</a>
       </div>
       
       <div class="flex items-center space-x-4">

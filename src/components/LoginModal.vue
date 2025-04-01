@@ -23,7 +23,7 @@
             v-model="email"
             type="email" 
             id="email" 
-            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           />
         </div>
@@ -34,7 +34,7 @@
             v-model="password"
             type="password" 
             id="password" 
-            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           />
         </div>
