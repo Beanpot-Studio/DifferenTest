@@ -3,14 +3,14 @@
     <div class="bg-white rounded-lg w-full max-w-md p-6 relative">
       <button 
         @click="$emit('close')" 
-        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        class="absolute top-4 right-4 text-secondary-400 hover:text-secondary-600"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
       
-      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Log In</h2>
+      <h2 class="text-2xl font-bold text-center mb-6 text-secondary-800">Log In</h2>
       
       <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
         {{ error }}
@@ -18,23 +18,23 @@
       
       <form @submit.prevent="handleLogin">
         <div class="mb-4">
-          <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+          <label for="email" class="block text-secondary-700 text-sm font-bold mb-2">Email</label>
           <input 
             v-model="email"
             type="email" 
             id="email" 
-            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
+            class="text-secondary-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
             required
           />
         </div>
         
         <div class="mb-6">
-          <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+          <label for="password" class="block text-secondary-700 text-sm font-bold mb-2">Password</label>
           <input 
             v-model="password"
             type="password" 
             id="password" 
-            class="text-gray-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
+            class="text-secondary-700 w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
             required
           />
         </div>
@@ -49,7 +49,7 @@
       </form>
       
       <div class="mt-4 text-center">
-        <p class="text-gray-600">
+        <p class="text-secondary-600">
           Don't have an account? 
           <a 
             href="#" 
@@ -70,7 +70,7 @@ import { loginUser } from '../lib/auth';
 
 export default {
   name: 'LoginModal',
-  emits: ['close', 'login-success', 'switch-to-register'],
+  emits: ['close', 'login-success', 'register'],
   
   setup(props, { emit }) {
     const email = ref('');
@@ -100,7 +100,7 @@ export default {
     
     const switchToRegister = () => {
       emit('close');
-      emit('switch-to-register');
+      emit('register');
     };
     
     return {

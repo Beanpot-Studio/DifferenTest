@@ -7,10 +7,10 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
   <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
 
-    <RoleBasedContent client:load>
+    <RoleBasedContent client:only>
       <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-2xl font-bold mb-4">Welcome to Your Dashboard</h2>
-        <p class="text-gray-600 mb-6">
+        <p class="text-secondary-600 mb-6">
           This is your personal dashboard where you can access your content and
           manage your account.
         </p>
@@ -21,7 +21,7 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
           >
             <h3 class="text-lg font-semibold mb-2">Your Profile</h3>
-            <p class="text-gray-600 mb-3">
+            <p class="text-secondary-600 mb-3">
               View and edit your personal information
             </p>
             <a
@@ -36,7 +36,7 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
           >
             <h3 class="text-lg font-semibold mb-2">Your Courses</h3>
-            <p class="text-gray-600 mb-3">
+            <p class="text-secondary-600 mb-3">
               Access your enrolled or created courses
             </p>
             <a
@@ -51,7 +51,7 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
           >
             <h3 class="text-lg font-semibold mb-2">Messages</h3>
-            <p class="text-gray-600 mb-3">
+            <p class="text-secondary-600 mb-3">
               Check your messages and notifications
             </p>
             <a
@@ -66,7 +66,7 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
           >
             <h3 class="text-lg font-semibold mb-2">Help Center</h3>
-            <p class="text-gray-600 mb-3">
+            <p class="text-secondary-600 mb-3">
               Get help and support for using the platform
             </p>
             <a
@@ -105,7 +105,6 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
   import { onAuthStateChanged } from "firebase/auth";
   import { doc, getDoc } from "firebase/firestore";
   import { auth, db } from "../lib/firebase";
-  import { ref } from "vue";
 
   // Show/hide the appropriate role-specific links
   onAuthStateChanged(auth, async (user) => {
@@ -114,20 +113,6 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const role = userDoc.data().role;
-          let isLoggedIn = ref(false);
-
-          // Create a user object with the data you want to pass
-          const userData = {
-            uid: user.uid,
-            role: role,
-            ...userDoc.data(), // spread any additional user data
-          };
-
-          // Find your RoleBasedContent component and pass the user data
-          const roleBasedContent = document.querySelector("role-based-content");
-          if (roleBasedContent) {
-            roleBasedContent.setAttribute("user", JSON.stringify(userData));
-          }
 
           // Your existing code for showing/hiding links
           const teacherLink = document.querySelector(".teacher-link");
@@ -136,10 +121,8 @@ import RoleBasedContent from "../components/RoleBasedContent.vue";
           if (teacherLink && studentLink) {
             if (role === "teacher") {
               teacherLink.classList.remove("hidden");
-              isLoggedIn.value = true;
             } else if (role === "student") {
               studentLink.classList.remove("hidden");
-              isLoggedIn.value = true;
             }
           }
         }

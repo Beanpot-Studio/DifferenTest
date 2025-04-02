@@ -1,14 +1,15 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
+import HomeCTA from "../components/HomeCTA.vue";
 ---
 
 <MainLayout title="Welcome">
   <section class="py-12">
     <div class="text-center mb-12">
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-secondary-900 mb-4">
         Welcome to DifferenTest
       </h1>
-      <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+      <p class="text-xl text-secondary-600 max-w-3xl mx-auto">
         Assessments, Testing, and Credentialing can be way better.
       </p>
     </div>
@@ -37,9 +38,11 @@ import MainLayout from "../layouts/MainLayout.astro";
               ></path>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">For Teachers</h2>
-          <p class="text-gray-600 mb-4">
-            Buid assessments and track student progress all in one place.
+          <h2 class="text-2xl font-bold text-secondary-900 mb-2">
+            For Teachers
+          </h2>
+          <p class="text-secondary-600 mb-4">
+            Build assessments and track student progress all in one place.
           </p>
           <ul class="space-y-2 mb-6">
             <li class="flex items-center">
@@ -121,8 +124,10 @@ import MainLayout from "../layouts/MainLayout.astro";
               ></path>
             </svg>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">For Students</h2>
-          <p class="text-gray-600 mb-4">
+          <h2 class="text-2xl font-bold text-secondary-900 mb-2">
+            For Students
+          </h2>
+          <p class="text-secondary-600 mb-4">
             Access and complete your assignments and communicate with your
             teachers easily.
           </p>
@@ -182,10 +187,12 @@ import MainLayout from "../layouts/MainLayout.astro";
   </section>
 
   <!-- Features Section -->
-  <section class="py-12 bg-gray-100 rounded-lg mt-12">
+  <section class="py-12 bg-secondary-100 rounded-lg mt-12">
     <div class="text-center mb-12">
-      <h2 class="text-3xl font-bold text-gray-900">Why Choose DifferenTest?</h2>
-      <p class="text-lg text-gray-600 mt-2">
+      <h2 class="text-3xl font-bold text-secondary-900">
+        Why Choose DifferenTest?
+      </h2>
+      <p class="text-lg text-secondary-600 mt-2">
         Our platform is designed to make education more accessible and
         efficient.
       </p>
@@ -211,7 +218,7 @@ import MainLayout from "../layouts/MainLayout.astro";
           </svg>
         </div>
         <h3 class="text-xl font-bold mb-2">Save Time</h3>
-        <p class="text-gray-600">
+        <p class="text-secondary-600">
           Streamline administrative tasks and focus on what matters: teaching
           and learning.
         </p>
@@ -237,7 +244,7 @@ import MainLayout from "../layouts/MainLayout.astro";
           </svg>
         </div>
         <h3 class="text-xl font-bold mb-2">Better Communication</h3>
-        <p class="text-gray-600">
+        <p class="text-secondary-600">
           Facilitate communication between teachers and students through our
           integrated platform.
         </p>
@@ -263,7 +270,7 @@ import MainLayout from "../layouts/MainLayout.astro";
           </svg>
         </div>
         <h3 class="text-xl font-bold mb-2">Track Progress</h3>
-        <p class="text-gray-600">
+        <p class="text-secondary-600">
           Monitor learning progress with intuitive analytics and reporting
           tools.
         </p>
@@ -278,32 +285,15 @@ import MainLayout from "../layouts/MainLayout.astro";
       Join thousands of teachers and students already using DifferenTest to
       transform their educational experience.
     </p>
-    <div
-      class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-    >
-      <a
-        href="#"
-        class="inline-block bg-white text-primary-600 font-bold py-3 px-8 rounded-lg hover:bg-primary-50 transition"
-        id="signupBtn"
-      >
-        Sign Up Now
-      </a>
-      <a
-        href="#"
-        class="inline-block bg-primary-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-primary-800 transition"
-        id="learnMoreBtn"
-      >
-        Learn More
-      </a>
-    </div>
+    <HomeCTA client:load />
   </section>
 </MainLayout>
 
 <script>
-  //auth status
   import { onAuthStateChanged } from "firebase/auth";
   import { doc, getDoc } from "firebase/firestore";
   import { auth, db } from "../lib/firebase";
+
   // This script will redirect non-student users away from this page
   onAuthStateChanged(auth, async (user) => {
     if (user) {
@@ -326,7 +316,6 @@ import MainLayout from "../layouts/MainLayout.astro";
                 "cursor-not-allowed"
               );
               teacherPortal.setAttribute("aria-disabled", "true");
-              // Optionally add a title to explain why it's disabled
               teacherPortal.setAttribute(
                 "title",
                 "Only available for teachers"
@@ -378,32 +367,6 @@ import MainLayout from "../layouts/MainLayout.astro";
         );
         portal.setAttribute("aria-disabled", "true");
         portal.setAttribute("title", "Please log in to access portals");
-      });
-    }
-  });
-
-  // Event handlers for the CTA buttons
-  document.addEventListener("DOMContentLoaded", () => {
-    const signupBtn = document.getElementById("signupBtn");
-    const learnMoreBtn = document.getElementById("learnMoreBtn");
-
-    if (signupBtn) {
-      signupBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        // This will need to be updated to use the actual header component's method
-        // For now, we'll just simulate by redirecting
-        window.location.href = "/dashboard?signup=true";
-      });
-    }
-
-    if (learnMoreBtn) {
-      learnMoreBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        // Scroll to features section or another informative section
-        const featuresSection = document.querySelector("section:nth-child(2)");
-        if (featuresSection) {
-          featuresSection.scrollIntoView({ behavior: "smooth" });
-        }
       });
     }
   });

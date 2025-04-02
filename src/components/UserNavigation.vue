@@ -17,7 +17,7 @@
         <a href="/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
         <a 
           href="#" 
-          @click.prevent="$emit('logout')" 
+          @click.prevent="handleLogout" 
           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
           Log out
@@ -44,22 +44,21 @@
 </template>
 
 <script>
+import { useAuth } from '../stores/auth';
+import { computed } from 'vue';
+
 export default {
   name: 'UserNavigation',
-  props: {
-    isLoggedIn: {
-      type: Boolean,
-      required: true
-    },
-    userRole: {
-      type: String,
-      default: null
-    },
-    userEmail: {
-      type: String,
-      default: ''
-    }
+  setup() {
+    const { isLoggedIn, role, user, logout } = useAuth();
+    
+    return {
+      isLoggedIn,
+      userRole: role,
+      userEmail: computed(() => user.value?.email || ''),
+      handleLogout: logout
+    };
   },
-  emits: ['login', 'register', 'logout']
+  emits: ['login', 'register']
 };
 </script>

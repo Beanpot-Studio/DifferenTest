@@ -12,19 +12,18 @@
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
             <a href="/dashboard" class="hover:text-primary-200 transition">Dashboard</a>
-            <a v-if="userRole === 'teacher'" href="/teacher" class="hover:text-primary-200 transition">Teacher Portal</a>
-            <a v-if="userRole === 'student'" href="/student" class="hover:text-primary-200 transition">Student Portal</a>
+            <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition">Teacher Portal</a>
+            <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition">Student Portal</a>
           </template>
         </nav>
         
         <!-- User Navigation Component -->
         <UserNavigation 
           :isLoggedIn="isLoggedIn" 
-          :userRole="userRole" 
+          :userRole="role" 
           :userEmail="userEmail"
           @login="showLoginModal = true"
           @register="showRegisterModal = true"
-          @logout="handleLogout"
         />
       </div>
     </div>
@@ -34,8 +33,9 @@
       v-if="showLoginModal" 
       @close="showLoginModal = false"
       @login-success="handleLoginSuccess"
+      @register="showRegisterModal = true"
     />
-    
+
     <!-- Register Modal -->
     <RegisterModal 
       v-if="showRegisterModal" 
@@ -46,11 +46,11 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onUnmounted, computed } from 'vue';
 import UserNavigation from './UserNavigation.vue';
 import LoginModal from './LoginModal.vue';
 import RegisterModal from './RegisterModal.vue';
-import { setupAuthListener, logoutUser } from '../lib/auth';
+import { useAuth } from '../stores/auth';
 
 export default {
   name: 'Header',
@@ -60,56 +60,30 @@ export default {
     RegisterModal
   },
   setup() {
-    const isLoggedIn = ref(false);
-    const userRole = ref(null);
-    const userEmail = ref('');
     const showLoginModal = ref(false);
     const showRegisterModal = ref(false);
-    let unsubscribeAuth = null;
-    
-    onMounted(() => {
-      // Set up authentication listener
-      unsubscribeAuth = setupAuthListener(({ user, role }) => {
-        isLoggedIn.value = !!user;
-        userRole.value = role;
-        userEmail.value = user ? user.email : '';
-      });
-    });
+    const { isLoggedIn, role, user, cleanup } = useAuth();
     
     onUnmounted(() => {
-      // Clean up auth listener when component is unmounted
-      if (unsubscribeAuth) {
-        unsubscribeAuth();
-      }
+      cleanup();
     });
-    
-    const handleLogout = async () => {
-      const { success } = await logoutUser();
-      if (success) {
-        // Redirect to home page after logout
-        window.location.href = '/';
-      }
-    };
     
     const handleLoginSuccess = () => {
       showLoginModal.value = false;
-      // Redirect to dashboard after login
       window.location.href = '/dashboard';
     };
-    
+
     const handleRegisterSuccess = () => {
       showRegisterModal.value = false;
-      // Redirect to dashboard after registration
       window.location.href = '/dashboard';
     };
     
     return {
       isLoggedIn,
-      userRole,
-      userEmail,
+      role,
+      userEmail: computed(() => user.value?.email || ''),
       showLoginModal,
       showRegisterModal,
-      handleLogout,
       handleLoginSuccess,
       handleRegisterSuccess
     };
