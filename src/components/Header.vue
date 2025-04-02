@@ -62,7 +62,7 @@ export default {
   setup() {
     const showLoginModal = ref(false);
     const showRegisterModal = ref(false);
-    const { isLoggedIn, role, user, cleanup } = useAuth();
+    const { isLoggedIn, role, user, isTeacher, isStudent, cleanup } = useAuth();
     
     onUnmounted(() => {
       cleanup();
@@ -81,6 +81,8 @@ export default {
     return {
       isLoggedIn,
       role,
+      isTeacher,
+      isStudent,
       userEmail: computed(() => user.value?.email || ''),
       showLoginModal,
       showRegisterModal,
