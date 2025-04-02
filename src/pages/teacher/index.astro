@@ -1,207 +1,25 @@
 ---
 import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
+import QuizGenerator from "../../components/QuizGenerator.vue";
 ---
 
 <MainLayout title="Teacher Portal">
   <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Teacher Portal</h1>
 
-    <RoleBasedContent client:load>
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-2xl font-bold">Your Teaching Dashboard</h2>
-          <button
-            class="bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg"
-          >
-            Create New Course
-          </button>
-        </div>
+    <RoleBasedContent client:only requiredRoles={["teacher"]}>
+      <div class="space-y-6">
+        <!-- Quiz Generator -->
+        <QuizGenerator client:load />
 
-        <div class="mb-8">
-          <h3 class="text-lg font-semibold mb-4">Your Courses</h3>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Course Cards (Would be dynamically populated in a real app) -->
-            <div
-              class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-            >
-              <div class="flex justify-between items-start">
-                <h4 class="font-semibold">Mathematics 101</h4>
-                <span
-                  class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                  >Active</span
-                >
-              </div>
-              <p class="text-secondary-600 text-sm mt-2">
-                Introduction to basic mathematics concepts
-              </p>
-              <div class="mt-4 flex justify-between items-center">
-                <span class="text-sm text-secondary-500">32 Students</span>
-                <a
-                  href="#"
-                  class="text-primary-600 hover:text-primary-800 text-sm"
-                  >Manage →</a
-                >
-              </div>
-            </div>
-
-            <div
-              class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-            >
-              <div class="flex justify-between items-start">
-                <h4 class="font-semibold">Physics Fundamentals</h4>
-                <span
-                  class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                  >Active</span
-                >
-              </div>
-              <p class="text-secondary-600 text-sm mt-2">
-                Introduction to physics principles
-              </p>
-              <div class="mt-4 flex justify-between items-center">
-                <span class="text-sm text-secondary-500">28 Students</span>
-                <a
-                  href="#"
-                  class="text-primary-600 hover:text-primary-800 text-sm"
-                  >Manage →</a
-                >
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-4">
-            <a href="#" class="text-primary-600 hover:text-primary-800"
-              >View All Courses →</a
-            >
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Teacher Tools -->
-          <div>
-            <h3 class="text-lg font-semibold mb-4">Teacher Tools</h3>
-            <ul class="space-y-2">
-              <li>
-                <a
-                  href="#"
-                  class="flex items-center p-2 hover:bg-secondary-50 rounded"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-primary-600 mr-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    ></path>
-                  </svg>
-                  Assignment Creator
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="flex items-center p-2 hover:bg-secondary-50 rounded"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-primary-600 mr-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    ></path>
-                  </svg>
-                  Grade Book
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="flex items-center p-2 hover:bg-secondary-50 rounded"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-primary-600 mr-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    ></path>
-                  </svg>
-                  Schedule Planner
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  class="flex items-center p-2 hover:bg-secondary-50 rounded"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-primary-600 mr-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    ></path>
-                  </svg>
-                  Analytics Dashboard
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Recent Activity -->
-          <div>
-            <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
-            <div class="space-y-4">
-              <div class="border-l-4 border-blue-500 pl-3 py-1">
-                <p class="text-sm font-medium">You created a new assignment</p>
-                <p class="text-xs text-secondary-500">Math 101 • 2 hours ago</p>
-              </div>
-              <div class="border-l-4 border-green-500 pl-3 py-1">
-                <p class="text-sm font-medium">
-                  5 students submitted their assignments
-                </p>
-                <p class="text-xs text-secondary-500">Physics • Yesterday</p>
-              </div>
-              <div class="border-l-4 border-yellow-500 pl-3 py-1">
-                <p class="text-sm font-medium">
-                  New message from administration
-                </p>
-                <p class="text-xs text-secondary-500">3 days ago</p>
-              </div>
-            </div>
-            <div class="mt-4">
-              <a
-                href="#"
-                class="text-primary-600 hover:text-primary-800 text-sm"
-                >View All Activity →</a
-              >
-            </div>
-          </div>
+        <!-- Other teacher-specific content -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-2xl font-bold mb-4">Your Classes</h2>
+          <p class="text-secondary-600 mb-6">
+            Manage your classes and students here.
+          </p>
+          <!-- Add class management content here -->
         </div>
       </div>
     </RoleBasedContent>

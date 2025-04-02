@@ -28,6 +28,10 @@ export default defineConfig({
       cors: true,
       origin: '*',
       allowedHosts: ['localhost'],
+    },
+    envDir: '.',
+    define: {
+      'import.meta.env.PUBLIC_GEMINI_API_KEY': JSON.stringify(process.env.PUBLIC_GEMINI_API_KEY),
     }
   }
 });
