@@ -2,6 +2,12 @@
   <div class="bg-white rounded-lg shadow-md p-6">
     <h2 class="text-2xl font-bold mb-4">Generate Quiz from Lesson Plan</h2>
     
+    <!-- Notification -->
+    <div v-if="notification.show" 
+         :class="['mb-4 p-4 rounded-lg', notification.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
+      {{ notification.message }}
+    </div>
+    
     <!-- Upload Section -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -25,6 +31,32 @@
       </div>
     </div>
 
+    <!-- Number of Questions -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Number of Questions
+      </label>
+      <input
+        type="number"
+        v-model="numQuestions"
+        min="1"
+        max="10"
+        class="w-24 p-2 border rounded-lg"
+      />
+    </div>
+
+    <!-- Quiz Title -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Quiz Title
+      </label>
+      <input
+        type="text"
+        v-model="quizTitle"
+        class="w-full p-2 border rounded-lg"
+      />
+    </div>
+
     <!-- Loading State -->
     <div v-if="isGenerating" class="mb-6">
       <div class="flex items-center space-x-2">
@@ -35,6 +67,10 @@
 
     <!-- Quiz Editor -->
     <div v-if="quiz" class="space-y-6">
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-800">{{ quiz.title }}</h3>
+      </div>
+      
       <div v-for="(question, index) in quiz.questions" :key="index" class="border rounded-lg p-4">
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -64,9 +100,12 @@
             />
             <button
               @click="removeOption(index, optionIndex)"
-              class="text-red-600 hover:text-red-800"
+              class="text-red-600 hover:text-red-800 p-1"
+              title="Remove option"
             >
-              Remove
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
             </button>
           </div>
           
@@ -113,11 +152,12 @@ export default {
     const isGenerating = ref(false);
     const quiz = ref(null);
     const fileContent = ref('');
+    const numQuestions = ref(3);
+    const quizTitle = ref('');
+    const notification = ref({ show: false, message: '', type: 'success' });
 
     // Get API key from environment variable
     const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
-    console.log('Environment:', import.meta.env);
-    console.log('API Key:', apiKey);
     
     if (!apiKey) {
       console.error('Gemini API key not found in environment variables');
@@ -125,6 +165,13 @@ export default {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
+
+    const showNotification = (message, type = 'success') => {
+      notification.value = { show: true, message, type };
+      setTimeout(() => {
+        notification.value.show = false;
+      }, 3000);
+    };
 
     const handleFileUpload = async (event) => {
       const file = event.target.files[0];
@@ -134,15 +181,12 @@ export default {
       isGenerating.value = true;
 
       try {
-        // Read file content
         const text = await file.text();
         fileContent.value = text;
-
-        // Generate quiz using Gemini
         await generateQuiz(text);
       } catch (error) {
         console.error('Error processing file:', error);
-        alert('Error processing file. Please try again.');
+        showNotification('Error processing file. Please try again.', 'error');
       } finally {
         isGenerating.value = false;
       }
@@ -152,9 +196,10 @@ export default {
       try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
         
-        const prompt = `Generate a 3-question multiple choice quiz based on this lesson plan. 
+        const prompt = `Generate a ${numQuestions.value}-question multiple choice quiz based on this lesson plan. 
         Format the response as a JSON object with this structure:
         {
+          "title": "quiz title",
           "questions": [
             {
               "text": "question text",
@@ -176,18 +221,15 @@ export default {
         const response = await result.response;
         let text = response.text();
         
-        // Clean up the response by removing markdown code block formatting
         text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        
-        // Parse the JSON response
         quiz.value = JSON.parse(text);
+        quiz.value.title = quizTitle.value || quiz.value.title;
         
-        // Save to Firebase
         await saveQuiz();
+        showNotification('Quiz generated successfully!');
       } catch (error) {
         console.error('Error generating quiz:', error);
-        console.error('Raw response:', response?.text());
-        alert('Error generating quiz. Please try again.');
+        showNotification('Error generating quiz. Please try again.', 'error');
       }
     };
 
@@ -203,16 +245,16 @@ export default {
         };
 
         if (!quiz.value.id) {
-          // Create new quiz
           const docRef = await addDoc(collection(db, 'quizzes'), quizData);
           quiz.value.id = docRef.id;
+          showNotification('Quiz saved successfully!');
         } else {
-          // Update existing quiz
           await updateDoc(doc(db, 'quizzes', quiz.value.id), quizData);
+          showNotification('Quiz updated successfully!');
         }
       } catch (error) {
         console.error('Error saving quiz:', error);
-        alert('Error saving quiz. Please try again.');
+        showNotification('Error saving quiz. Please try again.', 'error');
       }
     };
 
@@ -222,26 +264,14 @@ export default {
     };
 
     const removeOption = (questionIndex, optionIndex) => {
-      const question = quiz.value.questions[questionIndex];
-      question.options.splice(optionIndex, 1);
-      
-      // Update correctIndex if needed
-      if (question.correctIndex >= optionIndex) {
-        question.correctIndex = Math.max(0, question.correctIndex - 1);
-      }
-      
+      quiz.value.questions[questionIndex].options.splice(optionIndex, 1);
       saveQuiz();
     };
 
-    const generateNewQuiz = async () => {
-      if (!fileContent.value) {
-        alert('Please upload a lesson plan first.');
-        return;
+    const generateNewQuiz = () => {
+      if (fileContent.value) {
+        generateQuiz(fileContent.value);
       }
-      
-      isGenerating.value = true;
-      await generateQuiz(fileContent.value);
-      isGenerating.value = false;
     };
 
     return {
@@ -249,11 +279,14 @@ export default {
       fileName,
       isGenerating,
       quiz,
+      numQuestions,
+      quizTitle,
+      notification,
       handleFileUpload,
-      saveQuiz,
       addOption,
       removeOption,
-      generateNewQuiz
+      generateNewQuiz,
+      saveQuiz
     };
   }
 };
