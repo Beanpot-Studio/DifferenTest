@@ -32,7 +32,7 @@
 import { useAuth } from '../stores/auth';
 
 export default {
-  name: 'PortalButtons',
+  name: 'PortalLinks',
   setup() {
     const { isTeacher, isStudent } = useAuth();
     
