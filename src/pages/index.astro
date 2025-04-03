@@ -1,6 +1,7 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import HomeCTA from "../components/HomeCTA.vue";
+import UserInfo from "../components/UserInfo.vue";
 ---
 
 <MainLayout title="Welcome">
@@ -9,6 +10,12 @@ import HomeCTA from "../components/HomeCTA.vue";
       <h1 class="text-4xl md:text-5xl font-bold text-secondary-900 mb-4">
         Welcome to DifferenTest
       </h1>
+
+      <!-- User Info -->
+      <div class="max-w-5xl mx-auto mb-8">
+        <UserInfo client:load />
+      </div>
+
       <p class="text-xl text-secondary-600 max-w-3xl mx-auto">
         Assessments, Testing, and Credentialing can be way better.
       </p>
