@@ -1,7 +1,7 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import RoleBasedContent from "../components/RoleBasedContent.vue";
-import PortalButtons from "../components/PortalButtons.vue";
+import PortalLinks from "../components/PortalLinks.vue";
 ---
 
 <MainLayout title="Dashboard">
@@ -32,22 +32,6 @@ import PortalButtons from "../components/PortalButtons.vue";
               View Profile →
             </a>
           </div>
-
-          <div
-            class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-          >
-            <h3 class="text-lg font-semibold mb-2">Your Courses</h3>
-            <p class="text-secondary-600 mb-3">
-              Access your enrolled or created courses
-            </p>
-            <a
-              href="#"
-              class="text-primary-600 hover:text-primary-800 font-medium"
-            >
-              View Courses →
-            </a>
-          </div>
-
           <div
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
           >
@@ -77,13 +61,18 @@ import PortalButtons from "../components/PortalButtons.vue";
               Get Help →
             </a>
           </div>
+          <div
+          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
+        >
+          <h3 class="text-lg font-semibold mb-2">Portal</h3>
+        
+          <PortalLinks client:load />
+          
         </div>
 
-        <!-- Role-specific Portals -->
-        <div class="mt-8">
-          <h3 class="text-xl font-bold mb-4">Quick Access</h3>
-          <PortalButtons client:load />
         </div>
+        
+
       </div>
     </RoleBasedContent>
   </div>

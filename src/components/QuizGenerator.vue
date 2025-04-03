@@ -8,28 +8,7 @@
       {{ notification.message }}
     </div>
     
-    <!-- Upload Section -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Upload Lesson Plan (PDF or Text)
-      </label>
-      <div class="flex items-center space-x-4">
-        <input
-          type="file"
-          ref="fileInput"
-          accept=".pdf,.txt"
-          class="hidden"
-          @change="handleFileUpload"
-        />
-        <button
-          @click="$refs.fileInput.click()"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-        >
-          Choose File
-        </button>
-        <span v-if="fileName" class="text-sm text-gray-600">{{ fileName }}</span>
-      </div>
-    </div>
+   
 
     <!-- Number of Questions -->
     <div class="mb-6">
@@ -55,6 +34,29 @@
         v-model="quizTitle"
         class="w-full p-2 border rounded-lg"
       />
+    </div>
+
+     <!-- Upload Section -->
+     <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Upload Lesson Plan (PDF or Text)
+      </label>
+      <div class="flex items-center">
+        <input
+          type="file"
+          ref="fileInput"
+          accept=".pdf,.txt"
+          class="hidden"
+          @change="handleFileUpload"
+        />
+        <button
+          @click="$refs.fileInput.click()"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        >
+          Choose File
+        </button>
+        <span v-if="fileName" class="text-sm text-gray-600">{{ fileName }}</span>
+      </div>
     </div>
 
     <!-- Loading State -->
