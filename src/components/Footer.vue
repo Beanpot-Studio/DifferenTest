@@ -14,8 +14,9 @@
           <ul class="space-y-2">
             <li><a href="/" class="text-secondary-300 hover:text-white transition">Home</a></li>
             <li><a href="/dashboard" class="text-secondary-300 hover:text-white transition">Dashboard</a></li>
-            <li><a href="#" class="text-secondary-300 hover:text-white transition">About Us</a></li>
-            <li><a href="#" class="text-secondary-300 hover:text-white transition">Contact</a></li>
+            <li><a href="/about" class="text-secondary-300 hover:text-white transition">About Us</a></li>
+            <li><a href="/contact" class="text-secondary-300 hover:text-white transition">Contact</a></li>
+            <li><a href="/help" class="text-secondary-300 hover:text-white transition">Support</a></li>
           </ul>
         </div>
         

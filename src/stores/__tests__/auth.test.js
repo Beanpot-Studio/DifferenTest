@@ -1,71 +1,161 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { setActivePinia, createPinia } from 'pinia';
 import { useAuth } from '../auth';
-import { setupAuthListener, logoutUser } from '../../lib/auth';
+import { auth } from '../../lib/firebase';
+import { signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
-// Mock the auth functions
-vi.mock('../../lib/auth', () => ({
-  setupAuthListener: vi.fn(),
-  logoutUser: vi.fn()
+// Mock Firebase auth
+vi.mock('../../lib/firebase', () => ({
+  auth: {
+    currentUser: null
+  },
+  db: {}
+}));
+
+// Mock Firebase auth functions
+vi.mock('firebase/auth', () => ({
+  signOut: vi.fn().mockResolvedValue(),
+  signInWithEmailAndPassword: vi.fn().mockResolvedValue({
+    user: {
+      uid: '123',
+      email: 'test@example.com'
+    }
+  }),
+  createUserWithEmailAndPassword: vi.fn().mockResolvedValue({
+    user: {
+      uid: '123',
+      email: 'new@example.com'
+    }
+  }),
+  onAuthStateChanged: vi.fn()
+}));
+
+// Mock Firestore functions
+vi.mock('firebase/firestore', () => ({
+  doc: vi.fn(),
+  getDoc: vi.fn().mockResolvedValue({
+    exists: () => true,
+    data: () => ({ role: 'teacher' })
+  }),
+  setDoc: vi.fn().mockResolvedValue()
 }));
 
 describe('Auth Store', () => {
   beforeEach(() => {
+    setActivePinia(createPinia());
+    // Mock window.location
+    global.window = {
+      location: {
+        href: '/'
+      }
+    };
+  });
+
+  afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('initializes auth listener correctly', async () => {
-    const mockUnsubscribe = vi.fn();
-    setupAuthListener.mockImplementation((callback) => {
-      callback({ user: { email: 'test@example.com' }, role: 'teacher' });
-      return mockUnsubscribe;
+  it('initializes with default state', () => {
+    const store = useAuth();
+    expect(store.user).toBeNull();
+    expect(store.role).toBeNull();
+  });
+
+  it('handles login correctly', async () => {
+    const store = useAuth();
+    const result = await store.login('test@example.com', 'password');
+    
+    expect(signInWithEmailAndPassword).toHaveBeenCalledWith(auth, 'test@example.com', 'password');
+    expect(store.user).toEqual({
+      uid: '123',
+      email: 'test@example.com'
     });
-
-    const { initialize, user, role, isLoggedIn } = useAuth();
-    await initialize();
-
-    expect(setupAuthListener).toHaveBeenCalled();
-    expect(user.value).toEqual({ email: 'test@example.com' });
-    expect(role.value).toBe('teacher');
-    expect(isLoggedIn.value).toBe(true);
+    expect(result.success).toBe(true);
   });
 
   it('handles logout correctly', async () => {
-    logoutUser.mockResolvedValue({ success: true });
-    const { logout } = useAuth();
+    const store = useAuth();
+    store.user = { uid: '123' };
+    store.role = 'teacher';
+    
+    await store.logout();
+    
+    expect(signOut).toHaveBeenCalledWith(auth);
+    expect(store.user).toBeNull();
+    expect(store.role).toBeNull();
+    expect(window.location.href).toBe('/');
+  });
 
-    await logout();
+  it('handles registration correctly', async () => {
+    const store = useAuth();
+    const result = await store.register('new@example.com', 'password', 'teacher');
+    
+    expect(createUserWithEmailAndPassword).toHaveBeenCalledWith(auth, 'new@example.com', 'password');
+    expect(store.user).toEqual({
+      uid: '123',
+      email: 'new@example.com'
+    });
+    expect(store.role).toBe('teacher');
+    expect(result.success).toBe(true);
+  });
 
-    expect(logoutUser).toHaveBeenCalled();
+  it('updates user role correctly', async () => {
+    const store = useAuth();
+    store.user = { uid: '123' };
+    
+    const result = await store.updateUserRole('student');
+    
+    expect(store.role).toBe('student');
+    expect(result.success).toBe(true);
+  });
+
+  it('handles auth state changes correctly', async () => {
+    const store = useAuth();
+    const mockUser = {
+      uid: '123',
+      email: 'test@example.com'
+    };
+    
+    await store.handleAuthStateChanged(mockUser);
+    
+    expect(store.user).toEqual(mockUser);
+    expect(getDoc).toHaveBeenCalled();
+  });
+
+  it('clears auth state correctly', () => {
+    const store = useAuth();
+    store.user = { uid: '123' };
+    store.role = 'teacher';
+    
+    store.clearAuthState();
+    
+    expect(store.user).toBeNull();
+    expect(store.role).toBeNull();
+  });
+
+  it('computes isLoggedIn correctly', () => {
+    const store = useAuth();
+    expect(store.isLoggedIn).toBe(false);
+    
+    store.user = { uid: '123' };
+    expect(store.isLoggedIn).toBe(true);
   });
 
   it('computes isTeacher correctly', () => {
-    const { isTeacher, role } = useAuth();
+    const store = useAuth();
+    expect(store.isTeacher).toBe(false);
     
-    role.value = 'teacher';
-    expect(isTeacher.value).toBe(true);
-    
-    role.value = 'student';
-    expect(isTeacher.value).toBe(false);
+    store.role = 'teacher';
+    expect(store.isTeacher).toBe(true);
   });
 
   it('computes isStudent correctly', () => {
-    const { isStudent, role } = useAuth();
+    const store = useAuth();
+    expect(store.isStudent).toBe(false);
     
-    role.value = 'student';
-    expect(isStudent.value).toBe(true);
-    
-    role.value = 'teacher';
-    expect(isStudent.value).toBe(false);
-  });
-
-  it('cleans up auth listener', () => {
-    const mockUnsubscribe = vi.fn();
-    setupAuthListener.mockReturnValue(mockUnsubscribe);
-
-    const { initialize, cleanup } = useAuth();
-    initialize();
-    cleanup();
-
-    expect(mockUnsubscribe).toHaveBeenCalled();
+    store.role = 'student';
+    expect(store.isStudent).toBe(true);
   });
 }); 

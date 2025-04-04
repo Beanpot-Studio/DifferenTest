@@ -1,0 +1,28 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+import RoleBasedContent from "../../components/RoleBasedContent.vue";
+import ClassManager from "../../components/ClassManager.vue";
+---
+
+<MainLayout title="Class Management">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-3xl font-bold">Class Management</h1>
+      <a href="/teacher" class="text-primary-600 hover:text-primary-800"
+        >← Back to Portal</a
+      >
+    </div>
+
+    <RoleBasedContent client:only requiredRoles={["teacher"]}>
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-4">Class Manager</h2>
+        <ClassManager client:load />
+      </div>
+    </RoleBasedContent>
+  </div>
+</MainLayout>
+
+<script>
+  // Same auth check script as index.astro
+</script>
+
