@@ -1,8 +1,9 @@
 <template>
   <div>
     <!-- Loading state -->
-    <div v-if="loading || !initialized" class="p-6 flex justify-center items-center">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary-600"></div>
+    <div v-if="loading || !initialized" class="min-h-[400px] flex flex-col items-center justify-center p-6">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <p class="mt-4 text-primary-600 font-medium">Loading content...</p>
     </div>
     
     <!-- Not logged in state -->

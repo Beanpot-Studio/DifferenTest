@@ -10,35 +10,50 @@ import RoleBasedContent from "../../components/RoleBasedContent.vue";
     <RoleBasedContent client:only requiredRoles={["teacher"]}>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Portal Cards -->
-        <a
-          href="/teacher/quizzes"
-          class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
+        <div
+          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
         >
-          <h2 class="text-2xl font-bold mb-4">Quiz Management</h2>
-          <p class="text-secondary-600">
+          <h2 class="text-lg font-semibold mb-2">Quiz Management</h2>
+          <p class="text-secondary-600 mb-3">
             Generate and manage quizzes for your classes.
           </p>
-        </a>
+          <a
+            href="/teacher/quizzes"
+            class="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Manage Quizzes →
+          </a>
+        </div>
 
-        <a
-          href="/teacher/classes"
-          class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
+        <div
+          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
         >
-          <h2 class="text-2xl font-bold mb-4">Class Management</h2>
-          <p class="text-secondary-600">
+          <h2 class="text-lg font-semibold mb-2">Class Management</h2>
+          <p class="text-secondary-600 mb-3">
             Create and manage your classes, assign quizzes.
           </p>
-        </a>
+          <a
+            href="/teacher/classes"
+            class="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            Manage Classes →
+          </a>
+        </div>
 
-        <a
-          href="/teacher/submissions"
-          class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
+        <div
+          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
         >
-          <h2 class="text-2xl font-bold mb-4">Quiz Submissions</h2>
-          <p class="text-secondary-600">
+          <h2 class="text-lg font-semibold mb-2">Quiz Submissions</h2>
+          <p class="text-secondary-600 mb-3">
             View and track student quiz submissions and progress.
           </p>
-        </a>
+          <a
+            href="/teacher/submissions"
+            class="text-primary-600 hover:text-primary-800 font-medium"
+          >
+            View Submissions →
+          </a>
+        </div>
       </div>
     </RoleBasedContent>
   </div>

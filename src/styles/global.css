@@ -1,8 +1,165 @@
 /* Global styles for the application */
 
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 70, 95, 255;
+    --color-secondary: 100, 116, 139;
+    --color-success: 18, 183, 106;
+    --color-warning: 247, 144, 9;
+    --color-danger: 240, 68, 56;
+    --color-info: 11, 165, 236;
+  }
+
+  body {
+    @apply text-gray-900 dark:text-gray-100 font-outfit bg-gray-50 dark:bg-gray-900 antialiased;
+  }
+
+  h1 {
+    @apply text-title-lg leading-title-lg font-bold mb-4;
+  }
+
+  h2 {
+    @apply text-title-md leading-title-md font-semibold mb-3;
+  }
+
+  h3 {
+    @apply text-title-sm leading-title-sm font-semibold mb-2;
+  }
+
+  p {
+    @apply text-theme-xl leading-theme-xl mb-4;
+  }
+
+  a {
+    @apply text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300;
+  }
+
+  /* Links on primary background */
+  .bg-primary-50 a,
+  .bg-primary-100 a,
+  .bg-primary-200 a,
+  .bg-primary-300 a,
+  .bg-primary-400 a,
+  .bg-primary-500 a,
+  .bg-primary-600 a,
+  .bg-primary-700 a,
+  .bg-primary-800 a,
+  .bg-primary-900 a {
+    @apply text-white hover:text-white/80;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-theme-sm;
+  }
+
+  .btn-primary {
+    @apply bg-primary-500 text-white hover:bg-primary-600 dark:bg-primary-500 dark:hover:bg-primary-600;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary-500 text-white hover:bg-secondary-600 dark:bg-secondary-500 dark:hover:bg-secondary-600;
+  }
+
+  .btn-success {
+    @apply bg-success-500 text-white hover:bg-success-600 dark:bg-success-500 dark:hover:bg-success-600;
+  }
+
+  .btn-danger {
+    @apply bg-danger-500 text-white hover:bg-danger-600 dark:bg-danger-500 dark:hover:bg-danger-600;
+  }
+
+  .btn-warning {
+    @apply bg-warning-500 text-white hover:bg-warning-600 dark:bg-warning-500 dark:hover:bg-warning-600;
+  }
+
+  .btn-info {
+    @apply bg-info-500 text-white hover:bg-info-600 dark:bg-info-500 dark:hover:bg-info-600;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white text-theme-sm;
+  }
+
+  .label {
+    @apply block text-theme-sm font-medium text-gray-700 dark:text-gray-300 mb-1;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-theme-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply bg-primary-50 text-primary-500 dark:bg-primary-500/[0.12] dark:text-primary-400;
+  }
+
+  .badge-secondary {
+    @apply bg-secondary-50 text-secondary-700 dark:bg-secondary-700/[0.12] dark:text-secondary-300;
+  }
+
+  .badge-success {
+    @apply bg-success-50 text-success-500 dark:bg-success-500/[0.12] dark:text-success-400;
+  }
+
+  .badge-danger {
+    @apply bg-danger-50 text-danger-500 dark:bg-danger-500/[0.12] dark:text-danger-400;
+  }
+
+  .badge-warning {
+    @apply bg-warning-50 text-warning-500 dark:bg-warning-500/[0.12] dark:text-warning-400;
+  }
+
+  .badge-info {
+    @apply bg-info-50 text-info-500 dark:bg-info-500/[0.12] dark:text-info-400;
+  }
+
+  .menu-item {
+    @apply relative flex items-center w-full gap-3 px-3 py-2 font-medium rounded-lg text-theme-sm;
+  }
+
+  .menu-item-active {
+    @apply bg-primary-50 text-primary-500 dark:bg-primary-500/[0.12] dark:text-primary-400;
+  }
+
+  .menu-item-inactive {
+    @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  }
+
+  .menu-item-icon {
+    @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400;
+  }
+
+  .menu-item-icon-active {
+    @apply text-primary-500 dark:text-primary-400;
+  }
+
+  .menu-item-icon-inactive {
+    @apply text-gray-500 group-hover:text-gray-700 dark:text-gray-400 dark:group-hover:text-gray-300;
+  }
+
+  .menu-dropdown-item {
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-theme-sm font-medium;
+  }
+
+  .menu-dropdown-item-active {
+    @apply bg-primary-50 text-primary-500 dark:bg-primary-500/[0.12] dark:text-primary-400;
+  }
+
+  .menu-dropdown-item-inactive {
+    @apply text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5;
+  }
+}
 
 /* Custom variables */
 :root {

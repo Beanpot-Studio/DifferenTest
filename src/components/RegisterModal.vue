@@ -18,6 +18,17 @@
       
       <form @submit.prevent="handleRegister">
         <div class="mb-4">
+          <label for="name" class="block text-secondary-700 text-sm font-bold mb-2">Full Name</label>
+          <input 
+            v-model="name"
+            type="text" 
+            id="name" 
+            class="w-full text-secondary-700 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
+            required
+          />
+        </div>
+
+        <div class="mb-4">
           <label for="email" class="block text-secondary-700 text-sm font-bold mb-2">Email</label>
           <input 
             v-model="email"
@@ -100,6 +111,7 @@ export default {
   emits: ['close', 'register-success', 'switch-to-login'],
   
   setup(props, { emit }) {
+    const name = ref('');
     const email = ref('');
     const password = ref('');
     const role = ref('student'); // Default role
@@ -111,7 +123,7 @@ export default {
       error.value = '';
       
       try {
-        const { success, error: registerError } = await registerUser(email.value, password.value, role.value);
+        const { success, error: registerError } = await registerUser(email.value, password.value, role.value, name.value);
         
         if (success) {
           emit('register-success');
@@ -132,6 +144,7 @@ export default {
     };
     
     return {
+      name,
       email,
       password,
       role,

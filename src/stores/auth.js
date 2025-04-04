@@ -79,8 +79,13 @@ async function updateUserRole(newRole) {
 }
 
 async function handleAuthStateChanged(newUser) {
-  user.value = newUser;
   if (newUser) {
+    // Create a new user object with the auth data
+    user.value = {
+      uid: newUser.uid,
+      email: newUser.email,
+      // Other auth properties will be added by fetchUserRole
+    };
     await fetchUserRole(newUser.uid);
   } else {
     clearAuthState();
@@ -91,7 +96,15 @@ async function fetchUserRole(uid) {
   try {
     const userDoc = await getDoc(doc(db, 'users', uid));
     if (userDoc.exists()) {
-      role.value = userDoc.data().role;
+      const userData = userDoc.data();
+      role.value = userData.role;
+      // Update the user object with the name from Firestore
+      if (user.value) {
+        user.value = {
+          ...user.value,
+          name: userData.name
+        };
+      }
     }
     error.value = null;
   } catch (error) {

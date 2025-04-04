@@ -22,6 +22,7 @@
           :isLoggedIn="isLoggedIn" 
           :userRole="role" 
           :userEmail="userEmail"
+          :userName="userName"
           @login="showLoginModal = true"
           @register="showRegisterModal = true"
         />
@@ -84,6 +85,7 @@ export default {
       isTeacher,
       isStudent,
       userEmail: computed(() => user.value?.email || ''),
+      userName: computed(() => user.value?.name || ''),
       showLoginModal,
       showRegisterModal,
       handleLoginSuccess,
