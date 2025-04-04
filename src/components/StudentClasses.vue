@@ -1,75 +1,112 @@
 <template>
   <div class="space-y-6">
-    <!-- Join Class -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-bold mb-4">Join a Class</h2>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Class Code
-          </label>
-          <div class="flex space-x-2">
-            <input
-              v-model="classCode"
-              type="text"
-              class="flex-1 p-2 border rounded-lg"
-              placeholder="Enter class code"
-            />
-            <button
-              @click="joinClass"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Join
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Class Search -->
+    <ClassSearch @enrolled="loadClasses" />
 
     <!-- My Classes -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">My Classes</h2>
-      <div v-if="classes.length === 0" class="text-gray-500 text-center py-4">
+      <div v-if="loading" class="text-center py-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+        <p class="mt-2 text-gray-500">Loading your classes...</p>
+      </div>
+      
+      <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
+       
         You haven't joined any classes yet.
       </div>
+      
       <div v-else class="space-y-6">
-        <div v-for="classItem in classes" :key="classItem.id" class="border rounded-lg p-4">
+        <div v-for="classItem in classes" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
           <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
-              <p class="text-sm text-gray-500">
-                Teacher: {{ classItem.teacherName }}
-              </p>
+            <div class="space-y-2">
+              <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <p class="text-sm font-medium text-gray-700">
+                  Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
+                </p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                <p class="text-sm font-medium text-gray-700">
+                  Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
+                </p>
+              </div>
             </div>
             <button
               @click="leaveClass(classItem.id)"
-              class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-1"
             >
-              Leave
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Leave Class</span>
             </button>
           </div>
 
-          <!-- Class Quizzes -->
+          <!-- Class Progress -->
           <div class="mt-4">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="font-medium">Class Progress</h4>
+              <span class="text-sm text-gray-500">
+                {{ calculateProgress(classItem) }}% Complete
+              </span>
+            </div>
+            <div class="bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-green-500 rounded-full h-2"
+                :style="{ width: `${calculateProgress(classItem)}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Class Quizzes -->
+          <div class="mt-6">
             <h4 class="font-medium mb-2">Available Quizzes</h4>
-            <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
+            <div v-if="!classItem.quizzes?.length" class="text-gray-500 text-sm">
               No quizzes available yet.
             </div>
-            <div v-else class="space-y-2">
-              <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
+            <div v-else class="space-y-3">
+              <div 
+                v-for="quiz in classItem.quizzes" 
+                :key="quiz.id" 
+                class="border rounded p-4"
+              >
                 <div class="flex justify-between items-start">
                   <div>
                     <h5 class="font-medium">{{ quiz.title }}</h5>
                     <p class="text-sm text-gray-500">
                       {{ quiz.questions?.length || 0 }} questions
                     </p>
+                    <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="mt-1">
+                      <p class="text-sm">
+                        Last attempt: 
+                        <span :class="{'text-green-600': getQuizAttempt(classItem.id, quiz.id).score >= 80, 'text-yellow-600': getQuizAttempt(classItem.id, quiz.id).score >= 60, 'text-red-600': getQuizAttempt(classItem.id, quiz.id).score < 60}">
+                          {{ getQuizAttempt(classItem.id, quiz.id).score }}%
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                  <button
-                    @click="startQuiz(classItem.id, quiz)"
-                    class="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700"
-                  >
-                    Take Quiz
-                  </button>
+                  <div class="flex space-x-2">
+                    <button
+                      v-if="getQuizAttempt(classItem.id, quiz.id)?.score < 100"
+                      @click="reviewQuiz(classItem.id, quiz)"
+                      class="px-3 py-1 bg-secondary-600 text-white rounded hover:bg-secondary-700"
+                    >
+                      Review
+                    </button>
+                    <button
+                      @click="startQuiz(classItem.id, quiz)"
+                      class="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700"
+                    >
+                      {{ getQuizAttempt(classItem.id, quiz.id) ? 'Retake' : 'Start' }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -79,38 +116,161 @@
     </div>
 
     <!-- Quiz Modal -->
-    <div v-if="currentQuiz" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 class="text-2xl font-bold mb-4">{{ currentQuiz.title }}</h2>
-        <div v-for="(question, index) in currentQuiz.questions" :key="index" class="mb-6">
-          <p class="font-medium mb-2">Question {{ index + 1 }}: {{ question.text }}</p>
-          <div class="space-y-2">
-            <div v-for="(option, optionIndex) in question.options" :key="optionIndex" class="flex items-center space-x-2">
-              <input
-                type="radio"
-                :name="'answer-' + index"
-                :value="optionIndex"
-                v-model="answers[index]"
-                class="text-primary-600"
-              />
-              <span>{{ option.text }}</span>
+    <div v-if="showQuizModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+        <button 
+          @click="closeQuizModal"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div v-if="currentQuiz">
+          <h3 class="text-xl font-bold mb-4">{{ currentQuiz.title }}</h3>
+          
+          <div v-if="!quizCompleted" class="space-y-6">
+            <div v-for="(question, index) in currentQuiz.questions" :key="index" class="border-b pb-4">
+              <p class="font-medium mb-3">{{ index + 1 }}. {{ question.text }}</p>
+              <div class="space-y-2">
+                <label 
+                  v-for="option in question.options" 
+                  :key="option"
+                  class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    :name="'question-' + index"
+                    :value="option"
+                    v-model="answers[index]"
+                    class="text-primary-600"
+                  />
+                  <span>{{ option }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                @click="submitQuiz"
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                Submit Quiz
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="space-y-6">
+            <div class="text-center">
+              <h4 class="text-2xl font-bold mb-2">Quiz Complete!</h4>
+              <p class="text-lg">
+                Your score: 
+                <span :class="{
+                  'text-green-600': quizScore >= 80,
+                  'text-yellow-600': quizScore >= 60 && quizScore < 80,
+                  'text-red-600': quizScore < 60
+                }">
+                  {{ quizScore }}%
+                </span>
+              </p>
+            </div>
+
+            <div v-if="quizScore < 100" class="bg-primary-50 p-4 rounded-lg">
+              <h5 class="font-semibold mb-2">Want to improve your score?</h5>
+              <p class="text-sm text-gray-600 mb-4">
+                Review your answers and get detailed explanations to help you understand the concepts better.
+              </p>
+              <button
+                @click="startReview"
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              >
+                Start Review
+              </button>
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                @click="closeQuizModal"
+                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="flex justify-end space-x-4 mt-6">
-          <button
-            @click="currentQuiz = null"
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-          <button
-            @click="submitQuiz"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            Submit
-          </button>
+    <!-- Review Modal -->
+    <div v-if="showReviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+        <button 
+          @click="closeReviewModal"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div v-if="currentQuiz">
+          <h3 class="text-xl font-bold mb-4">Review: {{ currentQuiz.title }}</h3>
+          
+          <div class="space-y-8">
+            <div 
+              v-for="(question, index) in currentQuiz.questions" 
+              :key="index"
+              class="border-b pb-6"
+            >
+              <div class="mb-4">
+                <p class="font-medium">{{ index + 1 }}. {{ question.text }}</p>
+                <div class="mt-2 space-y-2">
+                  <div 
+                    v-for="option in question.options" 
+                    :key="option"
+                    :class="{
+                      'text-green-600': option === question.correctAnswer,
+                      'text-red-600': option === answers[index] && option !== question.correctAnswer
+                    }"
+                    class="flex items-center space-x-2"
+                  >
+                    <span v-if="option === question.correctAnswer">✓</span>
+                    <span v-else-if="option === answers[index]">✗</span>
+                    <span v-else>&nbsp;&nbsp;</span>
+                    <span>{{ option }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="answers[index] !== question.correctAnswer" class="mt-4">
+                <button
+                  @click="getExplanation(index)"
+                  class="text-primary-600 hover:text-primary-700 text-sm"
+                >
+                  Get detailed explanation
+                </button>
+                <div v-if="explanations[index]" class="mt-2 p-3 bg-primary-50 rounded">
+                  {{ explanations[index] }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end space-x-4">
+            <button
+              @click="retakeQuiz"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              Retake Quiz
+            </button>
+            <button
+              @click="closeReviewModal"
+              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              Close Review
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -118,164 +278,313 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { useAuth } from '../stores/auth';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { db } from '../lib/firebase';
+import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { useAuth } from '../stores/auth';
+import ClassSearch from './ClassSearch.vue';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 
 export default {
   name: 'StudentClasses',
+  components: {
+    ClassSearch
+  },
   setup() {
-    const { user } = useAuth();
+    const { user, initialized } = useAuth();
     const classes = ref([]);
-    const classCode = ref('');
+    const loading = ref(true);
+    const showQuizModal = ref(false);
+    const showReviewModal = ref(false);
     const currentQuiz = ref(null);
+    const currentClassId = ref(null);
     const answers = ref([]);
+    const quizCompleted = ref(false);
+    const quizScore = ref(0);
+    const quizAttempts = ref({});
+    const explanations = ref({});
 
-    const joinClass = async () => {
-      if (!classCode.value.trim()) return;
-
+    const loadClasses = async () => {
+      if (!user.value || !initialized.value) {
+        console.log('Auth not ready:', { user: !!user.value, initialized: initialized.value });
+        return;
+      }
+      
+      loading.value = true;
       try {
-        // Find class by code
-        const q = query(
-          collection(db, 'classes'),
-          where('code', '==', classCode.value.trim().toUpperCase())
-        );
-        const querySnapshot = await getDocs(q);
+        console.log('Loading classes for user:', user.value.uid);
         
-        if (querySnapshot.empty) {
-          alert('Class not found. Please check the code and try again.');
+        // Get user's enrollments
+        const enrollmentsRef = collection(db, 'enrollments');
+        const q = query(enrollmentsRef, where('userId', '==', user.value.uid));
+        const enrollmentSnapshot = await getDocs(q);
+        
+        console.log('Found enrollments:', enrollmentSnapshot.size);
+        
+        if (enrollmentSnapshot.empty) {
+          console.log('No enrollments found');
+          classes.value = [];
+          loading.value = false;
           return;
         }
-
-        const classDoc = querySnapshot.docs[0];
-        const classData = classDoc.data();
-
-        // Add student to class
-        await updateDoc(doc(db, 'classes', classDoc.id), {
-          students: arrayUnion(user.value.uid),
-          updatedAt: new Date()
-        });
-
-        // Get teacher's name
-        const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-        const teacherName = teacherDoc.data()?.name || 'Unknown Teacher';
-
-        // Add class to student's list
-        classes.value.push({
-          id: classDoc.id,
-          ...classData,
-          teacherName
-        });
-
-        classCode.value = '';
-      } catch (error) {
-        console.error('Error joining class:', error);
-        alert('Error joining class. Please try again.');
-      }
-    };
-
-    const fetchClasses = async () => {
-      if (!user.value) return;
-
-      try {
-        const q = query(
-          collection(db, 'classes'),
-          where('students', 'array-contains', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
         
-        const classPromises = querySnapshot.docs.map(async (doc) => {
-          const classData = doc.data();
-          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-          const teacherName = teacherDoc.data()?.name || 'Unknown Teacher';
+        const classPromises = enrollmentSnapshot.docs.map(async (enrollDoc) => {
+          console.log('Processing enrollment:', enrollDoc.id);
+          const classId = enrollDoc.data().classId;
+          
+          const classRef = doc(db, 'classes', classId);
+          const classDoc = await getDoc(classRef);
+          
+          if (!classDoc.exists()) {
+            console.log('Class not found:', classId);
+            return null;
+          }
+          
+          const classData = classDoc.data();
+          console.log('Found class:', classId, classData.name);
+          
+          // Get teacher's details
+          const teacherRef = doc(db, 'users', classData.teacherId);
+          const teacherDoc = await getDoc(teacherRef);
+          const teacherData = teacherDoc.data();
+          const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
           
           return {
-            id: doc.id,
+            id: classDoc.id,
             ...classData,
-            teacherName
+            teacherName,
+            code: classData.code || 'N/A'
           };
         });
-
-        classes.value = await Promise.all(classPromises);
+        
+        const loadedClasses = await Promise.all(classPromises);
+        classes.value = loadedClasses.filter(Boolean);
+        console.log('Loaded classes:', classes.value.length, classes.value);
+        
+        // Load quiz attempts
+        if (classes.value.length > 0) {
+          const attemptsRef = collection(db, 'quizAttempts');
+          const attemptsQuery = query(attemptsRef, where('userId', '==', user.value.uid));
+          const attemptsSnapshot = await getDocs(attemptsQuery);
+          
+          quizAttempts.value = {};
+          attemptsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (!quizAttempts.value[data.classId]) {
+              quizAttempts.value[data.classId] = {};
+            }
+            quizAttempts.value[data.classId][data.quizId] = data;
+          });
+          
+          console.log('Quiz attempts loaded:', Object.keys(quizAttempts.value).length);
+        }
       } catch (error) {
-        console.error('Error fetching classes:', error);
-        alert('Error fetching classes. Please try again.');
+        console.error('Error loading classes:', error);
+      } finally {
+        loading.value = false;
       }
     };
+
+    // Watch for both user and initialization changes
+    watch([() => user.value?.uid, () => initialized.value], ([newUserId, isInitialized]) => {
+      console.log('Auth state changed:', { userId: newUserId, initialized: isInitialized });
+      if (isInitialized && newUserId) {
+        loadClasses();
+      } else if (isInitialized) {
+        classes.value = [];
+        loading.value = false;
+      }
+    }, { immediate: true });
 
     const leaveClass = async (classId) => {
-      if (!confirm('Are you sure you want to leave this class?')) return;
-
+      if (!user.value) return;
+      
       try {
-        await updateDoc(doc(db, 'classes', classId), {
-          students: arrayRemove(user.value.uid),
-          updatedAt: new Date()
+        const enrollmentId = `${user.value.uid}_${classId}`;
+        await deleteDoc(doc(db, 'enrollments', enrollmentId));
+
+        // Update class student count
+        const classRef = doc(db, 'classes', classId);
+        const classDoc = await getDoc(classRef);
+        if (classDoc.exists()) {
+          await updateDoc(classRef, {
+            studentCount: Math.max((classDoc.data().studentCount || 1) - 1, 0),
+            updatedAt: new Date()
+          });
+        }
+
+        // Log activity
+        await addDoc(collection(db, 'activities'), {
+          userId: user.value.uid,
+          type: 'class_left',
+          classId: classId,
+          className: classes.value.find(c => c.id === classId)?.name || 'Unknown Class',
+          timestamp: new Date()
         });
-        
-        classes.value = classes.value.filter(c => c.id !== classId);
+
+        await loadClasses();
       } catch (error) {
         console.error('Error leaving class:', error);
-        alert('Error leaving class. Please try again.');
       }
     };
 
-    const startQuiz = async (classId, quiz) => {
-      try {
-        // Get full quiz data
-        const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
-        currentQuiz.value = {
-          ...quizDoc.data(),
-          id: quiz.id,
-          classId
-        };
-        answers.value = new Array(currentQuiz.value.questions.length).fill(null);
-      } catch (error) {
-        console.error('Error starting quiz:', error);
-        alert('Error starting quiz. Please try again.');
-      }
+    const startQuiz = (classId, quiz) => {
+      currentClassId.value = classId;
+      currentQuiz.value = quiz;
+      answers.value = new Array(quiz.questions.length).fill(null);
+      quizCompleted.value = false;
+      quizScore.value = 0;
+      showQuizModal.value = true;
     };
 
     const submitQuiz = async () => {
-      if (!currentQuiz.value) return;
-
+      if (!currentQuiz.value || !user.value) return;
+      
+      const score = calculateQuizScore();
+      quizScore.value = score;
+      quizCompleted.value = true;
+      
       try {
-        // Calculate score
-        const score = currentQuiz.value.questions.reduce((total, question, index) => {
-          return total + (answers.value[index] === question.correctIndex ? 1 : 0);
-        }, 0);
-
-        // Save quiz result
-        await addDoc(collection(db, 'quizResults'), {
+        const attemptId = `${user.value.uid}_${currentClassId.value}_${currentQuiz.value.id}`;
+        await setDoc(doc(db, 'quizAttempts', attemptId), {
+          userId: user.value.uid,
+          classId: currentClassId.value,
           quizId: currentQuiz.value.id,
-          classId: currentQuiz.value.classId,
-          studentId: user.value.uid,
+          score: score,
           answers: answers.value,
-          score,
-          totalQuestions: currentQuiz.value.questions.length,
-          submittedAt: new Date()
+          timestamp: new Date()
         });
-
-        alert(`Quiz submitted! Your score: ${score}/${currentQuiz.value.questions.length}`);
-        currentQuiz.value = null;
-        answers.value = [];
+        
+        await loadClasses();
       } catch (error) {
-        console.error('Error submitting quiz:', error);
-        alert('Error submitting quiz. Please try again.');
+        console.error('Error saving quiz attempt:', error);
       }
     };
 
-    onMounted(fetchClasses);
+    const calculateQuizScore = () => {
+      if (!currentQuiz.value) return 0;
+      
+      const correctAnswers = currentQuiz.value.questions.reduce((count, question, index) => {
+        return count + (answers.value[index] === question.correctAnswer ? 1 : 0);
+      }, 0);
+      
+      return Math.round((correctAnswers / currentQuiz.value.questions.length) * 100);
+    };
+
+    const getQuizAttempt = (classId, quizId) => {
+      return quizAttempts.value[classId]?.[quizId];
+    };
+
+    const calculateProgress = (classItem) => {
+      if (!classItem.quizzes?.length) return 0;
+      
+      const attempts = quizAttempts.value[classItem.id] || {};
+      const totalQuizzes = classItem.quizzes.length;
+      const completedQuizzes = Object.values(attempts).filter(attempt => attempt.score >= 80).length;
+      
+      return Math.round((completedQuizzes / totalQuizzes) * 100);
+    };
+
+    const reviewQuiz = (classId, quiz) => {
+      currentClassId.value = classId;
+      currentQuiz.value = quiz;
+      const attempt = getQuizAttempt(classId, quiz.id);
+      if (attempt) {
+        answers.value = attempt.answers;
+      }
+      showReviewModal.value = true;
+    };
+
+    const getExplanation = async (questionIndex) => {
+      if (!currentQuiz.value) return;
+      
+      try {
+        const question = currentQuiz.value.questions[questionIndex];
+        const prompt = `Explain why "${question.correctAnswer}" is the correct answer to the question: "${question.text}". Provide a detailed explanation that helps understand the concept.`;
+        
+        const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+        const result = await model.generateContent(prompt);
+        const explanation = result.response.text();
+        
+        explanations.value[questionIndex] = explanation;
+      } catch (error) {
+        console.error('Error getting explanation:', error);
+        explanations.value[questionIndex] = "Sorry, couldn't generate an explanation at this time.";
+      }
+    };
+
+    const retakeQuiz = () => {
+      showReviewModal.value = false;
+      startQuiz(currentClassId.value, currentQuiz.value);
+    };
+
+    const closeQuizModal = () => {
+      showQuizModal.value = false;
+      currentQuiz.value = null;
+      currentClassId.value = null;
+      answers.value = [];
+      quizCompleted.value = false;
+    };
+
+    const closeReviewModal = () => {
+      showReviewModal.value = false;
+      explanations.value = {};
+    };
+
+    onMounted(async () => {
+      console.log('StudentClasses mounted, user:', user.value?.uid);
+      if (user.value?.uid && initialized.value) {
+        await loadClasses();
+      }
+      
+      // Listen for class joined event
+      window.addEventListener('classJoined', async () => {
+        console.log('Class joined event received');
+        await loadClasses();
+      });
+
+      // Listen for custom refresh event
+      const component = document.querySelector('student-classes');
+      if (component) {
+        component.addEventListener('refreshClasses', async () => {
+          console.log('Refresh classes event received');
+          await loadClasses();
+        });
+      }
+    });
+
+    onUnmounted(() => {
+      // Clean up event listeners
+      window.removeEventListener('classJoined', loadClasses);
+      const component = document.querySelector('student-classes');
+      if (component) {
+        component.removeEventListener('refreshClasses', loadClasses);
+      }
+    });
 
     return {
       classes,
-      classCode,
+      loading,
+      showQuizModal,
+      showReviewModal,
       currentQuiz,
       answers,
-      joinClass,
+      quizCompleted,
+      quizScore,
+      explanations,
+      loadClasses,
       leaveClass,
       startQuiz,
-      submitQuiz
+      submitQuiz,
+      getQuizAttempt,
+      calculateProgress,
+      reviewQuiz,
+      getExplanation,
+      retakeQuiz,
+      closeQuizModal,
+      closeReviewModal
     };
   }
 };
