@@ -87,15 +87,10 @@
       </form>
       
       <div class="mt-4 text-center">
-        <p class="text-secondary-600">
-          Already have an account? 
-          <a 
-            href="#" 
-            @click.prevent="switchToLogin" 
-            class="text-primary-600 hover:text-primary-800"
+        <p class="text-primary-600 underline cursor-pointer"
+          @click.prevent="switchToLogin" 
           >
-            Log in
-          </a>
+            Already have an account? Log in →
         </p>
       </div>
     </div>
@@ -108,7 +103,7 @@ import { registerUser } from '../lib/auth';
 
 export default {
   name: 'RegisterModal',
-  emits: ['close', 'register-success', 'switch-to-login'],
+  emits: ['close', 'register-success', 'login'],
   
   setup(props, { emit }) {
     const name = ref('');
@@ -140,7 +135,7 @@ export default {
     
     const switchToLogin = () => {
       emit('close');
-      emit('switch-to-login');
+      emit('login');
     };
     
     return {

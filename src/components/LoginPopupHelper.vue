@@ -10,6 +10,7 @@
       v-if="showRegisterModal"
       @close="hideRegister"
       @register-success="handleLoginSuccess"
+      @login="show"
     />
   </div>
 </template>
@@ -34,26 +35,22 @@ export function useLoginPopup() {
       showLoginModal: state.showLoginModal,
       showRegisterModal: state.showRegisterModal,
       show() {
-        console.log('Showing login modal');
         state.showRegisterModal.value = false;
         state.showLoginModal.value = true;
       },
       hide() {
-        console.log('Hiding login modal');
         state.showLoginModal.value = false;
       },
       showRegister() {
-        console.log('Showing register modal');
         state.showLoginModal.value = false;
         state.showRegisterModal.value = true;
       },
       hideRegister() {
-        console.log('Hiding register modal');
         state.showRegisterModal.value = false;
       },
       handleLoginSuccess() {
-        console.log('Login success');
         state.showLoginModal.value = false;
+        state.showRegisterModal.value = false;
         // Redirect to dashboard after successful login
         window.location.href = "/dashboard";
       }
@@ -80,22 +77,11 @@ export default {
     return {
       showLoginModal: loginPopup.showLoginModal,
       showRegisterModal: loginPopup.showRegisterModal,
-      handleLoginSuccess: () => {
-        console.log('Login success in component');
-        loginPopup.handleLoginSuccess();
-      },
-      showRegister: () => {
-        console.log('Showing register in component');
-        loginPopup.showRegister();
-      },
-      hide: () => {
-        console.log('Hiding login in component');
-        loginPopup.hide();
-      },
-      hideRegister: () => {
-        console.log('Hiding register in component');
-        loginPopup.hideRegister();
-      }
+      handleLoginSuccess: loginPopup.handleLoginSuccess,
+      showRegister: loginPopup.showRegister,
+      show: loginPopup.show,
+      hide: loginPopup.hide,
+      hideRegister: loginPopup.hideRegister
     };
   }
 };

@@ -49,15 +49,8 @@
       </form>
       
       <div class="mt-4 text-center">
-        <p class="text-secondary-600">
-          Don't have an account? 
-          <a 
-            href="#" 
-            @click.prevent="switchToRegister" 
-            class="text-primary-600 hover:text-primary-800"
-          >
-            Sign up
-          </a>
+        <p @click.prevent="switchToRegister" class="text-primary-600 underline cursor-pointer">
+          Need an account? Sign up for free →
         </p>
       </div>
     </div>

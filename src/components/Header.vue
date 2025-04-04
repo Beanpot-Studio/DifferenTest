@@ -34,7 +34,7 @@
       v-if="showLoginModal" 
       @close="showLoginModal = false"
       @login-success="handleLoginSuccess"
-      @register="showRegisterModal = true"
+      @register="switchToRegister"
     />
 
     <!-- Register Modal -->
@@ -42,6 +42,7 @@
       v-if="showRegisterModal" 
       @close="showRegisterModal = false"
       @register-success="handleRegisterSuccess"
+      @login="switchToLogin"
     />
   </header>
 </template>
@@ -78,6 +79,16 @@ export default {
       showRegisterModal.value = false;
       window.location.href = '/dashboard';
     };
+
+    const switchToRegister = () => {
+      showLoginModal.value = false;
+      showRegisterModal.value = true;
+    };
+
+    const switchToLogin = () => {
+      showRegisterModal.value = false;
+      showLoginModal.value = true;
+    };
     
     return {
       isLoggedIn,
@@ -89,7 +100,9 @@ export default {
       showLoginModal,
       showRegisterModal,
       handleLoginSuccess,
-      handleRegisterSuccess
+      handleRegisterSuccess,
+      switchToRegister,
+      switchToLogin
     };
   }
 };
