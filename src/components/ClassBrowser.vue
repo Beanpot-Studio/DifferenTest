@@ -46,8 +46,9 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-        <p class="mt-4 text-gray-500">Loading available classes...</p>
+          <div class="w-full flex justify-center items-center">
+            <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
+          </div>
       </div>
 
       <!-- Error State -->
@@ -121,9 +122,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 
 export default {
   name: 'ClassBrowser',
+  components: {
+    DotLottieVue
+  },
   setup() {
     const { user } = useAuth();
     const showModal = ref(false);

@@ -2,8 +2,9 @@
   <div>
     <!-- Loading state -->
     <div v-if="loading || !initialized" class="min-h-[400px] flex flex-col items-center justify-center p-6">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      <p class="mt-4 text-primary-600 font-medium">Loading content...</p>
+      <div class="w-full flex justify-center items-center">
+        <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
+      </div>
     </div>
     
     <!-- Not logged in state -->
@@ -65,12 +66,13 @@ import { useAuth } from '../stores/auth';
 import { ref, computed, onMounted } from 'vue';
 import LoginModal from './LoginModal.vue';
 import RegisterModal from './RegisterModal.vue';
-
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 export default {
   name: 'RoleBasedContent',
   components: {
     LoginModal,
-    RegisterModal
+    RegisterModal,
+    DotLottieVue
   },
   props: {
     requiredRoles: {

@@ -3,6 +3,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
 import StudentClasses from "../../components/StudentClasses.vue";
 import ClassBrowser from "../../components/ClassBrowser.vue";
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 ---
 
 <MainLayout title="Student Portal">
@@ -151,11 +152,9 @@ import ClassBrowser from "../../components/ClassBrowser.vue";
           </h3>
           <div id="recentActivities" class="space-y-4">
             <div class="text-center py-4">
-              <div
-                class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"
-              >
+              <div class="w-full flex justify-center items-center">
+                <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
               </div>
-              <p class="mt-2 text-gray-500">Loading activities...</p>
             </div>
           </div>
           <div class="mt-4">
