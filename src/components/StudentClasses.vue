@@ -68,7 +68,7 @@
           <!-- Class Quizzes -->
           <div class="mt-6">
             <h4 class="font-medium mb-2">Available Quizzes</h4>
-            <div v-if="!classItem.quizzes?.length" class="text-gray-500 text-sm">
+            <div v-if="!classItem.quizzes || classItem.quizzes.length === 0" class="text-gray-500 text-sm">
               No quizzes available yet.
             </div>
             <div v-else class="space-y-3">
@@ -81,7 +81,7 @@
                   <div>
                     <h5 class="font-medium">{{ quiz.title }}</h5>
                     <p class="text-sm text-gray-500">
-                      {{ quiz.questions?.length || 0 }} questions
+                      {{ quiz.questions ? quiz.questions.length : 0 }} questions
                     </p>
                     <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="mt-1">
                       <p class="text-sm">
@@ -135,18 +135,18 @@
               <p class="font-medium mb-3">{{ index + 1 }}. {{ question.text }}</p>
               <div class="space-y-2">
                 <label 
-                  v-for="option in question.options" 
-                  :key="option"
+                  v-for="(option, optionIndex) in question.options" 
+                  :key="optionIndex"
                   class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
                 >
                   <input
                     type="radio"
                     :name="'question-' + index"
-                    :value="option"
+                    :value="optionIndex"
                     v-model="answers[index]"
                     class="text-primary-600"
                   />
-                  <span>{{ option }}</span>
+                  <span>{{ option.text }}</span>
                 </label>
               </div>
             </div>
@@ -227,23 +227,23 @@
                 <p class="font-medium">{{ index + 1 }}. {{ question.text }}</p>
                 <div class="mt-2 space-y-2">
                   <div 
-                    v-for="option in question.options" 
-                    :key="option"
+                    v-for="(option, optionIndex) in question.options" 
+                    :key="optionIndex"
                     :class="{
-                      'text-green-600': option === question.correctAnswer,
-                      'text-red-600': option === answers[index] && option !== question.correctAnswer
+                      'text-green-600': optionIndex === question.correctIndex,
+                      'text-red-600': optionIndex === answers[index] && optionIndex !== question.correctIndex
                     }"
                     class="flex items-center space-x-2"
                   >
-                    <span v-if="option === question.correctAnswer">✓</span>
-                    <span v-else-if="option === answers[index]">✗</span>
+                    <span v-if="optionIndex === question.correctIndex">✓</span>
+                    <span v-else-if="optionIndex === answers[index]">✗</span>
                     <span v-else>&nbsp;&nbsp;</span>
-                    <span>{{ option }}</span>
+                    <span>{{ option.text }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="answers[index] !== question.correctAnswer" class="mt-4">
+              <div v-if="answers[index] !== question.correctIndex" class="mt-4">
                 <button
                   @click="getExplanation(index)"
                   class="text-primary-600 hover:text-primary-700 text-sm"
@@ -305,6 +305,7 @@ export default {
     const quizScore = ref(0);
     const quizAttempts = ref({});
     const explanations = ref({});
+    const quizStartTime = ref(0);
 
     const loadClasses = async () => {
       if (!user.value || !initialized.value) {
@@ -350,18 +351,43 @@ export default {
           const teacherDoc = await getDoc(teacherRef);
           const teacherData = teacherDoc.data();
           const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
+
+          // Load full quiz data for each quiz in the class
+          const quizzes = await Promise.all((classData.quizzes || []).map(async (quizRef) => {
+            try {
+              const quizDoc = await getDoc(doc(db, 'quizzes', quizRef.id));
+              if (!quizDoc.exists()) {
+                console.log('Quiz not found:', quizRef.id);
+                return null;
+              }
+              const quizData = quizDoc.data();
+              console.log('Loaded quiz:', quizRef.id, quizData.title, 'Questions:', quizData.questions?.length || 0);
+              return {
+                id: quizDoc.id,
+                ...quizData
+              };
+            } catch (error) {
+              console.error('Error loading quiz:', quizRef.id, error);
+              return null;
+            }
+          }));
           
           return {
             id: classDoc.id,
             ...classData,
             teacherName,
-            code: classData.code || 'N/A'
+            code: classData.code || 'N/A',
+            quizzes: quizzes.filter(Boolean)
           };
         });
         
         const loadedClasses = await Promise.all(classPromises);
         classes.value = loadedClasses.filter(Boolean);
-        console.log('Loaded classes:', classes.value.length, classes.value);
+        console.log('Loaded classes with quizzes:', classes.value.map(c => ({
+          id: c.id,
+          name: c.name,
+          quizCount: c.quizzes?.length || 0
+        })));
         
         // Load quiz attempts
         if (classes.value.length > 0) {
@@ -431,46 +457,153 @@ export default {
     };
 
     const startQuiz = (classId, quiz) => {
+      console.log('Starting quiz:', quiz);
       currentClassId.value = classId;
       currentQuiz.value = quiz;
-      answers.value = new Array(quiz.questions.length).fill(null);
+      const questionsLength = quiz.questions?.length || 0;
+      console.log('Quiz questions:', quiz.questions);
+      answers.value = new Array(questionsLength).fill(null);
       quizCompleted.value = false;
       quizScore.value = 0;
+      quizStartTime.value = Date.now();
       showQuizModal.value = true;
+      
+      // Log quiz start activity
+      addDoc(collection(db, 'activities'), {
+        userId: user.value.uid,
+        type: 'quiz_started',
+        classId: classId,
+        quizId: quiz.id,
+        quizTitle: quiz.title,
+        timestamp: new Date()
+      }).catch(error => console.error('Error logging quiz start:', error));
+    };
+
+    const calculateQuizScore = () => {
+      if (!currentQuiz.value || !currentQuiz.value.questions) return 0;
+      
+      let correctAnswers = 0;
+      const totalQuestions = currentQuiz.value.questions.length;
+      
+      for (let i = 0; i < totalQuestions; i++) {
+        const question = currentQuiz.value.questions[i];
+        const userAnswer = answers.value[i];
+        
+        if (question && typeof question.correctIndex === 'number' && userAnswer === question.correctIndex) {
+          correctAnswers++;
+        }
+      }
+      
+      console.log('Quiz scoring:', {
+        correctAnswers,
+        totalQuestions,
+        answers: answers.value,
+        questions: currentQuiz.value.questions.map(q => q.correctIndex)
+      });
+      
+      return Math.round((correctAnswers / totalQuestions) * 100);
     };
 
     const submitQuiz = async () => {
       if (!currentQuiz.value || !user.value) return;
       
+      // Validate that all questions are answered
+      const unansweredQuestions = answers.value.filter(answer => answer === null).length;
+      if (unansweredQuestions > 0) {
+        alert(`Please answer all questions before submitting. You have ${unansweredQuestions} unanswered questions.`);
+        return;
+      }
+      
       const score = calculateQuizScore();
+      console.log('Quiz submitted with score:', score);
       quizScore.value = score;
       quizCompleted.value = true;
       
       try {
         const attemptId = `${user.value.uid}_${currentClassId.value}_${currentQuiz.value.id}`;
-        await setDoc(doc(db, 'quizAttempts', attemptId), {
+        
+        // Create detailed question results
+        const questionResults = currentQuiz.value.questions.map((question, index) => ({
+          questionIndex: index,
+          questionText: question.text,
+          correctIndex: question.correctIndex,
+          userAnswer: answers.value[index],
+          isCorrect: answers.value[index] === question.correctIndex,
+          selectedOption: question.options[answers.value[index]]
+        }));
+        
+        const attemptData = {
           userId: user.value.uid,
           classId: currentClassId.value,
           quizId: currentQuiz.value.id,
+          quizTitle: currentQuiz.value.title,
           score: score,
           answers: answers.value,
-          timestamp: new Date()
+          timestamp: new Date(),
+          questionCount: currentQuiz.value.questions.length,
+          correctAnswers: questionResults.filter(q => q.isCorrect).length,
+          questionResults: questionResults,
+          timeSpent: Date.now() - quizStartTime.value
+        };
+        
+        console.log('Saving quiz attempt:', attemptData);
+        await setDoc(doc(db, 'quizAttempts', attemptId), attemptData);
+        
+        // Log detailed activity
+        await addDoc(collection(db, 'activities'), {
+          userId: user.value.uid,
+          type: 'quiz_completed',
+          classId: currentClassId.value,
+          className: classes.value.find(c => c.id === currentClassId.value)?.name || 'Unknown Class',
+          quizId: currentQuiz.value.id,
+          quizTitle: currentQuiz.value.title,
+          score: score,
+          timestamp: new Date(),
+          correctAnswers: questionResults.filter(q => q.isCorrect).length,
+          totalQuestions: currentQuiz.value.questions.length,
+          timeSpent: Date.now() - quizStartTime.value,
+          improvement: await calculateImprovement(currentClassId.value, currentQuiz.value.id, score),
+          activityDescription: `Completed "${currentQuiz.value.title}" quiz in ${classes.value.find(c => c.id === currentClassId.value)?.name || 'Unknown Class'} with ${score}% score`,
+          status: score >= 80 ? 'passed' : 'needs_improvement',
+          isRetake: !!getQuizAttempt(currentClassId.value, currentQuiz.value.id)
         });
+
+        // If this is a perfect score, add a special achievement activity
+        if (score === 100) {
+          await addDoc(collection(db, 'activities'), {
+            userId: user.value.uid,
+            type: 'achievement',
+            classId: currentClassId.value,
+            className: classes.value.find(c => c.id === currentClassId.value)?.name,
+            quizId: currentQuiz.value.id,
+            quizTitle: currentQuiz.value.title,
+            timestamp: new Date(),
+            activityDescription: `🎉 Achieved perfect score on "${currentQuiz.value.title}" quiz!`,
+            achievement: 'perfect_score'
+          });
+        }
+        
+        // If there was improvement from previous attempts, log it as a progress activity
+        const improvement = await calculateImprovement(currentClassId.value, currentQuiz.value.id, score);
+        if (improvement > 0) {
+          await addDoc(collection(db, 'activities'), {
+            userId: user.value.uid,
+            type: 'progress',
+            classId: currentClassId.value,
+            className: classes.value.find(c => c.id === currentClassId.value)?.name,
+            quizId: currentQuiz.value.id,
+            quizTitle: currentQuiz.value.title,
+            timestamp: new Date(),
+            activityDescription: `📈 Improved score on "${currentQuiz.value.title}" by ${improvement}%`,
+            improvement
+          });
+        }
         
         await loadClasses();
       } catch (error) {
         console.error('Error saving quiz attempt:', error);
+        alert('There was an error saving your quiz results. Please try again.');
       }
-    };
-
-    const calculateQuizScore = () => {
-      if (!currentQuiz.value) return 0;
-      
-      const correctAnswers = currentQuiz.value.questions.reduce((count, question, index) => {
-        return count + (answers.value[index] === question.correctAnswer ? 1 : 0);
-      }, 0);
-      
-      return Math.round((correctAnswers / currentQuiz.value.questions.length) * 100);
     };
 
     const getQuizAttempt = (classId, quizId) => {
@@ -478,7 +611,7 @@ export default {
     };
 
     const calculateProgress = (classItem) => {
-      if (!classItem.quizzes?.length) return 0;
+      if (!classItem.quizzes || !classItem.quizzes.length) return 0;
       
       const attempts = quizAttempts.value[classItem.id] || {};
       const totalQuizzes = classItem.quizzes.length;
@@ -502,7 +635,7 @@ export default {
       
       try {
         const question = currentQuiz.value.questions[questionIndex];
-        const prompt = `Explain why "${question.correctAnswer}" is the correct answer to the question: "${question.text}". Provide a detailed explanation that helps understand the concept.`;
+        const prompt = `Explain why "${question.correctIndex}" is the correct answer to the question: "${question.text}". Provide a detailed explanation that helps understand the concept.`;
         
         const model = genAI.getGenerativeModel({ model: "gemini-pro"});
         const result = await model.generateContent(prompt);
@@ -531,6 +664,28 @@ export default {
     const closeReviewModal = () => {
       showReviewModal.value = false;
       explanations.value = {};
+    };
+
+    const calculateImprovement = async (classId, quizId, currentScore) => {
+      try {
+        const previousAttempts = await getDocs(
+          query(
+            collection(db, 'quizAttempts'),
+            where('userId', '==', user.value.uid),
+            where('quizId', '==', quizId),
+            where('timestamp', '<', new Date())
+          )
+        );
+        
+        if (previousAttempts.empty) return null;
+        
+        const scores = previousAttempts.docs.map(doc => doc.data().score);
+        const previousBest = Math.max(...scores);
+        return currentScore > previousBest ? currentScore - previousBest : 0;
+      } catch (error) {
+        console.error('Error calculating improvement:', error);
+        return null;
+      }
     };
 
     onMounted(async () => {
