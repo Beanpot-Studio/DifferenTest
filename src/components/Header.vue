@@ -4,7 +4,7 @@
       <div class="flex items-center">
         <a href="/" class="text-2xl font-bold">DifferenTest</a>
       </div>
-      
+    
       <div class="flex items-center space-x-4">
         <nav class="hidden md:flex space-x-6">
           <a href="/" class="hover:text-primary-200 transition">Home</a>

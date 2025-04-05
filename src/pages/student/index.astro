@@ -3,7 +3,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
 import StudentClasses from "../../components/StudentClasses.vue";
 import ClassBrowser from "../../components/ClassBrowser.vue";
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
 ---
 
 <MainLayout title="Student Portal">
@@ -16,21 +16,6 @@ import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
         </p>
       </div>
       <div class="flex items-center space-x-3">
-        <button
-          class="px-4 py-2 bg-white text-gray-600 border rounded-lg hover:bg-gray-50 flex items-center space-x-2"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
-            ></path>
-          </svg>
-          <span>Sort</span>
-        </button>
         <button
           id="joinClassBtn"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center space-x-2"
@@ -153,7 +138,12 @@ import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
           <div id="recentActivities" class="space-y-4">
             <div class="text-center py-4">
               <div class="w-full flex justify-center items-center">
-                <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
+                <DotLottieVue
+                  style="height: 200px; width: 200px"
+                  autoplay
+                  loop
+                  src="./loading.lottie"
+                />
               </div>
             </div>
           </div>
@@ -249,8 +239,8 @@ import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>`;
-              title = `Completed Quiz: ${activity.quizName}`;
-              subtitle = `Score: ${activity.score}% · ${activity.className} · ${activity.quizTitle}`;
+              title = `Completed Quiz: ${activity.quizTitle}`;
+              subtitle = `Score: ${activity.score}% · ${activity.className}`;
               break;
             case "quiz_started":
               icon = `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -364,6 +354,40 @@ import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
         // Listen for class joined events
         window.addEventListener("classJoined", async () => {
           // Update all components
+          await updateDashboardStats(user.uid);
+          await updateRecentActivities(user.uid);
+
+          // Trigger StudentClasses component update
+          const studentClassesComponent =
+            document.querySelector("student-classes");
+          if (studentClassesComponent) {
+            studentClassesComponent.dispatchEvent(
+              new CustomEvent("refreshClasses")
+            );
+          }
+        });
+
+        // Listen for class left events
+        window.addEventListener("classLeft", async () => {
+          console.log("Class left event received, updating dashboard...");
+          // Update dashboard stats and recent activity
+          await updateDashboardStats(user.uid);
+          await updateRecentActivities(user.uid);
+
+          // Trigger StudentClasses component update
+          const studentClassesComponent =
+            document.querySelector("student-classes");
+          if (studentClassesComponent) {
+            studentClassesComponent.dispatchEvent(
+              new CustomEvent("refreshClasses")
+            );
+          }
+        });
+
+        // Listen for quiz completed events
+        window.addEventListener("quizCompleted", async () => {
+          console.log("Quiz completed event received, updating dashboard...");
+          // Update dashboard stats and recent activity
           await updateDashboardStats(user.uid);
           await updateRecentActivities(user.uid);
 

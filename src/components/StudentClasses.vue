@@ -174,6 +174,11 @@
                 }">
                   {{ quizScore }}%
                 </span>
+                <span v-if="quizScore == 100">
+                  <div class="flex justify-center items-center">
+                    <DotLottieVue style="height: 200px; width: 500px" autoplay src="./confetti.lottie" />
+                  </div>
+                 </span>
               </p>
             </div>
 
@@ -450,8 +455,12 @@ export default {
           type: 'class_left',
           classId: classId,
           className: classes.value.find(c => c.id === classId)?.name || 'Unknown Class',
-          timestamp: new Date()
+          timestamp: new Date(),
+          activityDescription: `Left class: ${classes.value.find(c => c.id === classId)?.name || 'Unknown Class'}`
         });
+
+        // Dispatch event to update dashboard
+        window.dispatchEvent(new CustomEvent('classLeft'));
 
         await loadClasses();
       } catch (error) {
@@ -601,6 +610,9 @@ export default {
             improvement
           });
         }
+        
+        // Dispatch quiz completed event
+        window.dispatchEvent(new CustomEvent('quizCompleted'));
         
         await loadClasses();
       } catch (error) {

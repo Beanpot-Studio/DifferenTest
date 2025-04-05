@@ -2,6 +2,7 @@
 import MainLayout from "../layouts/MainLayout.astro";
 import HomeCTA from "../components/HomeCTA.vue";
 import UserInfo from "../components/UserInfo.vue";
+import LearningAnimation from "../components/LearningAnimation.vue";
 ---
 
 <MainLayout title="Welcome">
@@ -20,6 +21,7 @@ import UserInfo from "../components/UserInfo.vue";
         Assessments, Testing, and Credentialing can be way better.
       </h2>
     </div>
+    <LearningAnimation client:load />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
       <!-- For Teachers -->
@@ -104,6 +106,8 @@ import UserInfo from "../components/UserInfo.vue";
           </a>
         </div>
       </div>
+
+       
 
       <!-- For Students -->
       <div
@@ -353,11 +357,10 @@ import UserInfo from "../components/UserInfo.vue";
   import { onAuthStateChanged } from "firebase/auth";
   import { doc, getDoc } from "firebase/firestore";
   import { auth, db } from "../lib/firebase";
-
-  // This script will redirect non-student users away from this page
+  
   onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      try {
+      if (user) {
+        try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
 
         if (userDoc.exists()) {
@@ -429,5 +432,5 @@ import UserInfo from "../components/UserInfo.vue";
         portal.setAttribute("title", "Please log in to access portals");
       });
     }
-  });
+    });
 </script>

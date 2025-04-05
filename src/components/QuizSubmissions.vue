@@ -54,7 +54,7 @@
               {{ submission.quizTitle }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              {{ submission.score }}%
+              <span v-if="submission.score == 100">🎊</span> {{ submission.score }}%
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {{ formatDate(submission.submittedAt) }}
