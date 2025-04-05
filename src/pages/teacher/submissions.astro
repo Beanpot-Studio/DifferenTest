@@ -1,13 +1,13 @@
 ---
 import MainLayout from "../../layouts/MainLayout.astro";
+import TeacherSubmissions from "../../components/TeacherSubmissions.vue";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
-import QuizSubmissions from "../../components/QuizSubmissions.vue";
 ---
 
-<MainLayout title="Quiz Submissions">
+<MainLayout title="Student Submissions">
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-3xl font-bold">Quiz Submissions</h1>
+      <h1 class="text-3xl font-bold">Student Submissions</h1>
       <a href="/teacher" class="text-primary-600 hover:text-primary-800"
         >← Back to Portal</a
       >
@@ -15,8 +15,7 @@ import QuizSubmissions from "../../components/QuizSubmissions.vue";
 
     <RoleBasedContent client:only requiredRoles={["teacher"]}>
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold mb-4">Student Submissions</h2>
-        <QuizSubmissions client:load />
+        <TeacherSubmissions client:load />
       </div>
     </RoleBasedContent>
   </div>
@@ -25,4 +24,3 @@ import QuizSubmissions from "../../components/QuizSubmissions.vue";
 <script>
   // Same auth check script as index.astro
 </script>
-
