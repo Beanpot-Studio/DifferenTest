@@ -3,19 +3,19 @@
     <!-- Loading state -->
     <div v-if="loading || !initialized" class="min-h-[400px] flex flex-col items-center justify-center p-6">
       <div class="w-full flex justify-center items-center">
-        <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
+        <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="./loading.lottie" />
       </div>
     </div>
     
     <!-- Not logged in state -->
     <div v-else-if="!isLoggedIn" class="p-6 bg-secondary-100 rounded-lg">
       <div class="text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
         <h3 class="mt-2 text-xl font-medium text-secondary-900">Sorry, you don't have access</h3>
         <p class="mt-1 text-secondary-500">Please login</p>
         <div class="mt-4">
+          <div class="w-full flex justify-center items-center">
+          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="./lock.lottie" />
+          </div>
           <button 
             @click="showLoginModal = true"
             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500"
