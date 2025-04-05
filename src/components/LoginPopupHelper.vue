@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import LoginModal from "./LoginModal.vue";
 import RegisterModal from "./RegisterModal.vue";
 
@@ -69,9 +69,18 @@ export default {
     // Initialize the instance immediately
     const loginPopup = useLoginPopup();
 
+    const handleShowRegisterModal = () => {
+      loginPopup.showRegister();
+    };
+
     onMounted(() => {
       // Ensure the component is properly initialized
       console.log("LoginPopupHelper mounted");
+      window.addEventListener('show-register-modal', handleShowRegisterModal);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('show-register-modal', handleShowRegisterModal);
     });
 
     return {
