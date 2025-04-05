@@ -29,10 +29,10 @@
     <!-- No access for current role -->
     <div v-else-if="!hasAccess" class="p-6 bg-secondary-100 rounded-lg">
       <div class="text-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
         <h3 class="mt-2 text-xl font-medium text-secondary-900">Access Restricted</h3>
+        <div class="w-full flex justify-center items-center">
+          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="./lock.lottie" />
+        </div>
         <p class="mt-1 text-secondary-500">
           Your current role ({{ userRole }}) does not have permission to view this content
         </p>
