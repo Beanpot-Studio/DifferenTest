@@ -1,6 +1,6 @@
 <template>
     <div class="w-full flex justify-center items-center">
-        <DotLottieVue style="height: 500px; width: 500px" autoplay loop src="../learning.lottie" />
+        <DotLottieVue style="height: 500px; width: 500px" autoplay src="../learning.lottie" />
     </div>
 </template>
 
