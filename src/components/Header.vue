@@ -1,13 +1,12 @@
 <template>
-  <header class="bg-primary-900 text-white shadow-md">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+  <header class="relative z-50 text-white">
+    <div class=" mx-auto px-4 py-3 flex bg-primary-900 justify-between items-center">
       <div class="flex items-center">
-        <a href="/" class="text-2xl font-bold">DifferenTest</a>
+        <a href="/" class="text-2xl text-white font-bold">DifferenTest</a>
       </div>
     
       <div class="flex items-center space-x-4">
         <nav class="hidden md:flex space-x-6">
-          <a href="/" class="hover:text-primary-200 transition">Home</a>
           
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
@@ -16,6 +15,7 @@
             <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition">Student Portal</a>
           </template>
         </nav>
+
         
         <!-- User Navigation Component -->
         <UserNavigation 
@@ -28,6 +28,7 @@
         />
       </div>
     </div>
+    
     
     <!-- Login Modal -->
     <LoginModal 

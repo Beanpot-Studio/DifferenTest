@@ -1,48 +1,140 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import RoleBasedContent from "../components/RoleBasedContent.vue";
-import UserProfile from "../components/UserProfile.vue";
+import ProfilePictureUpload from "../components/ProfilePictureUpload.vue";
 ---
 
 <MainLayout title="Profile">
-  <div class="max-w-4xl mx-auto px-4">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Profile</h1>
-      <a
-        href="/teacher"
-        class="text-primary-600 hover:text-primary-800 flex items-center"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5 mr-2"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fill-rule="evenodd"
-            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-            clip-rule="evenodd"></path>
-        </svg>
-        Back to Dashboard
-      </a>
-    </div>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-sm">
+      <div class="p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h1>
 
-    <RoleBasedContent client:only>
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <UserProfile client:load />
+        <RoleBasedContent client:load>
+          <div class="space-y-8">
+            <!-- Profile Picture Section -->
+            <!--<div>
+              <h2 class="text-lg font-medium text-gray-900 mb-4">
+                Profile Picture
+              </h2>
+              <ProfilePictureUpload client:load />
+            </div>-->
+
+            <!-- Profile Information -->
+            <div>
+              <h2 class="text-lg font-medium text-gray-900 mb-4">
+                Personal Information
+              </h2>
+              <div class="bg-white rounded-lg border p-6">
+                <div id="profileForm" class="space-y-6">
+                  <!-- Profile form will be dynamically populated -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </RoleBasedContent>
       </div>
-    </RoleBasedContent>
+    </div>
   </div>
 </MainLayout>
 
 <script>
   import { onAuthStateChanged } from "firebase/auth";
-  import { auth } from "../lib/firebase";
+  import { doc, getDoc, updateDoc } from "firebase/firestore";
+  import { auth, db } from "../lib/firebase";
 
-  // This script will redirect non-authenticated users away from this page
-  onAuthStateChanged(auth, (user) => {
+  // Handle profile form submission
+  const handleProfileSubmit = async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const userId = auth.currentUser?.uid;
+
+    if (!userId) return;
+
+    try {
+      const formData = new FormData(form);
+      const updates = {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        updatedAt: new Date(),
+      };
+
+      await updateDoc(doc(db, "users", userId), updates);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+
+  // Initialize profile form
+  const initializeProfileForm = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, "users", userId));
+      if (!userDoc.exists()) return;
+
+      const userData = userDoc.data();
+      const formContainer = document.getElementById("profileForm");
+
+      if (formContainer) {
+        formContainer.innerHTML = `
+          <form id="updateProfileForm" class="space-y-6">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+              <input
+                type="text"
+                name="name"
+                id="name"
+                value="${userData.name || ""}"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              />
+            </div>
+
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                value="${userData.email || ""}"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                readonly
+              />
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        `;
+
+        const form = document.getElementById("updateProfileForm");
+        if (form) {
+          form.addEventListener("submit", handleProfileSubmit);
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing profile form:", error);
+    }
+  };
+
+  // Listen for auth state changes
+  onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "/?auth=required";
+      return;
     }
+
+    await initializeProfileForm(user.uid);
+
+    // Listen for profile updates
+    window.addEventListener("profileUpdated", async () => {
+      await initializeProfileForm(user.uid);
+    });
   });
 </script>

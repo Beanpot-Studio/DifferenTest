@@ -182,6 +182,9 @@ a:focus, button:focus, input:focus, textarea:focus, select:focus {
   outline-offset: 2px;
 }
 
+.shadow-header {
+  background-color: #0d0f144d
+}
 /* Custom utility classes */
 .text-balance {
   text-wrap: balance;

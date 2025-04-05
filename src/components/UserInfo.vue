@@ -14,17 +14,29 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAuth } from '../stores/auth';
 
 export default {
   name: 'UserInfo',
   setup() {
     const { user, role, isLoggedIn, initialize } = useAuth();
+    const initialized = ref(false);
 
     // Initialize auth state
     onMounted(async () => {
-      await initialize();
+      if (!initialized.value) {
+        await initialize();
+        initialized.value = true;
+      }
+    });
+
+    // Watch for auth state changes
+    watch([user, role], () => {
+      if (!initialized.value) {
+        initialize();
+        initialized.value = true;
+      }
     });
 
     const userEmail = computed(() => {
