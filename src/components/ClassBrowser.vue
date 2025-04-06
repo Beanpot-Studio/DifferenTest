@@ -226,6 +226,11 @@ export default {
         const enrollmentId = `${user.value.uid}_${classItem.id}`;
         const timestamp = new Date();
         
+        // Get teacher's details
+        const teacherDoc = await getDoc(doc(db, 'users', classItem.teacherId));
+        const teacherData = teacherDoc.data();
+        const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
+        
         // Create enrollment
         await setDoc(doc(db, 'enrollments', enrollmentId), {
           userId: user.value.uid,
@@ -249,7 +254,7 @@ export default {
           type: 'class_joined',
           classId: classItem.id,
           className: classItem.name,
-          teacherName: classItem.teacherName,
+          teacherName: teacherName,
           timestamp: timestamp
         });
 

@@ -439,25 +439,33 @@ export default {
         const enrollmentId = `${user.value.uid}_${classId}`;
         await deleteDoc(doc(db, 'enrollments', enrollmentId));
 
-        // Update class student count
+        // Get class and teacher details
         const classRef = doc(db, 'classes', classId);
         const classDoc = await getDoc(classRef);
         if (classDoc.exists()) {
+          const classData = classDoc.data();
+          
+          // Get teacher's details
+          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+          const teacherData = teacherDoc.data();
+          const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
+          
+          // Update class student count
           await updateDoc(classRef, {
-            studentCount: Math.max((classDoc.data().studentCount || 1) - 1, 0),
+            studentCount: Math.max((classData.studentCount || 1) - 1, 0),
             updatedAt: new Date()
           });
-        }
 
-        // Log activity
-        await addDoc(collection(db, 'activities'), {
-          userId: user.value.uid,
-          type: 'class_left',
-          classId: classId,
-          className: classes.value.find(c => c.id === classId)?.name || 'Unknown Class',
-          timestamp: new Date(),
-          activityDescription: `Left class: ${classes.value.find(c => c.id === classId)?.name || 'Unknown Class'}`
-        });
+          // Log activity
+          await addDoc(collection(db, 'activities'), {
+            userId: user.value.uid,
+            type: 'class_left',
+            classId: classId,
+            className: classData.name || 'Unknown Class',
+            teacherName: teacherName,
+            timestamp: new Date()
+          });
+        }
 
         // Dispatch event to update dashboard
         window.dispatchEvent(new CustomEvent('classLeft'));
@@ -487,6 +495,7 @@ export default {
         classId: classId,
         quizId: quiz.id,
         quizTitle: quiz.title,
+        className: classes.value.find(c => c.id === classId)?.name || 'Unknown Class',
         timestamp: new Date()
       }).catch(error => console.error('Error logging quiz start:', error));
     };

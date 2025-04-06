@@ -236,7 +236,16 @@ import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
               </svg>
             </div>`;
               title = `Joined New Class: ${activity.className}`;
-              subtitle = `Prof. ${activity.teacherName}`;
+              subtitle = `Teacher: ${activity.teacherName || "Unknown Teacher"}`;
+              break;
+            case "class_left":
+              icon = `<div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+              </svg>
+            </div>`;
+              title = `Left Class: ${activity.className}`;
+              subtitle = `Teacher: ${activity.teacherName || "Unknown Teacher"}`;
               break;
             case "quiz_completed":
               icon = `<div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -253,8 +262,8 @@ import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
             </div>`;
-              title = `Started New Quiz: ${activity.quizName}`;
-              subtitle = activity.className;
+              title = `Started New Quiz: ${activity.quizTitle}`;
+              subtitle = `Class: ${activity.className}`;
               break;
             default:
               return "";
