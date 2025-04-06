@@ -2,9 +2,7 @@
   <div>
     <!-- Loading state -->
     <div v-if="loading || !initialized" class="min-h-[400px] flex flex-col items-center justify-center p-6">
-      <div class="w-full flex justify-center items-center">
-        <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="./loading.lottie" />
-      </div>
+      <LoadingSpinner />
     </div>
     
     <!-- Not logged in state -->
@@ -14,7 +12,7 @@
         <p class="mt-1 text-secondary-500">Please login</p>
         <div class="mt-4">
           <div class="w-full flex justify-center items-center">
-          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="../../lock.lottie" />
+          <LockIcon />
           </div>
           <button 
             @click="showLoginModal = true"
@@ -31,7 +29,7 @@
       <div class="text-center">
         <h3 class="mt-2 text-xl font-medium text-secondary-900">Access Restricted</h3>
         <div class="w-full flex justify-center items-center">
-          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="../../lock.lottie" />
+          <LockIcon />
         </div>
         <p class="mt-1 text-secondary-500">
           Your current role ({{ userRole }}) does not have permission to view this content
@@ -66,7 +64,7 @@ import { useAuth } from '../stores/auth';
 import { ref, computed, onMounted } from 'vue';
 import LoginModal from './LoginModal.vue';
 import RegisterModal from './RegisterModal.vue';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import LoadingSpinner from './AnimationComponents/Loading.vue';
 import LockIcon from './AnimationComponents/Lock.vue';
 
 export default {
@@ -74,17 +72,13 @@ export default {
   components: {
     LoginModal,
     RegisterModal,
-    DotLottieVue,
+    LoadingSpinner,
     LockIcon
   },
   props: {
-    requiredRoles: {
-      type: Array,
-      default: () => []
-    },
-    allRoles: {
-      type: Boolean,
-      default: false
+    requiredRole: {
+      type: String,
+      required: true
     },
     message: {
       type: String,
@@ -101,15 +95,7 @@ export default {
       window.location.href = "/dashboard";
     };
     
-    const hasAccess = computed(() => {
-      // If no specific roles are required, any authenticated user has access
-      if (props.requiredRoles.length === 0) {
-        return true;
-      }
-      
-      // Check if user's role matches any of the required roles
-      return props.requiredRoles.includes(role.value);
-    });
+    const hasAccess = computed(() => role.value === props.requiredRole);
 
     onMounted(async () => {
       await initialize();

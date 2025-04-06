@@ -59,9 +59,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="text-center py-8">
-          <div class="w-full flex justify-center items-center">
-            <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
-          </div>
+        <LoadingSpinner />
       </div>
 
       <!-- Error State -->
@@ -134,12 +132,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import LoadingSpinner from './AnimationComponents/Loading.vue';
 
 export default {
   name: 'ClassBrowser',
   components: {
-    DotLottieVue
+    LoadingSpinner
   },
   setup() {
     const { user } = useAuth();

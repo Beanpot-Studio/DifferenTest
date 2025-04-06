@@ -7,9 +7,7 @@
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">My Classes</h2>
       <div v-if="loading" class="text-center py-4">
-        <div class="w-full flex justify-center items-center">
-          <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
-        </div>
+        <LoadingSpinner />
       </div>    
       
       <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
@@ -290,7 +288,7 @@ import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, upda
 import { useAuth } from '../stores/auth';
 import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import LoadingSpinner from './AnimationComponents/Loading.vue';
 import ConfettiIcon from './AnimationComponents/Confetti.vue';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
@@ -298,7 +296,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, DotLottieVue, ConfettiIcon
+    ClassSearch, LoadingSpinner, ConfettiIcon
   },
   setup() {
     const { user, initialized } = useAuth();
@@ -314,6 +312,7 @@ export default {
     const quizAttempts = ref({});
     const explanations = ref({});
     const quizStartTime = ref(0);
+    const error = ref(null);
 
     const loadClasses = async () => {
       if (!user.value?.uid) return;
@@ -771,6 +770,7 @@ export default {
     return {
       classes,
       loading,
+      error,
       showQuizModal,
       showReviewModal,
       currentQuiz,

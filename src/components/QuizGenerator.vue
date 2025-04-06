@@ -63,7 +63,7 @@
     <div v-if="isGenerating" class="mb-6">
       <div class="flex items-center space-x-2">
         <div class="w-full flex justify-center items-center">
-          <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="./loading.lottie" />
+          <LoadingSpinner />
         </div>
       </div>
     </div>
@@ -142,15 +142,15 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import LoadingSpinner from './AnimationComponents/Loading.vue';
 
 export default {
   name: 'QuizGenerator',
   components: {
-    DotLottieVue
+    LoadingSpinner
   },
   setup() {
     const { user } = useAuth();

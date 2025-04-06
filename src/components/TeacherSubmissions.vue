@@ -33,9 +33,7 @@
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-8">
-      <div class="w-full flex justify-center items-center">
-        <DotLottieVue style="height: 200px; width: 200px" autoplay loop src="../../loading.lottie" />
-      </div>
+      <LoadingSpinner />
     </div>
 
     <!-- Submissions Table -->
@@ -185,14 +183,14 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+import LoadingSpinner from './AnimationComponents/Loading.vue';
 
 export default {
   name: 'TeacherSubmissions',
   components: {
-    DotLottieVue
+    LoadingSpinner
   },
   setup() {
     const { user } = useAuth();
@@ -204,6 +202,7 @@ export default {
     const selectedQuiz = ref('');
     const showSubmissionModal = ref(false);
     const currentSubmission = ref(null);
+    const error = ref(null);
 
     const loadClasses = async () => {
       try {
@@ -426,6 +425,7 @@ export default {
       selectedQuiz,
       showSubmissionModal,
       currentSubmission,
+      error,
       loadSubmissions,
       viewSubmission,
       closeSubmissionModal,

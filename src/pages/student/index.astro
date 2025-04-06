@@ -4,6 +4,17 @@ import RoleBasedContent from "../../components/RoleBasedContent.vue";
 import StudentClasses from "../../components/StudentClasses.vue";
 import ClassBrowser from "../../components/ClassBrowser.vue";
 import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
+import { db } from "../../lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+} from "firebase/firestore";
+import { useAuth } from "../../stores/auth";
+import LoadingSpinner from "../../components/AnimationComponents/Loading.vue";
 ---
 
 <MainLayout title="Student Portal">
@@ -145,12 +156,7 @@ import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
             >
               <div class="text-center py-4">
                 <div class="w-full flex justify-center items-center">
-                  <DotLottieVue
-                    style="height: 200px; width: 200px"
-                    autoplay
-                    loop
-                    src="./loading.lottie"
-                  />
+                  <LoadingSpinner />
                 </div>
               </div>
             </div>
