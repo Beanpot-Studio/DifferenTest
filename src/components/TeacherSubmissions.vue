@@ -48,7 +48,9 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Spent</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
@@ -80,14 +82,32 @@
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ formatTimeSpent(submission.timeSpent) }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
               {{ formatDate(submission.submittedAt) }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span 
+                :class="{
+                  'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
+                  'bg-blue-100 text-blue-800': submission.status === 'completed',
+                  'bg-purple-100 text-purple-800': submission.isRetake,
+                  'bg-gray-100 text-gray-800': submission.status !== 'completed'
+                }"
+              >
+                {{ submission.isRetake ? 'Retake' : submission.status }}
+              </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <button 
                 @click="viewSubmission(submission)"
                 class="text-primary-600 hover:text-primary-900 mr-4"
+                title="View Details"
               >
-                View Details
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </button>
             </td>
           </tr>
@@ -109,34 +129,51 @@
 
         <div v-if="currentSubmission">
           <h3 class="text-xl font-bold mb-4">
-            Submission Details: {{ currentSubmission.quizTitle }}
+            Quiz Details: {{ currentSubmission.quizTitle }}
           </h3>
           <div class="mb-6">
             <p class="text-gray-600">Student: {{ currentSubmission.studentName }}</p>
             <p class="text-gray-600">Class: {{ currentSubmission.className }}</p>
             <p class="text-gray-600">Submitted: {{ formatDate(currentSubmission.submittedAt) }}</p>
             <p class="text-gray-600">Score: {{ currentSubmission.score }}%</p>
+            <p class="text-gray-600">Time Spent: {{ formatTimeSpent(currentSubmission.timeSpent) }}</p>
+            <p class="text-gray-600">Total Questions: {{ currentSubmission.totalQuestions }}</p>
+            <p class="text-gray-600">Correct Answers: {{ currentSubmission.correctAnswers }}</p>
+            <p class="text-gray-600">Status: {{ currentSubmission.isRetake ? 'Retake' : currentSubmission.status }}</p>
+            <p v-if="currentSubmission.improvement" class="text-gray-600">
+              Improvement: {{ currentSubmission.improvement }}%
+            </p>
           </div>
 
           <div class="space-y-6">
-            <div 
-              v-for="(answer, index) in currentSubmission.answers" 
-              :key="index"
-              class="border-b pb-4"
-            >
-              <p class="font-medium mb-2">{{ index + 1 }}. {{ answer.question }}</p>
-              <div class="ml-4">
-                <p class="text-sm text-gray-600 mb-1">Student's Answer: {{ answer.selectedOption }}</p>
-                <p class="text-sm text-gray-600">Correct Answer: {{ answer.correctOption }}</p>
-                <p 
-                  :class="{
-                    'text-sm mt-1': true,
-                    'text-green-600': answer.isCorrect,
-                    'text-red-600': !answer.isCorrect
-                  }"
-                >
-                  {{ answer.isCorrect ? 'Correct' : 'Incorrect' }}
-                </p>
+            <div class="border-b pb-4">
+              <p class="font-medium mb-2">Activity Description:</p>
+              <p class="text-sm text-gray-600">{{ currentSubmission.activityDescription }}</p>
+            </div>
+
+            <div v-if="currentSubmission.answers && currentSubmission.answers.length > 0">
+              <h4 class="font-medium mb-4">Incorrect Answers:</h4>
+              <div v-for="(answer, index) in currentSubmission.answers.filter(a => !a.isCorrect)" :key="index" class="mb-6">
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 mr-3">
+                    <span class="inline-flex items-center justify-center h-6 w-6 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                      {{ index + 1 }}
+                    </span>
+                  </div>
+                  <div class="flex-grow">
+                    <p class="font-medium text-gray-900">{{ answer.question }}</p>
+                    <div class="mt-2 space-y-2">
+                      <div class="p-2 rounded bg-red-50 text-red-800">
+                        <p class="text-sm font-medium">Student's Answer:</p>
+                        <p class="text-sm">{{ answer.selectedOption.text }}</p>
+                      </div>
+                      <div class="p-2 rounded bg-green-50 text-green-800">
+                        <p class="text-sm font-medium">Correct Answer:</p>
+                        <p class="text-sm">{{ answer.correctOption.text }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -240,9 +277,9 @@ export default {
     const loadSubmissions = async () => {
       loading.value = true;
       try {
-        console.log('Loading student quiz attempts');
-        const quizAttemptsRef = collection(db, 'quizAttempts');
-        let q = query(quizAttemptsRef);
+        console.log('Loading student activities');
+        const activitiesRef = collection(db, 'activities');
+        let q = query(activitiesRef, where('type', '==', 'quiz_completed'));
         console.log('Base query:', q);
 
         if (selectedClass.value) {
@@ -266,7 +303,7 @@ export default {
         });
         
         if (querySnapshot.empty) {
-          console.log('No quiz attempts found');
+          console.log('No quiz activities found');
           submissions.value = [];
           return;
         }
@@ -274,50 +311,70 @@ export default {
         const submissionsData = [];
 
         for (const docSnapshot of querySnapshot.docs) {
-          const attempt = docSnapshot.data();
-          console.log('Processing quiz attempt:', attempt);
+          const activity = docSnapshot.data();
+          console.log('Processing activity:', activity);
           
           try {
             // Get student data using userId
-            const studentDocRef = doc(db, 'users', attempt.userId);
+            const studentDocRef = doc(db, 'users', activity.userId);
             const studentDoc = await getDoc(studentDocRef);
             console.log('Student document:', {
-              id: attempt.userId,
+              id: activity.userId,
               exists: studentDoc.exists(),
               data: studentDoc.exists() ? studentDoc.data() : null
             });
-            
-            // Get class data
-            const classDocRef = doc(db, 'classes', attempt.classId);
-            const classDoc = await getDoc(classDocRef);
-            console.log('Class document:', {
-              id: attempt.classId,
-              exists: classDoc.exists(),
-              data: classDoc.exists() ? classDoc.data() : null
-            });
 
-            // Find the quiz in the class's quizzes array
-            const classData = classDoc.exists() ? classDoc.data() : null;
-            const quiz = classData?.quizzes?.find(q => q.id === attempt.quizId);
-            console.log('Found quiz in class:', quiz);
+            // Get quiz attempt details
+            const quizAttemptsRef = collection(db, 'quizAttempts');
+            const attemptQuery = query(
+              quizAttemptsRef,
+              where('userId', '==', activity.userId),
+              where('quizId', '==', activity.quizId),
+              where('classId', '==', activity.classId)
+            );
+            const attemptSnapshot = await getDocs(attemptQuery);
+            const attemptData = attemptSnapshot.docs[0]?.data() || {};
 
-            // Only include the submission if the quiz exists in the class
-            if (quiz) {
-              const submissionData = {
-                id: docSnapshot.id,
-                ...attempt,
-                studentName: studentDoc.exists() ? studentDoc.data()?.name || 'Unknown Student' : 'Unknown Student',
-                className: classDoc.exists() ? classDoc.data()?.name || 'Unknown Class' : 'Unknown Class',
-                quizTitle: quiz.title,
-                score: attempt.score || 0,
-                submittedAt: attempt.submittedAt || new Date(),
-                answers: attempt.answers || []
+            // Get quiz data from quizzes collection
+            const quizDocRef = doc(db, 'quizzes', activity.quizId);
+            const quizDoc = await getDoc(quizDocRef);
+            const quizData = quizDoc.data() || {};
+
+            // Compare student answers with correct answers
+            const processedAnswers = attemptData.answers?.map((selectedIndex, questionIndex) => {
+              const question = quizData.questions?.[questionIndex] || {};
+              const isCorrect = selectedIndex === question.correctIndex;
+              
+              return {
+                question: question.text || 'Unknown Question',
+                selectedOption: {
+                  text: question.options?.[selectedIndex - 1] || 'No answer selected'
+                },
+                correctOption: {
+                  text: question.options?.[question.correctIndex - 1] || 'Unknown correct answer'
+                },
+                isCorrect
               };
-              console.log('Processed submission data:', submissionData);
-              submissionsData.push(submissionData);
-            }
+            }) || [];
+
+            const submissionData = {
+              id: docSnapshot.id,
+              ...activity,
+              studentName: studentDoc.exists() ? studentDoc.data()?.name || 'Unknown Student' : 'Unknown Student',
+              score: activity.score || 0,
+              submittedAt: activity.timestamp || new Date(),
+              totalQuestions: activity.totalQuestions || 0,
+              correctAnswers: activity.correctAnswers || 0,
+              timeSpent: activity.timeSpent || 0,
+              isRetake: activity.isRetake || false,
+              status: activity.status || 'completed',
+              improvement: activity.improvement || 0,
+              answers: processedAnswers
+            };
+            console.log('Processed submission data:', submissionData);
+            submissionsData.push(submissionData);
           } catch (error) {
-            console.error('Error processing quiz attempt:', error);
+            console.error('Error processing activity:', error);
             console.error('Error details:', {
               message: error.message,
               code: error.code,
@@ -336,7 +393,7 @@ export default {
         console.log('Final submissions data:', submissionsData);
         submissions.value = submissionsData;
       } catch (error) {
-        console.error('Error loading quiz attempts:', error);
+        console.error('Error loading activities:', error);
         console.error('Error details:', {
           message: error.message,
           code: error.code,
@@ -369,6 +426,20 @@ export default {
       }
     };
 
+    const formatTimeSpent = (timeSpent) => {
+      if (!timeSpent) return 'N/A';
+      try {
+        // Convert milliseconds to seconds
+        const totalSeconds = Math.floor(timeSpent / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        return `${minutes} minutes ${seconds} seconds`;
+      } catch (error) {
+        console.error('Error formatting time spent:', error);
+        return 'Invalid Time';
+      }
+    };
+
     onMounted(async () => {
       console.log('Component mounted, user:', user.value);
       if (!user.value) {
@@ -392,7 +463,8 @@ export default {
       loadSubmissions,
       viewSubmission,
       closeSubmissionModal,
-      formatDate
+      formatDate,
+      formatTimeSpent
     };
   }
 };
