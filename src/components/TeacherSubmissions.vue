@@ -1,6 +1,5 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Student Submissions</h1>
 
     <!-- Class Selection -->
     <div class="mb-8">
@@ -151,9 +150,9 @@
               <p class="text-sm text-gray-600">{{ currentSubmission.activityDescription }}</p>
             </div>
 
-            <div v-if="currentSubmission.answers && currentSubmission.answers.length > 0">
+            <div v-if="currentSubmission.incorrectAnswers && currentSubmission.incorrectAnswers.length > 0">
               <h4 class="font-medium mb-4">Incorrect Answers:</h4>
-              <div v-for="(answer, index) in currentSubmission.answers.filter(a => !a.isCorrect)" :key="index" class="mb-6">
+              <div v-for="(answer, index) in currentSubmission.incorrectAnswers" :key="index" class="mb-6">
                 <div class="flex items-start">
                   <div class="flex-shrink-0 mr-3">
                     <span class="inline-flex items-center justify-center h-6 w-6 rounded-full text-sm font-medium bg-red-100 text-red-800">
@@ -165,11 +164,11 @@
                     <div class="mt-2 space-y-2">
                       <div class="p-2 rounded bg-red-50 text-red-800">
                         <p class="text-sm font-medium">Student's Answer:</p>
-                        <p class="text-sm">{{ answer.selectedOption.text }}</p>
+                        <p class="text-sm">{{ answer.selectedOption }}</p>
                       </div>
                       <div class="p-2 rounded bg-green-50 text-green-800">
                         <p class="text-sm font-medium">Correct Answer:</p>
-                        <p class="text-sm">{{ answer.correctOption.text }}</p>
+                        <p class="text-sm">{{ answer.correctOption }}</p>
                       </div>
                     </div>
                   </div>
@@ -324,39 +323,6 @@ export default {
               data: studentDoc.exists() ? studentDoc.data() : null
             });
 
-            // Get quiz attempt details
-            const quizAttemptsRef = collection(db, 'quizAttempts');
-            const attemptQuery = query(
-              quizAttemptsRef,
-              where('userId', '==', activity.userId),
-              where('quizId', '==', activity.quizId),
-              where('classId', '==', activity.classId)
-            );
-            const attemptSnapshot = await getDocs(attemptQuery);
-            const attemptData = attemptSnapshot.docs[0]?.data() || {};
-
-            // Get quiz data from quizzes collection
-            const quizDocRef = doc(db, 'quizzes', activity.quizId);
-            const quizDoc = await getDoc(quizDocRef);
-            const quizData = quizDoc.data() || {};
-
-            // Compare student answers with correct answers
-            const processedAnswers = attemptData.answers?.map((selectedIndex, questionIndex) => {
-              const question = quizData.questions?.[questionIndex] || {};
-              const isCorrect = selectedIndex === question.correctIndex;
-              
-              return {
-                question: question.text || 'Unknown Question',
-                selectedOption: {
-                  text: question.options?.[selectedIndex - 1] || 'No answer selected'
-                },
-                correctOption: {
-                  text: question.options?.[question.correctIndex - 1] || 'Unknown correct answer'
-                },
-                isCorrect
-              };
-            }) || [];
-
             const submissionData = {
               id: docSnapshot.id,
               ...activity,
@@ -369,7 +335,7 @@ export default {
               isRetake: activity.isRetake || false,
               status: activity.status || 'completed',
               improvement: activity.improvement || 0,
-              answers: processedAnswers
+              incorrectAnswers: activity.incorrectAnswers || []
             };
             console.log('Processed submission data:', submissionData);
             submissionsData.push(submissionData);

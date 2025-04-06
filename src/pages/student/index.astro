@@ -36,128 +36,133 @@ import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
       </div>
     </div>
 
-    <RoleBasedContent client:load>
-      <div class="space-y-6">
-        <!-- Class Browser Modal -->
-        <ClassBrowser client:load />
+    <div class="bg-white rounded-lg p-4">
+      <RoleBasedContent client:load>
+        <div class="space-y-6">
+          <!-- Class Browser Modal -->
+          <ClassBrowser client:load />
 
-        <!-- Learning Progress Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-              <div class="p-3 bg-primary-100 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6 text-primary-600"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"
-                  ></path>
-                </svg>
+          <!-- Learning Progress Overview -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-sm p-6">
+              <div class="flex items-center">
+                <div class="p-3 bg-primary-100 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-primary-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    Active Classes
+                  </h3>
+                  <p
+                    class="text-3xl font-bold text-primary-600"
+                    id="activeClassesCount"
+                  >
+                    0
+                  </p>
+                </div>
               </div>
-              <div class="ml-4">
-                <h3 class="text-lg font-semibold text-gray-900">
-                  Active Classes
-                </h3>
-                <p
-                  class="text-3xl font-bold text-primary-600"
-                  id="activeClassesCount"
-                >
-                  0
-                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+              <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-green-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                    <path
+                      fill-rule="evenodd"
+                      d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    Completed Quizzes
+                  </h3>
+                  <p
+                    class="text-3xl font-bold text-green-600"
+                    id="completedQuizzesCount"
+                  >
+                    0
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6">
+              <div class="flex items-center">
+                <div class="p-3 bg-yellow-100 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-yellow-600"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    Average Score
+                  </h3>
+                  <p
+                    class="text-3xl font-bold text-yellow-600"
+                    id="averageScore"
+                  >
+                    0%
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- Classes and Quizzes -->
+          <StudentClasses client:load />
+
+          <!-- Recent Activity -->
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-              <div class="p-3 bg-green-100 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6 text-green-600"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
-                  <path
-                    fill-rule="evenodd"
-                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"></path>
-                </svg>
-              </div>
-              <div class="ml-4">
-                <h3 class="text-lg font-semibold text-gray-900">
-                  Completed Quizzes
-                </h3>
-                <p
-                  class="text-3xl font-bold text-green-600"
-                  id="completedQuizzesCount"
-                >
-                  0
-                </p>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+              Recent Activity
+            </h3>
+            <div id="recentActivities" class="space-y-4">
+              <div class="text-center py-4">
+                <div class="w-full flex justify-center items-center">
+                  <DotLottieVue
+                    style="height: 200px; width: 200px"
+                    autoplay
+                    loop
+                    src="./loading.lottie"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <div class="flex items-center">
-              <div class="p-3 bg-yellow-100 rounded-lg">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6 text-yellow-600"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                  ></path>
-                </svg>
-              </div>
-              <div class="ml-4">
-                <h3 class="text-lg font-semibold text-gray-900">
-                  Average Score
-                </h3>
-                <p class="text-3xl font-bold text-yellow-600" id="averageScore">
-                  0%
-                </p>
-              </div>
+            <div class="mt-4">
+              <a
+                href="#"
+                class="text-sm font-medium text-primary-600 hover:text-primary-700"
+              >
+                View all activity →
+              </a>
             </div>
           </div>
         </div>
-
-        <!-- Classes and Quizzes -->
-        <StudentClasses client:load />
-
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">
-            Recent Activity
-          </h3>
-          <div id="recentActivities" class="space-y-4">
-            <div class="text-center py-4">
-              <div class="w-full flex justify-center items-center">
-                <DotLottieVue
-                  style="height: 200px; width: 200px"
-                  autoplay
-                  loop
-                  src="./loading.lottie"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="mt-4">
-            <a
-              href="#"
-              class="text-sm font-medium text-primary-600 hover:text-primary-700"
-            >
-              View all activity →
-            </a>
-          </div>
-        </div>
-      </div>
-    </RoleBasedContent>
+      </RoleBasedContent>
+    </div>
   </div>
 </MainLayout>
 

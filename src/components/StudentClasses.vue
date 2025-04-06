@@ -577,7 +577,14 @@ export default {
           improvement: await calculateImprovement(currentClassId.value, currentQuiz.value.id, score),
           activityDescription: `Completed "${currentQuiz.value.title}" quiz in ${classes.value.find(c => c.id === currentClassId.value)?.name || 'Unknown Class'} with ${score}% score`,
           status: score >= 80 ? 'passed' : 'needs_improvement',
-          isRetake: !!getQuizAttempt(currentClassId.value, currentQuiz.value.id)
+          isRetake: !!getQuizAttempt(currentClassId.value, currentQuiz.value.id),
+          incorrectAnswers: questionResults
+            .filter(q => !q.isCorrect)
+            .map(q => ({
+              question: q.questionText,
+              selectedOption: q.selectedOption?.text || 'No answer selected',
+              correctOption: currentQuiz.value.questions[q.questionIndex].options[q.correctIndex]?.text || 'Unknown correct answer'
+            }))
         });
 
         // If this is a perfect score, add a special achievement activity
