@@ -1,6 +1,7 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
-
+  <div class="space-y-6">
+    <h2 class="text-2xl font-bold mb-4">Submissions Manager</h2>
+    <div class="bg-white rounded-lg shadow-md p-6">
     <!-- Class Selection -->
     <div class="mb-8">
       <label class="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
@@ -177,6 +178,7 @@
         </div>
       </div>
     </div>
+  </div>
   </div>
 </template>
 

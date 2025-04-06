@@ -2,12 +2,13 @@
 import MainLayout from "../layouts/MainLayout.astro";
 import RoleBasedContent from "../components/RoleBasedContent.vue";
 import PortalLinks from "../components/PortalLinks.vue";
+import TeacherDashboard from "../components/TeacherDashboard.vue";
 ---
 
 <MainLayout title="Dashboard">
   <div class="max-w-4xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
-
+    <TeacherDashboard client:only />
     <RoleBasedContent client:only>
       <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-2xl font-bold mb-4">Welcome to Your Dashboard</h2>
@@ -47,32 +48,15 @@ import PortalLinks from "../components/PortalLinks.vue";
             </a>
           </div>
 
+         
           <div
             class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
           >
-            <h3 class="text-lg font-semibold mb-2">Help Center</h3>
-            <p class="text-secondary-600 mb-3">
-              Get help and support for using the platform
-            </p>
-            <a
-              href="/help"
-              class="text-primary-600 hover:text-primary-800 font-medium"
-            >
-              Get Help →
-            </a>
+            <h3 class="text-lg font-semibold mb-2">Portal</h3>
+
+            <PortalLinks client:load />
           </div>
-          <div
-          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-        >
-          <h3 class="text-lg font-semibold mb-2">Portal</h3>
-        
-          <PortalLinks client:load />
-          
         </div>
-
-        </div>
-        
-
       </div>
     </RoleBasedContent>
   </div>

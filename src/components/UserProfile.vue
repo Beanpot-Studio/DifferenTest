@@ -1,167 +1,310 @@
 <template>
-  <div class="space-y-6">
-    <!-- Profile Header -->
-    <div class="flex items-center space-x-4">
-      <div class="w-20 h-20 rounded-full bg-primary-100 flex items-center justify-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      </div>
-      <div>
-        <h2 class="text-2xl font-bold">{{ userData.name || 'User' }}</h2>
-        <p class="text-gray-600">{{ userData.email }}</p>
-        <p class="text-sm text-gray-500 capitalize">{{ userData.role }}</p>
-      </div>
-    </div>
-
-    <!-- Notification -->
-    <div v-if="notification.show" 
-         :class="['mb-4 p-4 rounded-lg', notification.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
-      {{ notification.message }}
-    </div>
-
-    <!-- Profile Form -->
-    <form @submit.prevent="updateProfile" class="space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Full Name
-          </label>
-          <input
-            v-model="userData.name"
-            type="text"
-            class="w-full p-2 border rounded-lg"
-          />
+    <form @submit.prevent="handleSubmit" class="space-y-10">
+      <!-- Profile Header -->
+      <div class="flex items-start space-x-8">
+        <div class="flex-shrink-0">
+          <div class="h-24 w-24 rounded-full bg-primary-100 flex items-center justify-center">
+            <span class="text-4xl font-bold text-primary-600">{{ userInitials }}</span>
+          </div>
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            v-model="userData.email"
-            type="email"
-            disabled
-            class="w-full p-2 border rounded-lg bg-gray-100"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Role
-          </label>
-          <input
-            v-model="userData.role"
-            type="text"
-            disabled
-            class="w-full p-2 border rounded-lg bg-gray-100 capitalize"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Phone Number
-          </label>
-          <input
-            v-model="userData.phone"
-            type="tel"
-            class="w-full p-2 border rounded-lg"
-          />
+        <div class="flex-1 space-y-6">
+          <div>
+            <label for="name" class="block text-base font-medium text-gray-700">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              v-model="formData.name"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-base font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                :value="formData.email"
+                disabled
+                class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-lg px-4 py-3"
+              />
+            </div>
+            <div>
+              <label class="block text-base font-medium text-gray-700">Role</label>
+              <input
+                type="text"
+                :value="userRole"
+                disabled
+                class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 bg-gray-50 shadow-sm text-lg px-4 py-3"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          Bio
-        </label>
-        <textarea
-          v-model="userData.bio"
-          rows="4"
-          class="w-full p-2 border rounded-lg"
-        ></textarea>
+      <!-- Contact Information -->
+      <div class="space-y-8">
+        <h3 class="text-xl font-semibold text-gray-900">Contact Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="phone" class="block text-base font-medium text-gray-700">Phone Number</label>
+            <input
+              type="tel"
+              id="phone"
+              v-model="formData.phone"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            />
+          </div>
+          <div>
+            <label for="timezone" class="block text-base font-medium text-gray-700">Timezone</label>
+            <select
+              id="timezone"
+              v-model="formData.timezone"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            >
+              <option value="">Select your timezone</option>
+              <option value="America/New_York">Eastern Time (ET)</option>
+              <option value="America/Chicago">Central Time (CT)</option>
+              <option value="America/Denver">Mountain Time (MT)</option>
+              <option value="America/Los_Angeles">Pacific Time (PT)</option>
+              <option value="America/Anchorage">Alaska Time (AKT)</option>
+              <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+            </select>
+          </div>
+        </div>
       </div>
 
+      <!-- Education Information -->
+      <div class="space-y-8">
+        <h3 class="text-xl font-semibold text-gray-900">Education Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="school" class="block text-base font-medium text-gray-700">School</label>
+            <input
+              type="text"
+              id="school"
+              v-model="formData.school"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            />
+          </div>
+          <div>
+            <label for="grade" class="block text-base font-medium text-gray-700">Grade</label>
+            <select
+              id="grade"
+              v-model="formData.grade"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            >
+              <option value="">Select grade level</option>
+              <optgroup label="K-12 Educator">
+                <option value="Kindergarten">Kindergarten</option>
+                <option value="1-3">1-3</option>
+                <option value="4-5">4-5</option>
+                <option value="6-8">6-8</option>
+                <option value="9-12">9-12</option>
+              </optgroup>
+              <optgroup label="Higher Education">
+                <option value="Undergraduate">Undergraduates</option>
+                <option value="Graduate">Graduate Students</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="Other">Other</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Teaching Information -->
+      <div class="space-y-8">
+        <h3 class="text-xl font-semibold text-gray-900">Teaching Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label for="subjects" class="block text-base font-medium text-gray-700">Subjects</label>
+            <input
+              type="text"
+              id="subjects"
+              v-model="formData.subjects"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            />
+            <p class="mt-2 text-sm text-gray-500">Enter subjects separated by commas</p>
+          </div>
+          <div>
+            <label for="availability" class="block text-base font-medium text-gray-700">Availability</label>
+            <input
+              type="text"
+              id="availability"
+              v-model="formData.availability"
+              class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Bio -->
+      <div class="space-y-8">
+        <h3 class="text-xl font-semibold text-gray-900">About You</h3>
+        <div>
+          <label for="bio" class="block text-base font-medium text-gray-700">Bio</label>
+          <textarea
+            id="bio"
+            v-model="formData.bio"
+            rows="6"
+            class="mt-2 bg-gray-100 block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg px-4 py-3"
+            placeholder="Tell us about yourself..."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Save Button -->
       <div class="flex justify-end">
         <button
           type="submit"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          :disabled="loading"
+          class="inline-flex justify-center py-3 px-6 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
         >
-          Save Changes
+          <span v-if="loading">Saving...</span>
+          <span v-else>Save Changes</span>
         </button>
       </div>
+
+      <!-- Success Message -->
+      <div v-if="success" class="rounded-lg bg-green-50 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium text-green-800">
+              Profile updated successfully!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div v-if="error" class="rounded-lg bg-red-50 p-4">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm font-medium text-red-800">
+              {{ error }}
+            </p>
+          </div>
+        </div>
+      </div>
     </form>
-  </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { useAuth } from '../stores/auth';
+import { ref, onMounted, watch, computed } from 'vue';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useAuth } from '../stores/auth';
 
 export default {
   name: 'UserProfile',
   setup() {
-    const { user } = useAuth();
-    const userData = ref({
+    const { user, role } = useAuth();
+    const loading = ref(false);
+    const success = ref(false);
+    const error = ref('');
+    const formData = ref({
       name: '',
       email: '',
-      role: '',
       phone: '',
-      bio: ''
+      bio: '',
+      school: '',
+      grade: '',
+      subjects: [],
+      availability: '',
+      timezone: ''
     });
-    const notification = ref({ show: false, message: '', type: 'success' });
 
-    const showNotification = (message, type = 'success') => {
-      notification.value = { show: true, message, type };
-      setTimeout(() => {
-        notification.value.show = false;
-      }, 3000);
-    };
+    const userInitials = computed(() => {
+      if (!formData.value.name) return '?';
+      return formData.value.name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase();
+    });
 
-    const fetchUserData = async () => {
-      if (!user.value) return;
+    const loadUserData = async () => {
+      if (!user.value?.uid) return;
 
       try {
         const userDoc = await getDoc(doc(db, 'users', user.value.uid));
         if (userDoc.exists()) {
-          userData.value = {
-            ...userData.value,
-            ...userDoc.data(),
-            email: user.value.email
+          const data = userDoc.data();
+          // Ensure subjects is always an array
+          const subjects = data.subjects || [];
+          const subjectsArray = Array.isArray(subjects) ? subjects : 
+            typeof subjects === 'string' ? subjects.split(',').map(s => s.trim()) : [];
+
+          formData.value = {
+            name: data.name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            bio: data.bio || '',
+            school: data.school || '',
+            grade: data.grade || '',
+            subjects: subjectsArray,
+            availability: data.availability || '',
+            timezone: data.timezone || ''
           };
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        showNotification('Error fetching profile data', 'error');
+      } catch (err) {
+        console.error('Error loading user data:', err);
+        error.value = 'Failed to load profile data';
       }
     };
 
-    const updateProfile = async () => {
-      if (!user.value) return;
+    const handleSubmit = async () => {
+      if (!user.value?.uid) return;
+
+      loading.value = true;
+      error.value = '';
+      success.value = false;
 
       try {
+        // Convert subjects string to array if it's a string
+        const subjectsArray = typeof formData.value.subjects === 'string' 
+          ? formData.value.subjects.split(',').map(s => s.trim())
+          : formData.value.subjects;
+
         await updateDoc(doc(db, 'users', user.value.uid), {
-          name: userData.value.name,
-          phone: userData.value.phone,
-          bio: userData.value.bio,
+          ...formData.value,
+          subjects: subjectsArray,
           updatedAt: new Date()
         });
-        showNotification('Profile updated successfully');
-      } catch (error) {
-        console.error('Error updating profile:', error);
-        showNotification('Error updating profile', 'error');
+        success.value = true;
+      } catch (err) {
+        console.error('Error updating profile:', err);
+        error.value = 'Failed to update profile. Please try again.';
+      } finally {
+        loading.value = false;
       }
     };
 
-    onMounted(() => {
-      fetchUserData();
-    });
+    // Watch for changes in the user object
+    watch(() => user.value, (newUser) => {
+      if (newUser) {
+        loadUserData();
+      }
+    }, { immediate: true });
 
     return {
-      userData,
-      notification,
-      updateProfile
+      formData,
+      loading,
+      success,
+      error,
+      userRole: role,
+      userInitials,
+      handleSubmit
     };
   }
 };

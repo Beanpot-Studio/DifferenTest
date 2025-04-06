@@ -1,62 +1,15 @@
 ---
 import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
+import TeacherDashboard from "../../components/TeacherDashboard.vue";
 ---
 
 <MainLayout title="Teacher Portal">
   <div class="max-w-7xl mx-auto px-4">
     <h1 class="text-3xl font-bold mb-6">Teacher Portal</h1>
 
-    <RoleBasedContent client:only requiredRoles={["teacher"]}>
-      <div
-        class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-white rounded-lg p-4"
-      >
-        <!-- Portal Cards -->
-        <div
-          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-        >
-          <h2 class="text-lg font-semibold mb-2">Quiz Management</h2>
-          <p class="text-secondary-600 mb-3">
-            Generate and manage quizzes for your classes.
-          </p>
-          <a
-            href="/teacher/quizzes"
-            class="text-primary-600 hover:text-primary-800 font-medium"
-          >
-            Manage Quizzes →
-          </a>
-        </div>
-
-        <div
-          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-        >
-          <h2 class="text-lg font-semibold mb-2">Class Management</h2>
-          <p class="text-secondary-600 mb-3">
-            Create and manage your classes, assign quizzes.
-          </p>
-          <a
-            href="/teacher/classes"
-            class="text-primary-600 hover:text-primary-800 font-medium"
-          >
-            Manage Classes →
-          </a>
-        </div>
-
-        <div
-          class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition"
-        >
-          <h2 class="text-lg font-semibold mb-2">Quiz Submissions</h2>
-          <p class="text-secondary-600 mb-3">
-            View and track student quiz submissions and progress.
-          </p>
-          <a
-            href="/teacher/submissions"
-            class="text-primary-600 hover:text-primary-800 font-medium"
-          >
-            View Submissions →
-          </a>
-        </div>
-      </div>
+    <RoleBasedContent client:only :required-roles="['teacher']">
+      <TeacherDashboard client:load />
     </RoleBasedContent>
   </div>
 </MainLayout>

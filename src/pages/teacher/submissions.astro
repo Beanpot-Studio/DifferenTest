@@ -13,7 +13,7 @@ import RoleBasedContent from "../../components/RoleBasedContent.vue";
       >
     </div>
 
-    <RoleBasedContent client:only requiredRoles={["teacher"]}>
+    <RoleBasedContent client:only :required-roles="['teacher']">
       <div class="bg-white rounded-lg shadow-md p-6">
         <TeacherSubmissions client:load />
       </div>

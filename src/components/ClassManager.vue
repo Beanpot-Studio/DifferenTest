@@ -1,5 +1,6 @@
 <template>
   <div class="space-y-6">
+    <h2 class="text-2xl font-bold mb-4">Class Manager</h2>
     <!-- Create New Class -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Create New Class</h2>
@@ -80,9 +81,7 @@
                     >
                       {{ quiz.title }}
                     </a>
-                    <p class="text-sm text-gray-500">
-                      {{ quiz.questions?.length || 0 }} questions
-                    </p>
+                   
                   </div>
                   <div class="flex space-x-2">
                     <button

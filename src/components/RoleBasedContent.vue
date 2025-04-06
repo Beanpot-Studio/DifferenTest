@@ -76,9 +76,9 @@ export default {
     LockIcon
   },
   props: {
-    requiredRole: {
-      type: String,
-      required: true
+    requiredRoles: {
+      type: Array,
+      default: () => ['student', 'teacher']
     },
     message: {
       type: String,
@@ -95,7 +95,7 @@ export default {
       window.location.href = "/dashboard";
     };
     
-    const hasAccess = computed(() => role.value === props.requiredRole);
+    const hasAccess = computed(() => props.requiredRoles.includes(role.value));
 
     onMounted(async () => {
       await initialize();

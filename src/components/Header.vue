@@ -10,7 +10,7 @@
           
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
-            <a href="/dashboard" class="hover:text-primary-200 transition">Dashboard</a>
+            
             <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition">Teacher Portal</a>
             <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition">Student Portal</a>
           </template>
