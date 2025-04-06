@@ -92,7 +92,14 @@ export default {
     
     const handleLoginSuccess = () => {
       showLoginModal.value = false;
-      window.location.href = "/dashboard";
+      if (role.value === 'teacher') {
+        window.location.href = '/teacher';
+      } else if (role.value === 'student') {
+        window.location.href = '/student';
+      } else {
+        // If no role is set, redirect to home page
+        window.location.href = '/';
+      }
     };
     
     const hasAccess = computed(() => props.requiredRoles.includes(role.value));

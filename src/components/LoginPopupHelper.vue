@@ -19,6 +19,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import LoginModal from "./LoginModal.vue";
 import RegisterModal from "./RegisterModal.vue";
+import { useAuth } from "../stores/auth";
 
 // Create a single source of truth for the login popup state
 const state = {
@@ -51,8 +52,24 @@ export function useLoginPopup() {
       handleLoginSuccess() {
         state.showLoginModal.value = false;
         state.showRegisterModal.value = false;
-        // Redirect to dashboard after successful login
-        window.location.href = "/dashboard";
+        
+        // Get the auth store and ensure it's initialized
+        const { role, initialize } = useAuth();
+        
+        // Initialize auth if needed
+        initialize().then(() => {
+          // Wait a moment for the role to be set
+          setTimeout(() => {
+            if (role.value === 'teacher') {
+              window.location.href = "/teacher";
+            } else if (role.value === 'student') {
+              window.location.href = "/student";
+            } else {
+              // If no role is set, redirect to home page
+              window.location.href = "/";
+            }
+          }, 100);
+        });
       }
     };
   }

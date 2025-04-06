@@ -33,8 +33,7 @@ import TeacherDashboard from "../../components/TeacherDashboard.vue";
       if (userDoc.exists()) {
         const role = userDoc.data().role;
         if (role !== "teacher") {
-          // If not a teacher, redirect to dashboard
-          window.location.href = "/dashboard?access=denied";
+          window.location.href = "/teacher?access=denied";
         }
       }
     } catch (error) {

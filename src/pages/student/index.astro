@@ -409,7 +409,7 @@ import LoadingSpinner from "../../components/AnimationComponents/Loading.vue";
       if (userDoc.exists()) {
         const role = userDoc.data().role;
         if (role !== "student") {
-          window.location.href = "/dashboard?access=denied";
+          window.location.href = "/student?access=denied";
           return;
         }
 

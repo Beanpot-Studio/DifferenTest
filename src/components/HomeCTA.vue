@@ -35,6 +35,7 @@
 import { ref } from 'vue';
 import RegisterModal from './RegisterModal.vue';
 import LoginModal from './LoginModal.vue';
+import { useAuth } from '../stores/auth';
 
 export default {
   name: 'HomeCTA',
@@ -45,6 +46,7 @@ export default {
   setup() {
     const showRegisterModal = ref(false);
     const showLoginModal = ref(false);
+    const { role, initialize } = useAuth();
 
     const scrollToAbout = () => {
       const aboutSection = document.querySelector('#about');
@@ -55,12 +57,32 @@ export default {
 
     const handleRegisterSuccess = () => {
       showRegisterModal.value = false;
-      window.location.href = '/dashboard';
+      initialize().then(() => {
+        setTimeout(() => {
+          if (role.value === 'teacher') {
+            window.location.href = '/teacher';
+          } else if (role.value === 'student') {
+            window.location.href = '/student';
+          } else {
+            window.location.href = '/';
+          }
+        }, 100);
+      });
     };
 
     const handleLoginSuccess = () => {
       showLoginModal.value = false;
-      window.location.href = '/dashboard';
+      initialize().then(() => {
+        setTimeout(() => {
+          if (role.value === 'teacher') {
+            window.location.href = '/teacher';
+          } else if (role.value === 'student') {
+            window.location.href = '/student';
+          } else {
+            window.location.href = '/';
+          }
+        }, 100);
+      });
     };
 
     return {

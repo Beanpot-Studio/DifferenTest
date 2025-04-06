@@ -59,7 +59,7 @@
 
 <script>
 import { ref } from 'vue';
-import { loginUser } from '../lib/auth';
+import { useAuth } from '../stores/auth';
 
 export default {
   name: 'LoginModal',
@@ -70,18 +70,19 @@ export default {
     const password = ref('');
     const loading = ref(false);
     const error = ref('');
+    const { login } = useAuth();
     
     const handleLogin = async () => {
       loading.value = true;
       error.value = '';
       
       try {
-        const { success, error: loginError } = await loginUser(email.value, password.value);
+        const { success, error: loginError } = await login(email.value, password.value);
         
         if (success) {
           emit('login-success');
         } else {
-          error.value = loginError.message || 'Failed to login. Please try again.';
+          error.value = loginError || 'Failed to login. Please try again.';
         }
       } catch (err) {
         error.value = 'An unexpected error occurred. Please try again.';

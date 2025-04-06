@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+The firebase database structure for this app is the following:
+
+activities
+    classId
+    className
+    teacherName
+    timestamp
+    type
+    userId
+
+classes
+    code
+    createdAt
+    name
+    quizzes
+        id
+        title
+    studentCount
+    students
+        (id of student is the value of the index)
+    teacherId
+    updatedAt
+
+enrollments
+    classId
+    enrolledAt
+    status
+    studentId
+
+quizAttempts
+    answers
+        array in answers includes the answer given as a number
+    classId
+    correctAnswers
+    questionCount
+    questionResults
+        correctIndex
+        isCorrect
+        questionIndex
+        questionText
+        selectedOption
+            text
+        userAnswer
+
+quizzes
+    createdAt
+    id
+    questions
+        correctIndex
+            options
+                text
+        text
+
+users 
+    bio
+    classes
+        array in classes includes ids of classes associated to this user
+    createdAt
+    email
+    lastLogin
+    name
+    phone
+    role (student or teacher)
+    updatedAt
