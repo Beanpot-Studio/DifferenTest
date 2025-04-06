@@ -14,7 +14,7 @@
         <p class="mt-1 text-secondary-500">Please login</p>
         <div class="mt-4">
           <div class="w-full flex justify-center items-center">
-          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="./lock.lottie" />
+          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="../../lock.lottie" />
           </div>
           <button 
             @click="showLoginModal = true"
@@ -31,7 +31,7 @@
       <div class="text-center">
         <h3 class="mt-2 text-xl font-medium text-secondary-900">Access Restricted</h3>
         <div class="w-full flex justify-center items-center">
-          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="./lock.lottie" />
+          <DotLottieVue style="height: 300px; width: 300px" autoplay loop src="../../lock.lottie" />
         </div>
         <p class="mt-1 text-secondary-500">
           Your current role ({{ userRole }}) does not have permission to view this content

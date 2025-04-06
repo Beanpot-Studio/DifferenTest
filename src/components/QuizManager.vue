@@ -13,21 +13,35 @@
       <!-- Quiz List -->
       <div v-if="quizzes.length > 0" class="space-y-2">
         <div v-for="quiz in quizzes" :key="quiz.id" class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
-          <button 
-            @click="openEditModal(quiz)"
-            class="text-primary-600 hover:text-primary-800 font-medium"
-          >
-            {{ quiz.title }}
-          </button>
-          <button 
-            @click="deleteQuiz(quiz.id)"
-            class="text-red-600 hover:text-red-800 p-1"
-            title="Delete quiz"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-          </button>
+          <div>
+            <h3 class="text-lg font-semibold">{{ quiz.title }}</h3>
+            <p class="text-sm text-gray-500">{{ quiz.questions?.length || 0 }} questions</p>
+          </div>
+          <div class="flex space-x-2">
+            <button
+              v-if="quiz.lessonPlan"
+              @click="viewLessonPlan(quiz)"
+              class="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+            >
+              View Lesson Plan
+            </button>
+           
+            <button
+              @click="openEditModal(quiz)"
+              class="text-primary-600 hover:text-primary-800 font-medium"
+            >
+              Edit
+            </button>
+            <button
+              @click="deleteQuiz(quiz.id)"
+              class="text-red-600 hover:text-red-800 p-1"
+              title="Delete quiz"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       <p v-else class="text-gray-500">No quizzes created yet.</p>
@@ -118,23 +132,126 @@
         </div>
       </div>
     </div>
+
+    <!-- Generate Quiz Modal -->
+    <div v-if="showGenerateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">Generate Quiz</h3>
+          <button @click="closeGenerateModal" class="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Lesson Plan</label>
+          <textarea
+            v-model="lessonPlanText"
+            class="w-full p-2 border rounded-lg"
+            rows="3"
+            @input="generateQuizzes"
+          ></textarea>
+        </div>
+
+        <div v-if="generating" class="text-center">
+          <DotLottieVue
+            :options="lottieOptions"
+            :height="100"
+            :width="100"
+          />
+        </div>
+
+        <div v-if="error" class="text-red-500 mb-4">
+          {{ error }}
+        </div>
+
+        <div v-if="success" class="text-green-500 mb-4">
+          {{ success }}
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-6">
+          <button
+            @click="closeGenerateModal"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Close
+          </button>
+          <button
+            @click="generateQuizzes"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Generate Quizzes
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Lesson Plan Modal -->
+    <div v-if="showLessonPlanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">Lesson Plan</h3>
+          <button @click="closeLessonPlanModal" class="text-gray-500 hover:text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Lesson Plan</label>
+          <textarea
+            v-model="currentLessonPlan.content"
+            class="w-full p-2 border rounded-lg"
+            rows="3"
+            readonly
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-6">
+          <button
+            @click="closeLessonPlanModal"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 
 export default {
   name: 'QuizManager',
+  components: {
+    DotLottieVue
+  },
   setup() {
     const { user } = useAuth();
     const quizzes = ref([]);
     const showEditModal = ref(false);
     const currentQuiz = ref(null);
     const notification = ref({ show: false, message: '', type: 'success' });
+    const loading = ref(false);
+    const showGenerateModal = ref(false);
+    const showLessonPlanModal = ref(false);
+    const currentLessonPlan = ref(null);
+    const lessonPlanText = ref('');
+    const generating = ref(false);
+    const error = ref(null);
+    const success = ref(null);
 
     const showNotification = (message, type = 'success') => {
       notification.value = { show: true, message, type };
@@ -211,6 +328,92 @@ export default {
       saveQuiz();
     };
 
+    const generateQuizzes = async () => {
+      if (!lessonPlanText.value.trim()) {
+        error.value = 'Please enter a lesson plan';
+        return;
+      }
+
+      generating.value = true;
+      error.value = null;
+      success.value = null;
+
+      try {
+        // Generate quizzes using the lesson plan
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const prompt = `Generate 5 multiple choice questions based on this lesson plan. Each question should have 4 options and one correct answer. Format the response as a JSON array of objects with the following structure:
+        [
+          {
+            "text": "question text",
+            "options": [
+              {"text": "option 1", "correct": false},
+              {"text": "option 2", "correct": false},
+              {"text": "option 3", "correct": true},
+              {"text": "option 4", "correct": false}
+            ]
+          }
+        ]
+        
+        Lesson Plan:
+        ${lessonPlanText.value}`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        // Parse the generated questions
+        const generatedQuestions = JSON.parse(text);
+        
+        // Create a new quiz with the generated questions and lesson plan
+        const quizRef = await addDoc(collection(db, 'quizzes'), {
+          title: `Quiz from Lesson Plan ${new Date().toLocaleDateString()}`,
+          questions: generatedQuestions.map(q => ({
+            text: q.text,
+            options: q.options.map(opt => ({ text: opt.text })),
+            correctIndex: q.options.findIndex(opt => opt.correct)
+          })),
+          teacherId: user.value.uid,
+          classId: props.classId,
+          createdAt: new Date(),
+          lessonPlan: lessonPlanText.value.trim()
+        });
+
+        // Update the class document to include the new quiz
+        const classRef = doc(db, 'classes', props.classId);
+        const classDoc = await getDoc(classRef);
+        if (classDoc.exists()) {
+          const classData = classDoc.data();
+          const updatedQuizzes = [...(classData.quizzes || []), { id: quizRef.id }];
+          await updateDoc(classRef, { quizzes: updatedQuizzes });
+        }
+
+        success.value = 'Quizzes generated successfully!';
+        lessonPlanText.value = '';
+        showGenerateModal.value = false;
+        await fetchQuizzes(); // Refresh the quiz list
+      } catch (err) {
+        console.error('Error generating quizzes:', err);
+        error.value = 'Failed to generate quizzes. Please try again.';
+      } finally {
+        generating.value = false;
+      }
+    };
+
+    const viewLessonPlan = async (quiz) => {
+      if (!quiz.lessonPlan) {
+        error.value = 'No lesson plan available for this quiz';
+        return;
+      }
+
+      try {
+        currentLessonPlan.value = { content: quiz.lessonPlan };
+        showLessonPlanModal.value = true;
+      } catch (err) {
+        console.error('Error loading lesson plan:', err);
+        error.value = 'Failed to load lesson plan';
+      }
+    };
+
     onMounted(() => {
       fetchQuizzes();
     });
@@ -225,7 +428,16 @@ export default {
       saveQuiz,
       deleteQuiz,
       addOption,
-      removeOption
+      removeOption,
+      showGenerateModal,
+      showLessonPlanModal,
+      currentLessonPlan,
+      lessonPlanText,
+      generating,
+      error,
+      success,
+      generateQuizzes,
+      viewLessonPlan
     };
   }
 };

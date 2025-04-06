@@ -23,7 +23,7 @@ import QuizManager from "../../components/QuizManager.vue";
 
         <div class="bg-white rounded-lg shadow-md p-6">
           <h2 class="text-2xl font-bold mb-4">Quiz Manager</h2>
-          <QuizManager client:load />
+          <QuizManager client:load :classId="selectedClassId" />
         </div>
       </div>
     </RoleBasedContent>
@@ -31,6 +31,6 @@ import QuizManager from "../../components/QuizManager.vue";
 </MainLayout>
 
 <script>
-  // Same auth check script as index.astro
+  import { ref } from "vue";
+  const selectedClassId = ref("");
 </script>
-
