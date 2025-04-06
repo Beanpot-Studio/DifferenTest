@@ -14,9 +14,22 @@
       <!-- Header -->
       <div class="mb-6">
         <h2 class="text-2xl font-bold text-gray-900">Browse Available Classes</h2>
-        <p class="mt-1 text-sm text-gray-500">
-          Find and join classes that interest you.
-        </p>
+        <!-- Message Popup -->
+        <div v-if="showMessage" class="mt-4">
+          <div :class="{
+            'bg-green-100 border-green-400 text-green-700': messageType === 'success',
+            'bg-red-100 border-red-400 text-red-700': messageType === 'error'
+          }" class="border rounded-lg px-4 py-3 shadow-sm flex items-center">
+            <div class="flex-1">
+              <p class="font-medium">{{ message }}</p>
+            </div>
+            <button @click="showMessage = false" class="ml-4">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Search -->
@@ -82,12 +95,6 @@
               <div class="mt-2 flex items-center space-x-4">
                 <span class="text-sm text-gray-500 flex items-center">
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  {{ classItem.studentCount }} Students
-                </span>
-                <span class="text-sm text-gray-500 flex items-center">
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   {{ classItem.quizCount }} Quizzes
@@ -96,14 +103,19 @@
             </div>
             <button
               @click="joinClass(classItem)"
-              :disabled="enrolledClasses.includes(classItem.id)"
+              :disabled="classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted'"
               :class="{
-                'bg-primary-600 hover:bg-primary-700': !enrolledClasses.includes(classItem.id),
-                'bg-gray-400 cursor-not-allowed': enrolledClasses.includes(classItem.id)
+                'bg-primary-600 hover:bg-primary-700': !classItem.enrollmentStatus,
+                'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted',
+                'bg-yellow-500': classItem.enrollmentStatus === 'pending'
               }"
               class="px-4 py-2 text-white rounded-lg"
             >
-              {{ enrolledClasses.includes(classItem.id) ? 'Enrolled' : 'Join Class' }}
+              {{ 
+                classItem.enrollmentStatus === 'accepted' ? 'Enrolled' : 
+                classItem.enrollmentStatus === 'pending' ? 'Pending' : 
+                'Join Class' 
+              }}
             </button>
           </div>
         </div>
@@ -119,7 +131,7 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
@@ -137,6 +149,9 @@ export default {
     const classes = ref([]);
     const searchQuery = ref('');
     const enrolledClasses = ref([]);
+    const showMessage = ref(false);
+    const message = ref('');
+    const messageType = ref('success');
 
     // Filter classes based on search query
     const filteredClasses = computed(() => {
@@ -149,6 +164,16 @@ export default {
       );
     });
 
+    // Show message function
+    const showMessagePopup = (text, type = 'success') => {
+      message.value = text;
+      messageType.value = type;
+      showMessage.value = true;
+      setTimeout(() => {
+        showMessage.value = false;
+      }, 5000);
+    };
+
     // Load all available classes
     const loadClasses = async () => {
       if (!user.value?.uid) {
@@ -160,11 +185,18 @@ export default {
       loading.value = true;
       error.value = null;
       try {
-        // Get user's enrolled classes
+        // Get user's enrolled classes and their statuses
         const enrollmentsRef = collection(db, 'enrollments');
-        const enrollmentsQuery = query(enrollmentsRef, where('userId', '==', user.value.uid));
+        const enrollmentsQuery = query(enrollmentsRef, where('studentId', '==', user.value.uid));
         const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-        enrolledClasses.value = enrollmentsSnapshot.docs.map(doc => doc.data().classId);
+        
+        // Create a map of classId to enrollment status
+        const enrollmentStatusMap = {};
+        enrollmentsSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          enrollmentStatusMap[data.classId] = data.status;
+        });
+        enrolledClasses.value = Object.keys(enrollmentStatusMap);
 
         // Get all classes
         const classesRef = collection(db, 'classes');
@@ -175,35 +207,37 @@ export default {
           return;
         }
 
-        const classPromises = classesSnapshot.docs.map(async (doc) => {
+        const classPromises = classesSnapshot.docs.map(async (classDoc) => {
           try {
-            const classData = doc.data();
+            const classData = classDoc.data();
             
             // Get teacher's details
             const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
             const teacherData = teacherDoc.data();
-            const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
             
             // Count students
-            const studentsQuery = query(enrollmentsRef, where('classId', '==', doc.id));
+            const studentsQuery = query(enrollmentsRef, where('classId', '==', classDoc.id));
             const studentsSnapshot = await getDocs(studentsQuery);
             
             return {
-              id: doc.id,
+              id: classDoc.id,
               ...classData,
-              teacherName,
+              teacherName: teacherData?.name || 'Unknown Teacher',
               teacherId: classData.teacherId,
               studentCount: studentsSnapshot.size,
-              quizCount: classData.quizzes?.length || 0
+              quizCount: classData.quizzes?.length || 0,
+              enrollmentStatus: enrollmentStatusMap[classDoc.id] || null
             };
           } catch (err) {
-            console.error(`Error processing class ${doc.id}:`, err);
+            console.error(`Error processing class ${classDoc.id}:`, err);
+            const classData = classDoc.data();
             return {
-              id: doc.id,
-              ...doc.data(),
+              id: classDoc.id,
+              ...classData,
               teacherName: 'Unknown Teacher',
               studentCount: 0,
-              quizCount: 0
+              quizCount: 0,
+              enrollmentStatus: null
             };
           }
         });
@@ -213,6 +247,7 @@ export default {
       } catch (err) {
         console.error('Error loading classes:', err);
         error.value = 'Failed to load classes. Please try again.';
+        showMessagePopup('Failed to load classes. Please try again.', 'error');
       } finally {
         loading.value = false;
       }
@@ -220,33 +255,29 @@ export default {
 
     // Join a class
     const joinClass = async (classItem) => {
-      if (!user.value) return;
-      
       try {
-        const enrollmentId = `${user.value.uid}_${classItem.id}`;
-        const timestamp = new Date();
-        
-        // Get teacher's details
+        // Create enrollment document with pending status
+        const enrollmentRef = await addDoc(collection(db, 'enrollments'), {
+          classId: classItem.id,
+          studentId: user.value.uid,
+          status: 'pending',
+          enrolledAt: new Date()
+        });
+
+        // Update student's classes array
+        await updateDoc(doc(db, 'users', user.value.uid), {
+          classes: arrayUnion(classItem.id)
+        });
+
+        // Update class's students array
+        await updateDoc(doc(db, 'classes', classItem.id), {
+          students: arrayUnion(user.value.uid)
+        });
+
+        // Get teacher's name
         const teacherDoc = await getDoc(doc(db, 'users', classItem.teacherId));
         const teacherData = teacherDoc.data();
         const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
-        
-        // Create enrollment
-        await setDoc(doc(db, 'enrollments', enrollmentId), {
-          userId: user.value.uid,
-          classId: classItem.id,
-          enrolledAt: timestamp
-        });
-
-        // Update class student count
-        const classRef = doc(db, 'classes', classItem.id);
-        const classDoc = await getDoc(classRef);
-        if (classDoc.exists()) {
-          await updateDoc(classRef, {
-            studentCount: (classDoc.data().studentCount || 0) + 1,
-            updatedAt: timestamp
-          });
-        }
 
         // Log activity
         await addDoc(collection(db, 'activities'), {
@@ -255,18 +286,21 @@ export default {
           classId: classItem.id,
           className: classItem.name,
           teacherName: teacherName,
-          timestamp: timestamp
+          timestamp: new Date()
         });
 
-        // Update enrolled classes list
-        enrolledClasses.value.push(classItem.id);
+        // Update local state
+        classes.value = classes.value.map(c => 
+          c.id === classItem.id 
+            ? { ...c, isEnrolled: true } 
+            : c
+        );
 
-        // Close modal and refresh parent components
-        closeModal();
-        window.dispatchEvent(new CustomEvent('classJoined'));
-      } catch (err) {
-        console.error('Error joining class:', err);
-        alert('Failed to join class. Please try again.');
+        // Show success message
+        showMessagePopup('Successfully requested to join the class. The teacher will review your request.');
+      } catch (error) {
+        console.error('Error joining class:', error);
+        showMessagePopup('Failed to join class. Please try again.', 'error');
       }
     };
 
@@ -307,7 +341,10 @@ export default {
       enrolledClasses,
       loadClasses,
       joinClass,
-      closeModal
+      closeModal,
+      showMessage,
+      message,
+      messageType
     };
   }
 };

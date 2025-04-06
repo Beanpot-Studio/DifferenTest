@@ -113,6 +113,11 @@
               </option>
             </select>
           </div>
+
+          <!-- Class Roster -->
+          <div class="mt-6">
+            <ClassRoster :classId="classItem.id" :className="classItem.name" />
+          </div>
         </div>
       </div>
     </div>
@@ -176,9 +181,13 @@ import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import ClassRoster from './ClassRoster.vue';
 
 export default {
   name: 'ClassManager',
+  components: {
+    ClassRoster
+  },
   setup() {
     const { user } = useAuth();
     const classes = ref([]);

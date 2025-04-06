@@ -476,28 +476,61 @@ export default {
       }
     };
 
-    const startQuiz = (classId, quiz) => {
-      console.log('Starting quiz:', quiz);
-      currentClassId.value = classId;
-      currentQuiz.value = quiz;
-      const questionsLength = quiz.questions?.length || 0;
-      console.log('Quiz questions:', quiz.questions);
-      answers.value = new Array(questionsLength).fill(null);
-      quizCompleted.value = false;
-      quizScore.value = 0;
-      quizStartTime.value = Date.now();
-      showQuizModal.value = true;
-      
-      // Log quiz start activity
-      addDoc(collection(db, 'activities'), {
-        userId: user.value.uid,
-        type: 'quiz_started',
-        classId: classId,
-        quizId: quiz.id,
-        quizTitle: quiz.title,
-        className: classes.value.find(c => c.id === classId)?.name || 'Unknown Class',
-        timestamp: new Date()
-      }).catch(error => console.error('Error logging quiz start:', error));
+    const startQuiz = async (classId, quiz) => {
+      try {
+        // Check enrollment status
+        const enrollmentQuery = query(
+          collection(db, 'enrollments'),
+          where('classId', '==', classId),
+          where('studentId', '==', user.value.uid)
+        );
+        const enrollmentSnapshot = await getDocs(enrollmentQuery);
+        
+        if (enrollmentSnapshot.empty) {
+          alert('You are not enrolled in this class.');
+          return;
+        }
+
+        const enrollment = enrollmentSnapshot.docs[0].data();
+        if (enrollment.status !== 'accepted') {
+          alert('Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.');
+          return;
+        }
+
+        // Get quiz details
+        const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
+        if (!quizDoc.exists()) {
+          alert('Quiz not found.');
+          return;
+        }
+
+        const quizData = quizDoc.data();
+        currentQuiz.value = {
+          id: quiz.id,
+          title: quizData.title,
+          questions: quizData.questions,
+          classId: classId
+        };
+
+        // Log quiz start activity
+        await addDoc(collection(db, 'activities'), {
+          userId: user.value.uid,
+          type: 'quiz_started',
+          quizId: quiz.id,
+          quizTitle: quizData.title,
+          classId: classId,
+          timestamp: new Date()
+        });
+
+        // Start the quiz
+        quizCompleted.value = false;
+        quizScore.value = 0;
+        quizStartTime.value = Date.now();
+        showQuizModal.value = true;
+      } catch (error) {
+        console.error('Error starting quiz:', error);
+        alert('Failed to start quiz. Please try again.');
+      }
     };
 
     const calculateQuizScore = () => {
