@@ -292,7 +292,6 @@ import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 
-
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 
 export default {
@@ -316,89 +315,75 @@ export default {
     const quizStartTime = ref(0);
 
     const loadClasses = async () => {
-      if (!user.value || !initialized.value) {
-        console.log('Auth not ready:', { user: !!user.value, initialized: initialized.value });
-        return;
-      }
-      
+      if (!user.value?.uid) return;
+
       loading.value = true;
       try {
-        console.log('Loading classes for user:', user.value.uid);
-        
         // Get user's enrollments
         const enrollmentsRef = collection(db, 'enrollments');
-        const q = query(enrollmentsRef, where('userId', '==', user.value.uid));
-        const enrollmentSnapshot = await getDocs(q);
+        const enrollmentsQuery = query(
+          enrollmentsRef, 
+          where('studentId', '==', user.value.uid),
+          where('status', '==', 'accepted')
+        );
+        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
         
-        console.log('Found enrollments:', enrollmentSnapshot.size);
-        
-        if (enrollmentSnapshot.empty) {
-          console.log('No enrollments found');
-          classes.value = [];
-          loading.value = false;
-          return;
-        }
-        
-        const classPromises = enrollmentSnapshot.docs.map(async (enrollDoc) => {
-          console.log('Processing enrollment:', enrollDoc.id);
-          const classId = enrollDoc.data().classId;
-          
-          const classRef = doc(db, 'classes', classId);
-          const classDoc = await getDoc(classRef);
-          
-          if (!classDoc.exists()) {
-            console.log('Class not found:', classId);
-            return null;
-          }
-          
-          const classData = classDoc.data();
-          console.log('Found class:', classId, classData.name);
-          
-          // Get teacher's details
-          const teacherRef = doc(db, 'users', classData.teacherId);
-          const teacherDoc = await getDoc(teacherRef);
-          const teacherData = teacherDoc.data();
-          const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
+        // Create a map of classId to enrollment status
+        const enrollmentStatusMap = {};
+        enrollmentsSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          enrollmentStatusMap[data.classId] = data.status;
+        });
 
-          // Load full quiz data for each quiz in the class
-          const quizzes = await Promise.all((classData.quizzes || []).map(async (quizRef) => {
-            try {
-              const quizDoc = await getDoc(doc(db, 'quizzes', quizRef.id));
-              if (!quizDoc.exists()) {
-                console.log('Quiz not found:', quizRef.id);
+        // Get all classes
+        const classesRef = collection(db, 'classes');
+        const classesSnapshot = await getDocs(classesRef);
+        
+        const loadedClasses = [];
+        for (const classDoc of classesSnapshot.docs) {
+          const classData = classDoc.data();
+          const enrollmentStatus = enrollmentStatusMap[classDoc.id];
+
+          // Only include classes where the student is enrolled and accepted
+          if (enrollmentStatus === 'accepted') {
+            // Get teacher's details
+            const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+            const teacherData = teacherDoc.data();
+            const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
+
+            // Load full quiz data for each quiz in the class
+            const quizzes = await Promise.all((classData.quizzes || []).map(async (quizRef) => {
+              try {
+                // Handle both DocumentReference and string ID cases
+                const quizId = typeof quizRef === 'string' ? quizRef : quizRef.id;
+                const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+                if (!quizDoc.exists()) return null;
+                const quizData = quizDoc.data();
+                return {
+                  id: quizDoc.id,
+                  ...quizData
+                };
+              } catch (error) {
+                console.error('Error loading quiz:', quizRef, error);
                 return null;
               }
-              const quizData = quizDoc.data();
-              console.log('Loaded quiz:', quizRef.id, quizData.title, 'Questions:', quizData.questions?.length || 0);
-              return {
-                id: quizDoc.id,
-                ...quizData
-              };
-            } catch (error) {
-              console.error('Error loading quiz:', quizRef.id, error);
-              return null;
-            }
-          }));
-          
-          return {
-            id: classDoc.id,
-            ...classData,
-            teacherName,
-            code: classData.code || 'N/A',
-            quizzes: quizzes.filter(Boolean)
-          };
-        });
-        
-        const loadedClasses = await Promise.all(classPromises);
-        classes.value = loadedClasses.filter(Boolean);
-        console.log('Loaded classes with quizzes:', classes.value.map(c => ({
-          id: c.id,
-          name: c.name,
-          quizCount: c.quizzes?.length || 0
-        })));
-        
+            }));
+
+            loadedClasses.push({
+              id: classDoc.id,
+              ...classData,
+              teacherName,
+              code: classData.code || 'N/A',
+              quizzes: quizzes.filter(Boolean),
+              enrollmentStatus
+            });
+          }
+        }
+
+        classes.value = loadedClasses;
+
         // Load quiz attempts
-        if (classes.value.length > 0) {
+        if (loadedClasses.length > 0) {
           const attemptsRef = collection(db, 'quizAttempts');
           const attemptsQuery = query(attemptsRef, where('userId', '==', user.value.uid));
           const attemptsSnapshot = await getDocs(attemptsQuery);
@@ -411,8 +396,6 @@ export default {
             }
             quizAttempts.value[data.classId][data.quizId] = data;
           });
-          
-          console.log('Quiz attempts loaded:', Object.keys(quizAttempts.value).length);
         }
       } catch (error) {
         console.error('Error loading classes:', error);
@@ -479,8 +462,9 @@ export default {
     const startQuiz = async (classId, quiz) => {
       try {
         // Check enrollment status
+        const enrollmentsRef = collection(db, 'enrollments');
         const enrollmentQuery = query(
-          collection(db, 'enrollments'),
+          enrollmentsRef,
           where('classId', '==', classId),
           where('studentId', '==', user.value.uid)
         );

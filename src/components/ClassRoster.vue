@@ -108,7 +108,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import { collection, query, where, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default {
@@ -175,9 +175,31 @@ export default {
     const updateStudentStatus = async (enrollmentId, newStatus) => {
       try {
         const enrollmentRef = doc(db, 'enrollments', enrollmentId);
+        const enrollmentDoc = await getDoc(enrollmentRef);
+        const enrollmentData = enrollmentDoc.data();
+
+        // Update enrollment status
         await updateDoc(enrollmentRef, {
           status: newStatus
         });
+
+        // Get student details
+        const studentDoc = await getDoc(doc(db, 'users', enrollmentData.studentId));
+        const studentData = studentDoc.data();
+
+        // Log activity
+        await addDoc(collection(db, 'activities'), {
+          userId: enrollmentData.studentId,
+          type: 'enrollment_status_changed',
+          classId: props.classId,
+          className: props.className,
+          teacherName: studentData?.name || 'Unknown Teacher',
+          status: newStatus,
+          timestamp: new Date()
+        });
+
+        // Dispatch event to update student's view
+        window.dispatchEvent(new CustomEvent('enrollmentStatusChanged'));
 
         // Reload students
         await loadStudents();
