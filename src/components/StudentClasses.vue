@@ -176,7 +176,7 @@
                 </span>
                 <span v-if="quizScore == 100">
                   <div class="flex justify-center items-center">
-                    <DotLottieVue style="height: 200px; width: 500px" autoplay src="./confetti.lottie" />
+                    <ConfettiIcon />
                   </div>
                  </span>
               </p>
@@ -291,13 +291,14 @@ import { useAuth } from '../stores/auth';
 import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import ConfettiIcon from './AnimationComponents/Confetti.vue';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, DotLottieVue
+    ClassSearch, DotLottieVue, ConfettiIcon
   },
   setup() {
     const { user, initialized } = useAuth();

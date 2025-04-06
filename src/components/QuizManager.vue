@@ -156,11 +156,7 @@
         </div>
 
         <div v-if="generating" class="text-center">
-          <DotLottieVue
-            :options="lottieOptions"
-            :height="100"
-            :width="100"
-          />
+          <LoadingSpinner height="100px" width="100px" />
         </div>
 
         <div v-if="error" class="text-red-500 mb-4">
@@ -229,16 +225,22 @@ import { useAuth } from '../stores/auth';
 import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+import LoadingSpinner from './AnimationComponents/Loading.vue';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
 
 export default {
   name: 'QuizManager',
   components: {
-    DotLottieVue
+    LoadingSpinner
   },
-  setup() {
+  props: {
+    classId: {
+      type: String,
+      required: true
+    }
+  },
+  setup(props) {
     const { user } = useAuth();
     const quizzes = ref([]);
     const showEditModal = ref(false);

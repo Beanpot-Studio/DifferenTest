@@ -67,12 +67,15 @@ import { ref, computed, onMounted } from 'vue';
 import LoginModal from './LoginModal.vue';
 import RegisterModal from './RegisterModal.vue';
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import LockIcon from './AnimationComponents/Lock.vue';
+
 export default {
   name: 'RoleBasedContent',
   components: {
     LoginModal,
     RegisterModal,
-    DotLottieVue
+    DotLottieVue,
+    LockIcon
   },
   props: {
     requiredRoles: {
@@ -82,6 +85,10 @@ export default {
     allRoles: {
       type: Boolean,
       default: false
+    },
+    message: {
+      type: String,
+      default: 'You do not have permission to access this content.'
     }
   },
   setup(props) {
