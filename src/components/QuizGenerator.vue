@@ -140,9 +140,9 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, addDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import LoadingSpinner from './AnimationComponents/Loading.vue';
@@ -201,6 +201,7 @@ export default {
 
     const generateQuiz = async (content) => {
       try {
+        //generate 5 questions from the lesson plan using Gemini lite
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
         
         const prompt = `Generate a ${numQuestions.value}-question multiple choice quiz based on this lesson plan. 

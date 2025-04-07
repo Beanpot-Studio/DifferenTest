@@ -291,7 +291,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import LoadingSpinner from './AnimationComponents/Loading.vue';
 import ConfettiIcon from './AnimationComponents/Confetti.vue';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
@@ -489,6 +489,9 @@ export default {
         }
 
         const quizData = quizDoc.data();
+        const isRetake = !!getQuizAttempt(classId, quiz.id);
+
+        // Start the quiz
         currentQuiz.value = {
           id: quiz.id,
           title: quizData.title,
@@ -503,7 +506,8 @@ export default {
           quizId: quiz.id,
           quizTitle: quizData.title,
           classId: classId,
-          timestamp: new Date()
+          timestamp: new Date(),
+          isRetake: isRetake
         });
 
         // Start the quiz
@@ -680,12 +684,15 @@ export default {
 
     const getExplanation = async (questionIndex) => {
       if (!currentQuiz.value) return;
-      
+      //the chosen answer is: question.options[answers.value[questionIndex]].text
+      //the correct answer is: question.options[question.correctIndex].text
       try {
         const question = currentQuiz.value.questions[questionIndex];
-        const prompt = `Explain why "${question.correctIndex}" is the correct answer to the question: "${question.text}". Provide a detailed explanation that helps understand the concept.`;
+        const prompt = `Explain in simple, concise language why "${question.options[question.correctIndex].text}" is the correct answer 
+        to the question: "${question.text}". Only address how the correct answer is different from the student's chosen answer:
+         "${question.options[answers.value[questionIndex]].text}". Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
         
-        const model = genAI.getGenerativeModel({ model: "gemini-pro"});
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite"});
         const result = await model.generateContent(prompt);
         const explanation = result.response.text();
         

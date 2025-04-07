@@ -133,57 +133,7 @@
       </div>
     </div>
 
-    <!-- Generate Quiz Modal -->
-    <div v-if="showGenerateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold">Generate Quiz</h3>
-          <button @click="closeGenerateModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Lesson Plan</label>
-          <textarea
-            v-model="lessonPlanText"
-            class="w-full p-2 border rounded-lg"
-            rows="3"
-            @input="generateQuizzes"
-          ></textarea>
-        </div>
-
-        <div v-if="generating" class="text-center">
-          <LoadingSpinner height="100px" width="100px" />
-        </div>
-
-        <div v-if="error" class="text-red-500 mb-4">
-          {{ error }}
-        </div>
-
-        <div v-if="success" class="text-green-500 mb-4">
-          {{ success }}
-        </div>
-
-        <div class="flex justify-end space-x-4 mt-6">
-          <button
-            @click="closeGenerateModal"
-            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Close
-          </button>
-          <button
-            @click="generateQuizzes"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            Generate Quizzes
-          </button>
-        </div>
-      </div>
-    </div>
-
+   
     <!-- View Lesson Plan Modal -->
     <div v-if="showLessonPlanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -227,7 +177,7 @@ import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import LoadingSpinner from './AnimationComponents/Loading.vue';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GOOGLE_AI_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'QuizManager',
@@ -246,8 +196,6 @@ export default {
     const showEditModal = ref(false);
     const currentQuiz = ref(null);
     const notification = ref({ show: false, message: '', type: 'success' });
-    const loading = ref(false);
-    const showGenerateModal = ref(false);
     const showLessonPlanModal = ref(false);
     const currentLessonPlan = ref(null);
     const lessonPlanText = ref('');
@@ -330,77 +278,7 @@ export default {
       saveQuiz();
     };
 
-    const generateQuizzes = async () => {
-      if (!lessonPlanText.value.trim()) {
-        error.value = 'Please enter a lesson plan';
-        return;
-      }
-
-      generating.value = true;
-      error.value = null;
-      success.value = null;
-
-      try {
-        // Generate quizzes using the lesson plan
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const prompt = `Generate 5 multiple choice questions based on this lesson plan. Each question should have 4 options and one correct answer. Format the response as a JSON array of objects with the following structure:
-        [
-          {
-            "text": "question text",
-            "options": [
-              {"text": "option 1", "correct": false},
-              {"text": "option 2", "correct": false},
-              {"text": "option 3", "correct": true},
-              {"text": "option 4", "correct": false}
-            ]
-          }
-        ]
-        
-        Lesson Plan:
-        ${lessonPlanText.value}`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        
-        // Parse the generated questions
-        const generatedQuestions = JSON.parse(text);
-        
-        // Create a new quiz with the generated questions and lesson plan
-        const quizRef = await addDoc(collection(db, 'quizzes'), {
-          title: `Quiz from Lesson Plan ${new Date().toLocaleDateString()}`,
-          questions: generatedQuestions.map(q => ({
-            text: q.text,
-            options: q.options.map(opt => ({ text: opt.text })),
-            correctIndex: q.options.findIndex(opt => opt.correct)
-          })),
-          teacherId: user.value.uid,
-          classId: props.classId,
-          createdAt: new Date(),
-          lessonPlan: lessonPlanText.value.trim(),
-          updatedAt: new Date()
-        });
-
-        // Update the class document to include the new quiz
-        const classRef = doc(db, 'classes', props.classId);
-        const classDoc = await getDoc(classRef);
-        if (classDoc.exists()) {
-          const classData = classDoc.data();
-          const updatedQuizzes = [...(classData.quizzes || []), { id: quizRef.id }];
-          await updateDoc(classRef, { quizzes: updatedQuizzes });
-        }
-
-        success.value = 'Quizzes generated successfully!';
-        lessonPlanText.value = '';
-        showGenerateModal.value = false;
-        await fetchQuizzes(); // Refresh the quiz list
-      } catch (err) {
-        console.error('Error generating quizzes:', err);
-        error.value = 'Failed to generate quizzes. Please try again.';
-      } finally {
-        generating.value = false;
-      }
-    };
+    
 
     const viewLessonPlan = async (quiz) => {
       if (!quiz.lessonPlan) {
@@ -437,14 +315,12 @@ export default {
       deleteQuiz,
       addOption,
       removeOption,
-      showGenerateModal,
       showLessonPlanModal,
       currentLessonPlan,
       lessonPlanText,
       generating,
       error,
       success,
-      generateQuizzes,
       viewLessonPlan,
       closeLessonPlanModal
     };
