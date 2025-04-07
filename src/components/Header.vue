@@ -1,6 +1,6 @@
 <template>
   <header class="relative z-50 text-white">
-    <div class=" mx-auto px-4 py-3 flex bg-primary-900 justify-between items-center">
+    <div class=" mx-auto px-4 py-3 flex bg-gradient-to-r from-primary-700 to-primary-950 justify-between items-center">
       <div class="flex items-center">
         <a href="/" class="text-2xl text-white font-bold">DifferenTest</a>
       </div>
@@ -10,9 +10,8 @@
           
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
-            
-            <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition">Teacher Portal</a>
-            <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition">Student Portal</a>
+            <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
+            <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition text-white">Student Portal</a>
           </template>
         </nav>
 

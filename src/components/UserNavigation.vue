@@ -5,7 +5,7 @@
         <!-- Messages Button -->
         <a 
           href="/messages" 
-          class="p-2 rounded-lg hover:bg-primary-700 transition"
+          class="p-2 rounded-lg hover:bg-primary-300 transition text-white"
           title="Messages"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -16,7 +16,7 @@
         <!-- Profile Button -->
         <a 
           href="/profile" 
-          class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-primary-700 hover:bg-primary-600 transition"
+          class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-white bg-primary-700 hover:bg-primary-300 transition"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -31,7 +31,7 @@
 
       <button 
         @click="handleLogout" 
-        class="px-4 py-1.5 text-sm rounded-lg bg-primary-500 hover:bg-primary-600 transition"
+        class="px-3 py-1.5 text-sm rounded-lg bg-primary-700 hover:bg-primary-300 transition"
       >
         Log Out
       </button>
@@ -40,7 +40,7 @@
     <div v-else class="space-x-2">
       <button 
         @click="$emit('login')" 
-        class="px-4 py-1.5 text-sm rounded-lg bg-primary-500 hover:bg-primary-600 transition"
+        class="px-4 py-1.5 text-sm rounded-lg bg-primary-700 hover:bg-primary-300 transition"
       >
         Log In
       </button>
