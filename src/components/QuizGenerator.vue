@@ -248,7 +248,8 @@ export default {
           ...quiz.value,
           userId: user.value.uid,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          lessonPlan: fileContent.value
         };
 
         if (!quiz.value.id) {

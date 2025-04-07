@@ -377,7 +377,8 @@ export default {
           teacherId: user.value.uid,
           classId: props.classId,
           createdAt: new Date(),
-          lessonPlan: lessonPlanText.value.trim()
+          lessonPlan: lessonPlanText.value.trim(),
+          updatedAt: new Date()
         });
 
         // Update the class document to include the new quiz
@@ -416,6 +417,11 @@ export default {
       }
     };
 
+    const closeLessonPlanModal = () => {
+      showLessonPlanModal.value = false;
+      currentLessonPlan.value = null;
+    };
+
     onMounted(() => {
       fetchQuizzes();
     });
@@ -439,7 +445,8 @@ export default {
       error,
       success,
       generateQuizzes,
-      viewLessonPlan
+      viewLessonPlan,
+      closeLessonPlanModal
     };
   }
 };
