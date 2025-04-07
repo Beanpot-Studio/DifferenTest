@@ -41,7 +41,7 @@
 
       <!-- Tab Content -->
       <div v-if="activeTab === 'classes'">
-        <ClassManager />
+        <ClassManager @select-quiz="handleQuizSelect" />
       </div>
       <div v-else-if="activeTab === 'quizzes'" class="space-y-6">
         <div>
@@ -136,6 +136,11 @@ export default {
       }
     };
 
+    const handleQuizSelect = (quizId) => {
+      activeTab.value = 'quizzes';
+      selectedClassId.value = quizId;
+    };
+
     onMounted(() => {
       loadStats();
     });
@@ -144,6 +149,7 @@ export default {
       activeTab,
       selectedClassId,
       stats,
+      handleQuizSelect,
       tabs
     };
   }

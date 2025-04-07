@@ -75,13 +75,12 @@
               <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
                 <div class="flex justify-between items-start">
                   <div>
-                    <a 
-                      :href="`/teacher/quizzes?edit=${quiz.id}`"
+                    <button 
+                      @click="$emit('select-quiz', quiz.id)"
                       class="text-primary-600 hover:text-primary-800 font-medium"
                     >
                       {{ quiz.title }}
-                    </a>
-                   
+                    </button>
                   </div>
                   <div class="flex space-x-2">
                     <button
