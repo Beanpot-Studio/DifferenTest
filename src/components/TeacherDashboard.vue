@@ -44,14 +44,28 @@
         <ClassManager @select-quiz="handleQuizSelect" />
       </div>
       <div v-else-if="activeTab === 'quizzes'" class="space-y-6">
-        <div>
-          <h2 class="text-2xl font-bold mb-4">Quiz Generator</h2>
-          <QuizGenerator />
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold">Quiz Management</h2>
+          <button
+            @click="activeTab = 'quiz-generator'"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Create New Quiz
+          </button>
         </div>
-        <div>
-          <h2 class="text-2xl font-bold mb-4">Quiz Manager</h2>
-          <QuizManager :classId="selectedClassId" />
+        <QuizManager :classId="selectedClassId" />
+      </div>
+      <div v-else-if="activeTab === 'quiz-generator'" class="space-y-6">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold">Create New Quiz</h2>
+          <button
+            @click="activeTab = 'quizzes'"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Back to Quizzes
+          </button>
         </div>
+        <QuizGenerator :classId="selectedClassId" />
       </div>
       <div v-else-if="activeTab === 'submissions'">
         <TeacherSubmissions />

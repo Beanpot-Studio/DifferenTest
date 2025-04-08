@@ -49,7 +49,7 @@
           </div>
 
           <!-- Class Progress -->
-          <div class="mt-4">
+          <!--<div class="mt-4">
             <div class="flex justify-between items-center mb-2">
               <h4 class="font-medium">Class Progress</h4>
               <span class="text-sm text-gray-500">
@@ -62,7 +62,7 @@
                 :style="{ width: `${calculateProgress(classItem)}%` }"
               ></div>
             </div>
-          </div>
+          </div>-->
 
           <!-- Class Quizzes -->
           <div class="mt-6">
@@ -278,6 +278,32 @@
         </div>
       </div>
     </div>
+
+    <nav class="-mb-px flex space-x-8">
+      <button
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click="activeTab = tab.id"
+        :class="[
+          activeTab === tab.id
+            ? 'border-primary-500 text-primary-600'
+            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+          'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+        ]"
+      >
+        {{ tab.name }}
+      </button>
+    </nav>
+
+    <!-- Classes Tab -->
+    <div v-if="activeTab === 'activities'" class="space-y-6">
+      <RecentActivity />
+    </div>
+
+    <!-- Quiz History Tab -->
+    <div v-else-if="activeTab === 'history'" class="space-y-6">
+      <QuizHistory />
+    </div>
   </div>
 </template>
 
@@ -289,13 +315,15 @@ import { useAuth } from '../stores/auth';
 import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
-
+import { useNotification } from '../composables/useNotification';
+import QuizHistory from './QuizHistory.vue';
+import RecentActivity from './RecentActivity.vue';
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, BaseAnimation
+    ClassSearch, BaseAnimation, QuizHistory, RecentActivity
   },
   setup() {
     const { user, initialized } = useAuth();
@@ -313,6 +341,12 @@ export default {
     const quizStartTime = ref(0);
     const error = ref(null);
     const showConfetti = ref(false);
+    const { showNotification } = useNotification();
+    const activeTab = ref('activities');
+    const tabs = [
+      { id: 'activities', name: 'Activities' },
+      { id: 'history', name: 'Quiz History' }
+    ];
 
     const loadClasses = async () => {
       if (!user.value?.uid) return;
@@ -460,42 +494,26 @@ export default {
     };
 
     const startQuiz = async (classId, quiz) => {
+      if (!user.value) return;
+
+      const enrollment = enrollments.value.find(e => e.classId === classId);
+      if (enrollment?.status !== 'accepted') {
+        showNotification('Error', 'Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.', 'error');
+        return;
+      }
+
+      const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
+      if (!quizDoc.exists()) {
+        showNotification('Error', 'Quiz not found.', 'error');
+        return;
+      }
+
       try {
-        // Check enrollment status
-        const enrollmentsRef = collection(db, 'enrollments');
-        const enrollmentQuery = query(
-          enrollmentsRef,
-          where('classId', '==', classId),
-          where('studentId', '==', user.value.uid)
-        );
-        const enrollmentSnapshot = await getDocs(enrollmentQuery);
-        
-        if (enrollmentSnapshot.empty) {
-          alert('You are not enrolled in this class.');
-          return;
-        }
-
-        const enrollment = enrollmentSnapshot.docs[0].data();
-        if (enrollment.status !== 'accepted') {
-          alert('Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.');
-          return;
-        }
-
-        // Get quiz details
-        const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
-        if (!quizDoc.exists()) {
-          alert('Quiz not found.');
-          return;
-        }
-
-        const quizData = quizDoc.data();
-        const isRetake = !!getQuizAttempt(classId, quiz.id);
-
         // Start the quiz
         currentQuiz.value = {
           id: quiz.id,
-          title: quizData.title,
-          questions: quizData.questions,
+          title: quizDoc.data().title,
+          questions: quizDoc.data().questions,
           classId: classId
         };
 
@@ -504,10 +522,10 @@ export default {
           userId: user.value.uid,
           type: 'quiz_started',
           quizId: quiz.id,
-          quizTitle: quizData.title,
+          quizTitle: quizDoc.data().title,
           classId: classId,
           timestamp: new Date(),
-          isRetake: isRetake
+          isRetake: !!getQuizAttempt(classId, quiz.id)
         });
 
         // Start the quiz
@@ -517,7 +535,7 @@ export default {
         showQuizModal.value = true;
       } catch (error) {
         console.error('Error starting quiz:', error);
-        alert('Failed to start quiz. Please try again.');
+        showNotification('Error', 'Failed to start quiz. Please try again.', 'error');
       }
     };
 
@@ -549,10 +567,9 @@ export default {
     const submitQuiz = async () => {
       if (!currentQuiz.value || !user.value) return;
       
-      // Validate that all questions are answered
       const unansweredQuestions = answers.value.filter(answer => answer === null).length;
       if (unansweredQuestions > 0) {
-        alert(`Please answer all questions before submitting. You have ${unansweredQuestions} unanswered questions.`);
+        showNotification('Error', `Please answer all questions before submitting. You have ${unansweredQuestions} unanswered questions.`, 'error');
         return;
       }
       
@@ -653,8 +670,8 @@ export default {
         
         await loadClasses();
       } catch (error) {
-        console.error('Error saving quiz attempt:', error);
-        alert('There was an error saving your quiz results. Please try again.');
+        console.error('Error saving quiz results:', error);
+        showNotification('Error', 'There was an error saving your quiz results. Please try again.', 'error');
       }
     };
 
@@ -796,7 +813,10 @@ export default {
       retakeQuiz,
       closeQuizModal,
       closeReviewModal,
-      showConfetti
+      showConfetti,
+      showNotification,
+      activeTab,
+      tabs
     };
   }
 };

@@ -101,17 +101,18 @@
             </div>
             <button
               @click="joinClass(classItem)"
-              :disabled="classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted'"
+              :disabled="classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted' || classItem.enrollmentStatus === 'rejected'"
               :class="{
                 'bg-primary-600 hover:bg-primary-700': !classItem.enrollmentStatus,
-                'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted',
+                'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted' || classItem.enrollmentStatus === 'rejected',
                 'bg-yellow-500': classItem.enrollmentStatus === 'pending'
               }"
               class="px-4 py-2 text-white rounded-lg"
             >
               {{ 
                 classItem.enrollmentStatus === 'accepted' ? 'Enrolled' : 
-                classItem.enrollmentStatus === 'pending' ? 'Pending' : 
+                classItem.enrollmentStatus === 'pending' ? 'Pending' :
+                classItem.enrollmentStatus === 'rejected' ? 'Rejected' :
                 'Join Class' 
               }}
             </button>
@@ -125,14 +126,60 @@
       </div>
     </div>
   </div>
+
+  <!-- Class Details Popup -->
+  <div v-if="selectedClass" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h2 class="text-2xl font-bold">{{ selectedClass.name }}</h2>
+          <p class="text-gray-600">{{ selectedClass.description }}</p>
+        </div>
+        <button @click="selectedClass = null" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Enrollment Status -->
+      <div v-if="user" class="mb-4 p-4 rounded-lg" :class="{
+        'bg-yellow-100 text-yellow-800': enrollmentStatus === 'pending',
+        'bg-green-100 text-green-800': enrollmentStatus === 'accepted',
+        'bg-red-100 text-red-800': enrollmentStatus === 'rejected',
+        'bg-gray-100 text-gray-800': !enrollmentStatus
+      }">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-semibold">Your Enrollment Status</h3>
+            <p>{{ enrollmentStatus ? `Status: ${enrollmentStatus.charAt(0).toUpperCase() + enrollmentStatus.slice(1)}` : 'Not enrolled' }}</p>
+          </div>
+          <div v-if="!enrollmentStatus">
+            <button
+              @click="enrollInClass(selectedClass.id)"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              :disabled="enrolling"
+            >
+              {{ enrolling ? 'Enrolling...' : 'Enroll in Class' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- ... existing code ... -->
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
+import { useNotification } from '../composables/useNotification';
 
 export default {
   name: 'ClassBrowser',
@@ -150,6 +197,10 @@ export default {
     const showMessage = ref(false);
     const message = ref('');
     const messageType = ref('success');
+    const { showNotification } = useNotification();
+    const selectedClass = ref(null);
+    const enrollmentStatus = ref(null);
+    const enrolling = ref(false);
 
     // Filter classes based on search query
     const filteredClasses = computed(() => {
@@ -164,12 +215,11 @@ export default {
 
     // Show message function
     const showMessagePopup = (text, type = 'success') => {
-      message.value = text;
-      messageType.value = type;
-      showMessage.value = true;
-      setTimeout(() => {
-        showMessage.value = false;
-      }, 5000);
+      showNotification(
+        type === 'success' ? 'Success' : 'Error',
+        text,
+        type
+      );
     };
 
     // Load all available classes
@@ -329,6 +379,77 @@ export default {
       searchQuery.value = '';
     };
 
+    const checkEnrollmentStatus = async (classId) => {
+      if (!user.value) return;
+      
+      try {
+        const enrollmentsRef = collection(db, 'enrollments');
+        const q = query(
+          enrollmentsRef,
+          where('classId', '==', classId),
+          where('studentId', '==', user.value.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          const enrollment = querySnapshot.docs[0].data();
+          enrollmentStatus.value = enrollment.status;
+        } else {
+          enrollmentStatus.value = null;
+        }
+      } catch (error) {
+        console.error('Error checking enrollment status:', error);
+        enrollmentStatus.value = null;
+      }
+    };
+
+    const enrollInClass = async (classId) => {
+      if (!user.value) return;
+      
+      try {
+        enrolling.value = true;
+        
+        // Check if already enrolled
+        const enrollmentsRef = collection(db, 'enrollments');
+        const q = query(
+          enrollmentsRef,
+          where('classId', '==', classId),
+          where('studentId', '==', user.value.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          showNotification('Error', 'You are already enrolled in this class', 'error');
+          return;
+        }
+        
+        // Create enrollment
+        await addDoc(enrollmentsRef, {
+          classId,
+          studentId: user.value.uid,
+          status: 'pending',
+          enrolledAt: new Date()
+        });
+        
+        enrollmentStatus.value = 'pending';
+        showNotification('Success', 'Enrollment request sent successfully', 'success');
+      } catch (error) {
+        console.error('Error enrolling in class:', error);
+        showNotification('Error', 'Failed to enroll in class', 'error');
+      } finally {
+        enrolling.value = false;
+      }
+    };
+
+    // Watch for selected class changes
+    watch(selectedClass, (newClass) => {
+      if (newClass) {
+        checkEnrollmentStatus(newClass.id);
+      } else {
+        enrollmentStatus.value = null;
+      }
+    });
+
     return {
       showModal,
       loading,
@@ -342,7 +463,13 @@ export default {
       closeModal,
       showMessage,
       message,
-      messageType
+      messageType,
+      showMessagePopup,
+      selectedClass,
+      enrollmentStatus,
+      enrolling,
+      checkEnrollmentStatus,
+      enrollInClass
     };
   }
 };

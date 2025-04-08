@@ -3,16 +3,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
 import StudentClasses from "../../components/StudentClasses.vue";
 import ClassBrowser from "../../components/ClassBrowser.vue";
-import { db } from "../../lib/firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  limit,
-} from "firebase/firestore";
-import { useAuth } from "../../stores/auth";
+import RecentActivity from "../../components/RecentActivity.vue";
 import BaseAnimation from "../../components/BaseAnimation.vue";
 ---
 
@@ -46,7 +37,7 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
       </div>
     </div>
 
-    <div class="bg-white rounded-lg p-4">
+    <div>
       <RoleBasedContent client:load required-role="student">
         <div class="space-y-6">
           <!-- Class Browser Modal -->
@@ -142,44 +133,8 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
           </div>
 
           <!-- Classes and Quizzes -->
-          <StudentClasses client:load />
-
-          <!-- Recent Activity -->
           <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">
-              Recent Activity
-            </h3>
-            <div
-              id="recentActivities"
-              class="space-y-4 max-h-[300px] overflow-y-auto"
-            >
-              <div class="text-center py-4">
-                <div class="w-full flex justify-center items-center">
-                  <BaseAnimation type="loading" />
-                </div>
-              </div>
-            </div>
-            <div class="mt-4">
-              <button
-                id="viewAllActivitiesBtn"
-                class="text-sm font-medium text-primary-600 hover:text-primary-700 flex items-center space-x-1"
-              >
-                <span>View all activity</span>
-                <svg
-                  id="expandIcon"
-                  class="w-4 h-4 transform transition-transform duration-200"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-            </div>
+            <StudentClasses client:load />
           </div>
         </div>
       </RoleBasedContent>
@@ -196,156 +151,11 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
     collection,
     query,
     where,
-    getDocs,
-    orderBy,
-    limit,
+    getDocs
   } from "firebase/firestore";
   import { auth, db } from "../../lib/firebase";
 
-  // Format relative time
-  const formatRelativeTime = (timestamp: any) => {
-    const now = new Date();
-    const then =
-      typeof timestamp.toDate === "function"
-        ? timestamp.toDate()
-        : new Date(timestamp);
-    const diffInSeconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return "just now";
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800)
-      return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return then.toLocaleDateString();
-  };
-
-  // Update recent activities
-  const updateRecentActivities = async (userId) => {
-    try {
-      const activitiesRef = collection(db, "activities");
-      const activitiesQuery = query(
-        activitiesRef,
-        where("userId", "==", userId),
-        orderBy("timestamp", "desc"),
-        limit(5)
-      );
-      const activitiesSnapshot = await getDocs(activitiesQuery);
-
-      const activitiesContainer = document.querySelector("#recentActivities");
-      if (!activitiesContainer) return;
-
-      if (activitiesSnapshot.empty) {
-        activitiesContainer.innerHTML = `
-          <div class="text-center py-8">
-            <p class="text-gray-500">No recent activity</p>
-          </div>
-        `;
-        return;
-      }
-
-      const activitiesHTML = await Promise.all(
-        activitiesSnapshot.docs.map(async (doc) => {
-          const activity = doc.data();
-          let icon, title, subtitle;
-
-          switch (activity.type) {
-            case "class_joined":
-              icon = `<div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>`;
-              title = `Requested to join ${activity.className}`;
-              subtitle = `Teacher: ${activity.teacherName || "Unknown Teacher"}`;
-              break;
-            case "class_left":
-              icon = `<div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-              </svg>
-            </div>`;
-              title = `Left Class: ${activity.className}`;
-              subtitle = `Teacher: ${activity.teacherName || "Unknown Teacher"}`;
-              break;
-            case "quiz_completed":
-              icon = `<div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>`;
-              title = `Completed Quiz: ${activity.quizTitle}`;
-              subtitle = `Score: ${activity.score}% · ${activity.className}`;
-              break;
-            case "quiz_started":
-              icon = `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </div>`;
-              title = `Started New Quiz: ${activity.quizTitle}`;
-              subtitle = `Class: ${activity.className}`;
-              break;
-            case "enrollment_status_changed":
-              icon = `<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>`;
-              title = `Enrollment Status Changed: ${activity.className}`;
-              subtitle = `Status: ${activity.status === "accepted" ? "Accepted" : "Rejected"}`;
-              break;
-            default:
-              return "";
-          }
-
-          return `
-          <div class="flex items-start space-x-4">
-            <div class="flex-shrink-0">
-              ${icon}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900">${title}</p>
-              <p class="text-sm text-gray-500">${subtitle}</p>
-            </div>
-            <div class="flex-shrink-0 text-sm text-gray-500">
-              ${formatRelativeTime(activity.timestamp)}
-            </div>
-          </div>
-        `;
-        })
-      );
-
-      activitiesContainer.innerHTML = `
-        <div class="space-y-4">
-          ${activitiesHTML.join("")}
-        </div>
-      `;
-
-      // Add click handler for the view all button
-      const viewAllBtn = document.getElementById("viewAllActivitiesBtn");
-      const expandIcon = document.getElementById("expandIcon");
-      if (viewAllBtn && expandIcon) {
-        viewAllBtn.addEventListener("click", () => {
-          const isExpanded =
-            activitiesContainer.classList.contains("max-h-[600px]");
-          if (isExpanded) {
-            activitiesContainer.classList.remove("max-h-[600px]");
-            activitiesContainer.classList.add("max-h-[300px]");
-            expandIcon.classList.remove("rotate-180");
-            viewAllBtn.querySelector("span").textContent = "View all activity";
-          } else {
-            activitiesContainer.classList.remove("max-h-[300px]");
-            activitiesContainer.classList.add("max-h-[600px]");
-            expandIcon.classList.add("rotate-180");
-            viewAllBtn.querySelector("span").textContent = "Show less";
-          }
-        });
-      }
-    } catch (error) {
-      console.error("Error updating activities:", error);
-    }
-  };
+  
 
   // Update dashboard stats
   const updateDashboardStats = async (userId) => {
@@ -354,7 +164,8 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
       const enrollmentsRef = collection(db, "enrollments");
       const enrollmentsQuery = query(
         enrollmentsRef,
-        where("userId", "==", userId)
+        where("studentId", "==", userId),
+        where("status", "==", "accepted")
       );
       const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
 
@@ -414,13 +225,11 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
 
         // Initial updates
         await updateDashboardStats(user.uid);
-        await updateRecentActivities(user.uid);
 
         // Listen for class joined events
         window.addEventListener("classJoined", async () => {
           // Update all components
           await updateDashboardStats(user.uid);
-          await updateRecentActivities(user.uid);
 
           // Trigger StudentClasses component update
           const studentClassesComponent =
@@ -435,9 +244,8 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
         // Listen for class left events
         window.addEventListener("classLeft", async () => {
           console.log("Class left event received, updating dashboard...");
-          // Update dashboard stats and recent activity
+          // Update dashboard stats
           await updateDashboardStats(user.uid);
-          await updateRecentActivities(user.uid);
 
           // Trigger StudentClasses component update
           const studentClassesComponent =
@@ -452,9 +260,8 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
         // Listen for quiz completed events
         window.addEventListener("quizCompleted", async () => {
           console.log("Quiz completed event received, updating dashboard...");
-          // Update dashboard stats and recent activity
+          // Update dashboard stats
           await updateDashboardStats(user.uid);
-          await updateRecentActivities(user.uid);
 
           // Trigger StudentClasses component update
           const studentClassesComponent =
@@ -471,9 +278,8 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
           console.log(
             "Enrollment status changed event received, updating dashboard..."
           );
-          // Update dashboard stats and recent activity
+          // Update dashboard stats
           await updateDashboardStats(user.uid);
-          await updateRecentActivities(user.uid);
 
           // Trigger StudentClasses component update
           const studentClassesComponent =

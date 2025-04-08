@@ -136,12 +136,13 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, addDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
+import { useNotification } from '../composables/useNotification';
 
 export default {
   name: 'QuizGenerator',
@@ -150,6 +151,7 @@ export default {
   },
   setup() {
     const { user } = useAuth();
+    const { showNotification: showGlobalNotification } = useNotification();
     const fileInput = ref(null);
     const fileName = ref('');
     const loading = ref(false);
@@ -170,10 +172,11 @@ export default {
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const showNotification = (message, type = 'success') => {
-      notification.value = { show: true, message, type };
-      setTimeout(() => {
-        notification.value.show = false;
-      }, 3000);
+      showGlobalNotification(
+        type === 'success' ? 'Success' : 'Error',
+        message,
+        type
+      );
     };
 
     const handleFileUpload = async (event) => {

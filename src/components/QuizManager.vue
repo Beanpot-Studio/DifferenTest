@@ -9,12 +9,6 @@
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Your Quizzes</h2>
       
-      <!-- Notification -->
-      <div v-if="notification.show" 
-           :class="['mb-4 p-4 rounded-lg', notification.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
-        {{ notification.message }}
-      </div>
-
       <!-- Quiz List -->
       <div v-if="quizzes.length > 0" class="space-y-2">
         <div v-for="quiz in quizzes" :key="quiz.id" class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
@@ -181,6 +175,7 @@ import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, g
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
+import { useNotification } from '../composables/useNotification';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
@@ -192,7 +187,8 @@ export default {
   props: {
     classId: {
       type: String,
-      required: true
+      required: false,
+      default: null
     }
   },
   setup(props) {
@@ -200,7 +196,7 @@ export default {
     const quizzes = ref([]);
     const showEditModal = ref(false);
     const currentQuiz = ref(null);
-    const notification = ref({ show: false, message: '', type: 'success' });
+    const { showNotification } = useNotification();
     const showLessonPlanModal = ref(false);
     const currentLessonPlan = ref(null);
     const lessonPlanText = ref('');
@@ -208,13 +204,6 @@ export default {
     const error = ref(null);
     const success = ref(null);
     const loading = ref(false);
-
-    const showNotification = (message, type = 'success') => {
-      notification.value = { show: true, message, type };
-      setTimeout(() => {
-        notification.value.show = false;
-      }, 3000);
-    };
 
     const fetchQuizzes = async () => {
       if (!user.value) return;
@@ -231,7 +220,7 @@ export default {
         }));
       } catch (error) {
         console.error('Error fetching quizzes:', error);
-        showNotification('Error fetching quizzes', 'error');
+        showNotification('Error', 'Error fetching quizzes', 'error');
       }
     };
 
@@ -254,10 +243,10 @@ export default {
           ...currentQuiz.value,
           updatedAt: new Date()
         });
-        showNotification('Quiz updated successfully');
+        showNotification('Success', 'Quiz updated successfully', 'success');
       } catch (error) {
         console.error('Error saving quiz:', error);
-        showNotification('Error saving quiz', 'error');
+        showNotification('Error', 'Error saving quiz', 'error');
       }
     };
 
@@ -267,10 +256,10 @@ export default {
       try {
         await deleteDoc(doc(db, 'quizzes', quizId));
         quizzes.value = quizzes.value.filter(q => q.id !== quizId);
-        showNotification('Quiz deleted successfully');
+        showNotification('Success', 'Quiz deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting quiz:', error);
-        showNotification('Error deleting quiz', 'error');
+        showNotification('Error', 'Error deleting quiz', 'error');
       }
     };
 
@@ -314,13 +303,6 @@ export default {
       quizzes,
       showEditModal,
       currentQuiz,
-      notification,
-      openEditModal,
-      closeEditModal,
-      saveQuiz,
-      deleteQuiz,
-      addOption,
-      removeOption,
       showLessonPlanModal,
       currentLessonPlan,
       lessonPlanText,
@@ -329,7 +311,13 @@ export default {
       success,
       viewLessonPlan,
       closeLessonPlanModal,
-      loading
+      loading,
+      openEditModal,
+      closeEditModal,
+      saveQuiz,
+      deleteQuiz,
+      addOption,
+      removeOption
     };
   }
 };

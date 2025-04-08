@@ -180,6 +180,7 @@ import { useAuth } from '../stores/auth';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import ClassRoster from './ClassRoster.vue';
+import { useNotification } from '../composables/useNotification';
 
 export default {
   name: 'ClassManager',
@@ -193,6 +194,7 @@ export default {
     const newClassName = ref('');
     const editingClass = ref(null);
     const selectedQuiz = ref('');
+    const { showNotification } = useNotification();
 
     const generateClassCode = () => {
       return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -217,7 +219,7 @@ export default {
         fetchClasses();
       } catch (error) {
         console.error('Error creating class:', error);
-        alert('Error creating class. Please try again.');
+        showNotification('Error', 'Error creating class. Please try again.', 'error');
       }
     };
 
@@ -236,7 +238,7 @@ export default {
         }));
       } catch (error) {
         console.error('Error fetching classes:', error);
-        alert('Error fetching classes. Please try again.');
+        showNotification('Error', 'Error fetching classes. Please try again.', 'error');
       }
     };
 
@@ -255,7 +257,7 @@ export default {
         }));
       } catch (error) {
         console.error('Error fetching quizzes:', error);
-        alert('Error fetching quizzes. Please try again.');
+        showNotification('Error', 'Error fetching quizzes. Please try again.', 'error');
       }
     };
 
@@ -280,7 +282,7 @@ export default {
         editingClass.value = null;
       } catch (error) {
         console.error('Error saving class:', error);
-        alert('Error saving class. Please try again.');
+        showNotification('Error', 'Error saving class. Please try again.', 'error');
       }
     };
 
@@ -292,7 +294,7 @@ export default {
         classes.value = classes.value.filter(c => c.id !== classId);
       } catch (error) {
         console.error('Error deleting class:', error);
-        alert('Error deleting class. Please try again.');
+        showNotification('Error', 'Error deleting class. Please try again.', 'error');
       }
     };
 
@@ -322,7 +324,7 @@ export default {
         selectedQuiz.value = '';
       } catch (error) {
         console.error('Error adding quiz to class:', error);
-        alert('Error adding quiz to class. Please try again.');
+        showNotification('Error', 'Error adding quiz to class. Please try again.', 'error');
       }
     };
 
@@ -341,14 +343,14 @@ export default {
         }
       } catch (error) {
         console.error('Error removing quiz from class:', error);
-        alert('Error removing quiz from class. Please try again.');
+        showNotification('Error', 'Error removing quiz from class. Please try again.', 'error');
       }
     };
 
     const copyClassCode = () => {
       if (!editingClass.value?.code) return;
       navigator.clipboard.writeText(editingClass.value.code);
-      alert('Class code copied to clipboard!');
+      showNotification('Success', 'Class code copied to clipboard!', 'success');
     };
 
     const formatDate = (timestamp) => {
@@ -375,7 +377,8 @@ export default {
       addQuizToClass,
       removeQuizFromClass,
       copyClassCode,
-      formatDate
+      formatDate,
+      showNotification
     };
   }
 };
