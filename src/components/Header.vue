@@ -13,6 +13,8 @@
             <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
             <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition text-white">Student Portal</a>
           </template>
+          <!-- Curriculum Link (visible to all) -->
+          <a href="/curriculum" class="hover:text-primary-200 transition text-white">Curriculum</a>
         </nav>
 
         

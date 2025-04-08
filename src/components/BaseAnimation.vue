@@ -13,7 +13,6 @@
 
 <script>
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
-import { computed } from 'vue';
 
 export default {
   name: 'BaseAnimation',
@@ -24,14 +23,14 @@ export default {
     type: {
       type: String,
       required: true,
-      validator: (value) => ['404', 'loading', 'confetti', 'lock', 'learning'].includes(value)
+      validator: (value) => ['lost', 'loading', 'confetti', 'lock', 'learning'].includes(value)
     },
     size: {
       type: Number,
       default(rawProps) {
         // Default sizes based on animation type
         const defaults = {
-          '404': 300,
+          lost: 300,
           loading: 100,
           confetti: 200,
           lock: 200,

@@ -4,10 +4,10 @@ import BaseAnimation from "../components/BaseAnimation.vue";
 ---
 
 <MainLayout title="Page Not Found">
-  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+  <div class="flex flex-col items-center justify-center px-4">
     <div class="text-center space-y-6">
-      <div class="w-full flex justify-center items-center">
-        <BaseAnimation type="404" />
+      <div class="w-full flex justify-center">
+        <BaseAnimation type="lost" client:load />
       </div>
       <h1 class="text-6xl font-bold text-gray-900">404</h1>
       <h2 class="text-2xl font-semibold text-gray-700">Page Not Found</h2>
@@ -21,12 +21,7 @@ import BaseAnimation from "../components/BaseAnimation.vue";
         >
           Go Home
         </a>
-        <a
-          href="/login"
-          class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Login
-        </a>
+       
       </div>
     </div>
   </div>

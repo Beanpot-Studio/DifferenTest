@@ -2,6 +2,7 @@
   <div class="mt-6">
     <h3 class="text-lg font-semibold mb-4">Class Roster</h3>
     
+
     <!-- Status Filter Buttons -->
     <div class="flex space-x-2 mb-4">
       <button
@@ -130,6 +131,7 @@ export default {
     const enrollments = ref([]);
     const currentFilter = ref('all');
     const loading = ref(true);
+
 
     // Filter students based on current filter
     const filteredStudents = computed(() => {
