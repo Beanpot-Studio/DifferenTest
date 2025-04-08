@@ -7,7 +7,7 @@
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">My Classes</h2>
       <div v-if="loading" class="text-center py-4">
-        <LoadingSpinner />
+        <BaseAnimation type="loading" />
       </div>    
       
       <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
@@ -174,7 +174,7 @@
                 </span>
                 <span v-if="quizScore == 100">
                   <div class="flex justify-center items-center">
-                    <ConfettiIcon />
+                    <BaseAnimation type="confetti" />
                   </div>
                  </span>
               </p>
@@ -288,15 +288,14 @@ import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, upda
 import { useAuth } from '../stores/auth';
 import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import LoadingSpinner from './AnimationComponents/Loading.vue';
-import ConfettiIcon from './AnimationComponents/Confetti.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, LoadingSpinner, ConfettiIcon
+    ClassSearch, BaseAnimation
   },
   setup() {
     const { user, initialized } = useAuth();
@@ -313,6 +312,7 @@ export default {
     const explanations = ref({});
     const quizStartTime = ref(0);
     const error = ref(null);
+    const showConfetti = ref(false);
 
     const loadClasses = async () => {
       if (!user.value?.uid) return;
@@ -795,7 +795,8 @@ export default {
       getExplanation,
       retakeQuiz,
       closeQuizModal,
-      closeReviewModal
+      closeReviewModal,
+      showConfetti
     };
   }
 };

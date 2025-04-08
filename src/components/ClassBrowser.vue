@@ -58,8 +58,8 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="text-center py-8">
-        <LoadingSpinner />
+      <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
+        <BaseAnimation type="loading" />
       </div>
 
       <!-- Error State -->
@@ -132,12 +132,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
-import LoadingSpinner from './AnimationComponents/Loading.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 export default {
   name: 'ClassBrowser',
   components: {
-    LoadingSpinner
+    BaseAnimation
   },
   setup() {
     const { user } = useAuth();

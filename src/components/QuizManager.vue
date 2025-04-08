@@ -1,5 +1,10 @@
 <template>
   <div class="space-y-6">
+    <!-- Loading state -->
+    <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
+      <BaseAnimation type="loading" />
+    </div>
+
     <!-- Quiz List -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Your Quizzes</h2>
@@ -175,14 +180,14 @@ import { useAuth } from '../stores/auth';
 import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import LoadingSpinner from './AnimationComponents/Loading.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'QuizManager',
   components: {
-    LoadingSpinner
+    BaseAnimation
   },
   props: {
     classId: {
@@ -202,6 +207,7 @@ export default {
     const generating = ref(false);
     const error = ref(null);
     const success = ref(null);
+    const loading = ref(false);
 
     const showNotification = (message, type = 'success') => {
       notification.value = { show: true, message, type };
@@ -322,7 +328,8 @@ export default {
       error,
       success,
       viewLessonPlan,
-      closeLessonPlanModal
+      closeLessonPlanModal,
+      loading
     };
   }
 };

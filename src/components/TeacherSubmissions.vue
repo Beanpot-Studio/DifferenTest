@@ -33,8 +33,8 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="text-center py-8">
-      <LoadingSpinner />
+    <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
+      <BaseAnimation type="loading" />
     </div>
 
     <!-- Submissions Table -->
@@ -187,12 +187,12 @@ import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import LoadingSpinner from './AnimationComponents/Loading.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 export default {
   name: 'TeacherSubmissions',
   components: {
-    LoadingSpinner
+    BaseAnimation
   },
   setup() {
     const { user } = useAuth();

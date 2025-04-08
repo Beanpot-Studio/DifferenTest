@@ -1,27 +1,32 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import Animation404 from "../components/AnimationComponents/404.vue";
+import BaseAnimation from "../components/BaseAnimation.vue";
 ---
 
 <MainLayout title="Page Not Found">
-  <div class="flex items-center justify-center bg-gray-50">
-    <div class="max-w-md w-full mx-auto p-6 text-center">
-      <div class="space-y-6">
-        <h1 class="text-3xl font-bold text-gray-900">Page Not Found</h1>
-        <Animation404 client:load />
-
-        <p class="text-gray-600">
-          Sorry! The page you're looking for doesn't exist or has been moved.
-        </p>
-
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/"
-            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Go Home
-          </a>
-        </div>
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <div class="text-center space-y-6">
+      <div class="w-full flex justify-center items-center">
+        <BaseAnimation type="404" />
+      </div>
+      <h1 class="text-6xl font-bold text-gray-900">404</h1>
+      <h2 class="text-2xl font-semibold text-gray-700">Page Not Found</h2>
+      <p class="text-gray-500 max-w-md">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+      <div class="flex space-x-4 justify-center">
+        <a
+          href="/"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Go Home
+        </a>
+        <a
+          href="/login"
+          class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          Login
+        </a>
       </div>
     </div>
   </div>

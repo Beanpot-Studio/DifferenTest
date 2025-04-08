@@ -60,12 +60,8 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="isGenerating" class="mb-6">
-      <div class="flex items-center space-x-2">
-        <div class="w-full flex justify-center items-center">
-          <LoadingSpinner />
-        </div>
-      </div>
+    <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
+      <BaseAnimation type="loading" />
     </div>
 
     <!-- Quiz Editor -->
@@ -145,18 +141,18 @@ import { useAuth } from '../stores/auth';
 import { collection, addDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import LoadingSpinner from './AnimationComponents/Loading.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 export default {
   name: 'QuizGenerator',
   components: {
-    LoadingSpinner
+    BaseAnimation
   },
   setup() {
     const { user } = useAuth();
     const fileInput = ref(null);
     const fileName = ref('');
-    const isGenerating = ref(false);
+    const loading = ref(false);
     const quiz = ref(null);
     const fileContent = ref('');
     const numQuestions = ref(3);
@@ -185,7 +181,7 @@ export default {
       if (!file) return;
 
       fileName.value = file.name;
-      isGenerating.value = true;
+      loading.value = true;
 
       try {
         const text = await file.text();
@@ -195,7 +191,7 @@ export default {
         console.error('Error processing file:', error);
         showNotification('Error processing file. Please try again.', 'error');
       } finally {
-        isGenerating.value = false;
+        loading.value = false;
       }
     };
 
@@ -286,7 +282,7 @@ export default {
     return {
       fileInput,
       fileName,
-      isGenerating,
+      loading,
       quiz,
       numQuestions,
       quizTitle,

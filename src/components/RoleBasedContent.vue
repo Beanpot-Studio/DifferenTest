@@ -2,7 +2,7 @@
   <div>
     <!-- Loading state -->
     <div v-if="loading || !initialized" class="min-h-[400px] flex flex-col items-center justify-center p-6">
-      <LoadingSpinner />
+      <BaseAnimation type="loading" />
     </div>
     
     <!-- Not logged in state -->
@@ -12,7 +12,7 @@
         <p class="mt-1 text-secondary-500">Please login</p>
         <div class="mt-4">
           <div class="w-full flex justify-center items-center">
-          <LockIcon />
+            <BaseAnimation type="lock" />
           </div>
           <button 
             @click="showLoginModal = true"
@@ -29,7 +29,7 @@
       <div class="text-center">
         <h3 class="mt-2 text-xl font-medium text-secondary-900">Access Restricted</h3>
         <div class="w-full flex justify-center items-center">
-          <LockIcon />
+          <BaseAnimation type="lock" />
         </div>
         <p class="mt-1 text-secondary-500">
           Your current role ({{ userRole }}) does not have permission to view this content
@@ -64,16 +64,14 @@ import { useAuth } from '../stores/auth';
 import { ref, computed, onMounted } from 'vue';
 import LoginModal from './LoginModal.vue';
 import RegisterModal from './RegisterModal.vue';
-import LoadingSpinner from './AnimationComponents/Loading.vue';
-import LockIcon from './AnimationComponents/Lock.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 export default {
   name: 'RoleBasedContent',
   components: {
     LoginModal,
     RegisterModal,
-    LoadingSpinner,
-    LockIcon
+    BaseAnimation
   },
   props: {
     requiredRoles: {

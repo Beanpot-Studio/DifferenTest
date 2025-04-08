@@ -1,223 +1,220 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import HomeCTA from "../components/HomeCTA.vue";
-import LearningAnimation from "../components/AnimationComponents/Learning.vue";
+import BaseAnimation from "../components/BaseAnimation.vue";
 import LoginPopupHelper from "../components/LoginPopupHelper.vue";
 ---
 
 <MainLayout title="Welcome">
-
   <div class="bg-white pb-10 rounded">
-  <!-- Hero Section -->
-  <section class="py-5">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div class="text-center lg:text-left">
-          <h1 class="text-4xl md:text-5xl font-bold text-secondary-900 mb-6">
-            Transform Your Learning Experience
-          </h1>
-          <p class="text-xl text-secondary-600 mb-8">
-            Join our innovative platform where teachers create engaging quizzes
-            and students achieve their full potential through personalized
-            learning.
-          </p>
-          <div
-            class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-          >
-            <button
-              onclick="window.dispatchEvent(new CustomEvent('show-register-modal'))"
-              class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+    <!-- Hero Section -->
+    <section class="py-5">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div class="text-center lg:text-left">
+            <h1 class="text-4xl md:text-5xl font-bold text-secondary-900 mb-6">
+              Transform Your Learning Experience
+            </h1>
+            <p class="text-xl text-secondary-600 mb-8">
+              Join our innovative platform where teachers create engaging
+              quizzes and students achieve their full potential through
+              personalized learning.
+            </p>
+            <div
+              class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
             >
-              Get Started
-            </button>
+              <button
+                onclick="window.dispatchEvent(new CustomEvent('show-register-modal'))"
+                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Get Started
+              </button>
+              <a
+                href="#about"
+                class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Learn More
+              </a>
+            </div>
+          </div>
+          <div class="flex justify-center">
+            <BaseAnimation type="learning" client:load />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <LoginPopupHelper client:load />
+
+    <section class="py-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <!-- For Teachers -->
+        <div
+          class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+        >
+          <div class="p-6">
+            <div
+              class="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center mb-4"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-primary-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-secondary-900 mb-2">
+              For Teachers
+            </h2>
+            <p class="text-secondary-600 mb-4">
+              Upload lesson plans and autogenerate editable assessments. Track
+              student progress all in one place.
+            </p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Create and manage courses
+              </li>
+              <li class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Assign auto-graded differentiated tests
+              </li>
+              <li class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Track student performance
+              </li>
+            </ul>
             <a
-              href="#about"
-              class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              href="/teacher"
+              class="inline-block bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-lg transition"
             >
-              Learn More
+              Teacher Portal
             </a>
           </div>
         </div>
-        <div class="flex justify-center">
-          <LearningAnimation client:load />
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <LoginPopupHelper client:load />
-
-  <section class="py-5">
-   
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-      <!-- For Teachers -->
-      <div
-        class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
-      >
-        <div class="p-6">
-          <div
-            class="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center mb-4"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 text-primary-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <!-- For Students -->
+        <div
+          class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+        >
+          <div class="p-6">
+            <div
+              class="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center mb-4"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-              ></path>
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-secondary-900 mb-2">
-            For Teachers
-          </h2>
-          <p class="text-secondary-600 mb-4">
-            Upload lesson plans and autogenerate editable assessments. Track
-            student progress all in one place.
-          </p>
-          <ul class="space-y-2 mb-6">
-            <li class="flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+                class="h-6 w-6 text-primary-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
                 <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                ></path>
               </svg>
-              Create and manage courses
-            </li>
-            <li class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
-              </svg>
-              Assign auto-graded differentiated tests
-            </li>
-            <li class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
-              </svg>
-              Track student performance
-            </li>
-          </ul>
-          <a
-            href="/teacher"
-            class="inline-block bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-lg transition"
-          >
-            Teacher Portal
-          </a>
-        </div>
-      </div>
-
-      <!-- For Students -->
-      <div
-        class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
-      >
-        <div class="p-6">
-          <div
-            class="w-12 h-12 rounded-lg bg-primary-100 flex items-center justify-center mb-4"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 text-primary-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+            </div>
+            <h2 class="text-2xl font-bold text-secondary-900 mb-2">
+              For Students
+            </h2>
+            <p class="text-secondary-600 mb-4">
+              Access and complete your assignments and communicate with your
+              teachers easily.
+            </p>
+            <ul class="space-y-2 mb-6">
+              <li class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Access course materials
+              </li>
+              <li class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Submit assignments
+              </li>
+              <li class="flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"></path>
+                </svg>
+                Track your progress
+              </li>
+            </ul>
+            <a
+              href="/student"
+              class="inline-block bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-lg transition"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              ></path>
-            </svg>
+              Student Portal
+            </a>
           </div>
-          <h2 class="text-2xl font-bold text-secondary-900 mb-2">
-            For Students
-          </h2>
-          <p class="text-secondary-600 mb-4">
-            Access and complete your assignments and communicate with your
-            teachers easily.
-          </p>
-          <ul class="space-y-2 mb-6">
-            <li class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
-              </svg>
-              Access course materials
-            </li>
-            <li class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
-              </svg>
-              Submit assignments
-            </li>
-            <li class="flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-green-500 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
-              </svg>
-              Track your progress
-            </li>
-          </ul>
-          <a
-            href="/student"
-            class="inline-block bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-6 rounded-lg transition"
-          >
-            Student Portal
-          </a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
     <!-- Features Section -->
     <section id="features" class="py-5">

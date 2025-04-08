@@ -3,7 +3,6 @@ import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
 import StudentClasses from "../../components/StudentClasses.vue";
 import ClassBrowser from "../../components/ClassBrowser.vue";
-import { DotLottieVue } from "@lottiefiles/dotlottie-vue";
 import { db } from "../../lib/firebase";
 import {
   collection,
@@ -14,7 +13,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { useAuth } from "../../stores/auth";
-import LoadingSpinner from "../../components/AnimationComponents/Loading.vue";
+import BaseAnimation from "../../components/BaseAnimation.vue";
 ---
 
 <MainLayout title="Student Portal">
@@ -156,7 +155,7 @@ import LoadingSpinner from "../../components/AnimationComponents/Loading.vue";
             >
               <div class="text-center py-4">
                 <div class="w-full flex justify-center items-center">
-                  <LoadingSpinner />
+                  <BaseAnimation type="loading" />
                 </div>
               </div>
             </div>

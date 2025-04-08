@@ -17,9 +17,12 @@
     "@astrojs/vue": "^5.0.9",
     "@google/generative-ai": "^0.24.0",
     "@lottiefiles/dotlottie-vue": "^0.6.1",
+    "@openzeppelin/contracts": "^5.2.0",
     "apexcharts": "^3.37.2",
     "astro": "^5.5.6",
+    "ethers": "^6.13.5",
     "firebase": "^11.6.0",
+    "ipfs-http-client": "^60.0.1",
     "tailwindcss": "^3.4.17",
     "vue": "^3.5.13"
   },
