@@ -1,17 +1,17 @@
 <template>
-  <div class="flex justify-center items-center">
+  <div class="flex items-center justify-center" :style="{ width: sizeValue + 'px', height: sizeValue + 'px' }">
     <DotLottieVue
       :src="animationSrc"
       :autoplay="true"
-      :loop="loop"
-      :style="{ height: `${sizeValue}px`, width: `${sizeValue}px` }"
+      :loop="loop === 'true' || loop === true"
+      class="w-full h-full"
     />
   </div>
 </template>
 
 <script>
-import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 import { computed } from 'vue';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
 
 export default {
   name: 'BaseAnimation',
@@ -24,20 +24,22 @@ export default {
       required: true,
       validator: (value) => ['loading', 'lock', 'confetti', 'lost', 'learning'].includes(value)
     },
-    loop: {
-      type: Boolean,
-      default: true
-    },
     size: {
       type: [Number, String],
-      default: 200,
+      default: 100,
       validator: (value) => {
         const num = Number(value);
         return !isNaN(num) && num > 0;
       }
+    },
+    loop: {
+      type: [Boolean, String],
+      default: true
     }
   },
   setup(props) {
+    const sizeValue = computed(() => Number(props.size));
+    
     const animationSrc = computed(() => {
       switch (props.type) {
         case 'loading':
@@ -55,11 +57,9 @@ export default {
       }
     });
 
-    const sizeValue = computed(() => Number(props.size));
-
     return {
-      animationSrc,
-      sizeValue
+      sizeValue,
+      animationSrc
     };
   }
 };
