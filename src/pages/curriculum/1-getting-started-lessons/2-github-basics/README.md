@@ -311,19 +311,3 @@ Pair with a friend to work on each other's code. Create a project collaborativel
 
 ## Post-Lecture Quiz
 [Post-lecture quiz](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/4)
-
-## Review & Self Study
-
-Read more about [contributing to open source software](https://opensource.guide/how-to-contribute/#how-to-submit-a-contribution). 
-
-[Git cheatsheet](https://training.github.com/downloads/github-git-cheat-sheet/).
-
-Practice, practice, practice. GitHub has great learning paths available via [lab.github.com](https://lab.github.com/):
-
-- [First Week on GitHub](https://lab.github.com/githubtraining/first-week-on-github)
-
-You'll also find more advanced labs. 
-
-## Assignment 
-
-Complete [the First Week on GitHub training lab](https://lab.github.com/githubtraining/first-week-on-github)

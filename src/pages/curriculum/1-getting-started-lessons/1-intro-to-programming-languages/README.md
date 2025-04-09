@@ -188,10 +188,3 @@ Compare some programming languages. What are some of the unique traits of JavaSc
 ## Post-Lecture Quiz
 [Post-lecture quiz](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/2)
 
-## Review & Self Study
-
-Study a bit on the different languages available to the programmer. Try to write a line in one language, and then rewrite it in two others. What did you learn?
-
-## Assignment
-
-[Reading the Docs](assignment.md)

@@ -11,10 +11,7 @@
     </div>
     
     <div v-else class="prose max-w-none bg-white p-6 rounded shadow">
-    <!-- back to curriculum home  link -->
-    <div class="mb-4">
-      <router-link to="/curriculum" class="text-blue-500 hover:text-blue-700">Home</router-link>
-    </div>
+   
       <div v-html="renderedCurriculum"></div>
     </div>
   </div>
