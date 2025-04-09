@@ -115,96 +115,18 @@
     </div>
 
     <!-- Quiz Modal -->
-    <div v-if="showQuizModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
-        <button 
-          @click="closeQuizModal"
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-
-        <div v-if="currentQuiz">
-          <h3 class="text-xl font-bold mb-4">{{ currentQuiz.title }}</h3>
-          
-          <div v-if="!quizCompleted" class="space-y-6">
-            <div v-for="(question, index) in currentQuiz.questions" :key="index" class="border-b pb-4">
-              <p class="font-medium mb-3">{{ index + 1 }}. {{ question.text }}</p>
-              <div class="space-y-2">
-                <label 
-                  v-for="(option, optionIndex) in question.options" 
-                  :key="optionIndex"
-                  class="flex items-center space-x-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    :name="'question-' + index"
-                    :value="optionIndex"
-                    v-model="answers[index]"
-                    class="text-primary-600"
-                  />
-                  <span>{{ option.text }}</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                @click="submitQuiz"
-                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-              >
-                Submit Quiz
-              </button>
-            </div>
-          </div>
-
-          <div v-else class="space-y-6">
-            <div class="text-center">
-              <h4 class="text-2xl font-bold mb-2">Quiz Complete!</h4>
-              <p class="text-lg">
-                Your score: 
-                <span :class="{
-                  'text-green-600': quizScore >= 80,
-                  'text-yellow-600': quizScore >= 60 && quizScore < 80,
-                  'text-red-600': quizScore < 60
-                }">
-                  {{ quizScore }}%
-                </span>
-                <span v-if="quizScore == 100">
-                  <div class="flex justify-center items-center">
-                    <BaseAnimation type="confetti" :style="{ height: '1200px', width: '300px' }" />
-                  </div>
-                 </span>
-              </p>
-            </div>
-
-            <div v-if="quizScore < 100" class="bg-primary-50 p-4 rounded-lg">
-              <h5 class="font-semibold mb-2">Want to improve your score?</h5>
-              <p class="text-sm text-gray-600 mb-4">
-                Review your answers and get detailed explanations to help you understand the concepts better.
-              </p>
-              <button
-                @click="startReview"
-                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-              >
-                Start Review
-              </button>
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                @click="closeQuizModal"
-                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <BaseModal
+      v-if="selectedQuiz"
+      :is-open="isQuizModalOpen"
+      @close="closeQuizModal"
+      :title="selectedQuiz.title"
+    >
+      <QuizInterface
+        :quiz-id="selectedQuiz.id"
+        :class-id="selectedClass?.id"
+        :is-embedded="false"
+      />
+    </BaseModal>
 
     <!-- Review Modal -->
     <div v-if="showReviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -318,12 +240,14 @@ import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
 import QuizHistory from './QuizHistory.vue';
 import RecentActivity from './RecentActivity.vue';
+import QuizInterface from './QuizInterface.vue';
+import BaseModal from './BaseModal.vue';
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, BaseAnimation, QuizHistory, RecentActivity
+    ClassSearch, BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal
   },
   setup() {
     const { user, initialized } = useAuth();
@@ -333,6 +257,9 @@ export default {
     const showReviewModal = ref(false);
     const currentQuiz = ref(null);
     const currentClassId = ref(null);
+    const selectedQuiz = ref(null);
+    const selectedClass = ref(null);
+    const isQuizModalOpen = ref(false);
     const answers = ref([]);
     const quizCompleted = ref(false);
     const quizScore = ref(0);
@@ -340,9 +267,9 @@ export default {
     const explanations = ref({});
     const quizStartTime = ref(0);
     const error = ref(null);
-    const showConfetti = ref(false);
     const { showNotification } = useNotification();
     const activeTab = ref('activities');
+    const enrollments = ref([]);
     const tabs = [
       { id: 'activities', name: 'Activities' },
       { id: 'history', name: 'Quiz History' }
@@ -461,6 +388,28 @@ export default {
       }
     };
 
+    const loadEnrollments = async () => {
+      try {
+        loading.value = true;
+        if (!user.value?.uid) return;
+
+        const enrollmentsQuery = query(
+          collection(db, 'enrollments'),
+          where('studentId', '==', user.value.uid)
+        );
+        const querySnapshot = await getDocs(enrollmentsQuery);
+        enrollments.value = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (err) {
+        console.error('Error loading enrollments:', err);
+        error.value = 'Failed to load enrollments';
+      } finally {
+        loading.value = false;
+      }
+    };
+
     // Watch for both user and initialization changes
     watch([() => user.value?.uid, () => initialized.value], ([newUserId, isInitialized]) => {
       console.log('Auth state changed:', { userId: newUserId, initialized: isInitialized });
@@ -532,13 +481,14 @@ export default {
       }
 
       try {
-        // Start the quiz
-        currentQuiz.value = {
+        selectedClass.value = classes.value.find(c => c.id === classId);
+        selectedQuiz.value = {
           id: quiz.id,
           title: quizDoc.data().title,
           questions: quizDoc.data().questions,
           classId: classId
         };
+        isQuizModalOpen.value = true;
 
         // Log quiz start activity
         await addDoc(collection(db, 'activities'), {
@@ -550,12 +500,6 @@ export default {
           timestamp: new Date(),
           isRetake: !!getQuizAttempt(classId, quiz.id)
         });
-
-        // Start the quiz
-        quizCompleted.value = false;
-        quizScore.value = 0;
-        quizStartTime.value = Date.now();
-        showQuizModal.value = true;
       } catch (error) {
         console.error('Error starting quiz:', error);
         showNotification('Error', 'Failed to start quiz. Please try again.', 'error');
@@ -749,11 +693,9 @@ export default {
     };
 
     const closeQuizModal = () => {
-      showQuizModal.value = false;
-      currentQuiz.value = null;
-      currentClassId.value = null;
-      answers.value = [];
-      quizCompleted.value = false;
+      isQuizModalOpen.value = false;
+      selectedQuiz.value = null;
+      selectedClass.value = null;
     };
 
     const closeReviewModal = () => {
@@ -786,13 +728,13 @@ export default {
     onMounted(async () => {
       console.log('StudentClasses mounted, user:', user.value?.uid);
       if (user.value?.uid && initialized.value) {
-        await loadClasses();
+        await Promise.all([loadClasses(), loadEnrollments()]);
       }
       
       // Listen for class joined event
       window.addEventListener('classJoined', async () => {
         console.log('Class joined event received');
-        await loadClasses();
+        await Promise.all([loadClasses(), loadEnrollments()]);
       });
 
       // Listen for custom refresh event
@@ -800,7 +742,7 @@ export default {
       if (component) {
         component.addEventListener('refreshClasses', async () => {
           console.log('Refresh classes event received');
-          await loadClasses();
+          await Promise.all([loadClasses(), loadEnrollments()]);
         });
       }
     });
@@ -821,6 +763,9 @@ export default {
       showQuizModal,
       showReviewModal,
       currentQuiz,
+      selectedQuiz,
+      selectedClass,
+      isQuizModalOpen,
       answers,
       quizCompleted,
       quizScore,
@@ -836,13 +781,13 @@ export default {
       retakeQuiz,
       closeQuizModal,
       closeReviewModal,
-      showConfetti,
       showNotification,
       activeTab,
       tabs,
       filteredClasses,
       handleSearch,
-      searchQuery
+      searchQuery,
+      loadEnrollments
     };
   }
 };

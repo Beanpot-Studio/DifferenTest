@@ -22,7 +22,7 @@ export default {
     type: {
       type: String,
       required: true,
-      validator: (value) => ['loading', 'lock'].includes(value)
+      validator: (value) => ['loading', 'lock', 'confetti', 'lost', 'learning'].includes(value)
     },
     loop: {
       type: Boolean,
