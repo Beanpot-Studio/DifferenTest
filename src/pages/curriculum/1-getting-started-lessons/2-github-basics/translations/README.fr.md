@@ -2,7 +2,7 @@
 
 Cette leçon couvre les principes de base de GitHub, une plateforme permettant d’héberger et de gérer les modifications apportées à votre code.
 
-![Intro to GitHub](/sketchnotes/webdev101-github.png)
+![Intro to GitHub](../../../sketchnotes/webdev101-github.png)
 > Sketchnote par [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz préalable

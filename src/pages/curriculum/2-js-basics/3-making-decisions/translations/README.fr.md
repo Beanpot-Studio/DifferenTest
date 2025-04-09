@@ -1,6 +1,6 @@
 # Principes de base de JavaScript : Prendre des décisions
 
-![Principes de base de JavaScript : Prendre des décisions](/sketchnotes/webdev101-js-decisions.png)
+![Principes de base de JavaScript : Prendre des décisions](../../../sketchnotes/webdev101-js-decisions.png)
 > Sketchnote par [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz préalable
@@ -12,7 +12,6 @@ Prendre des décisions et contrôler l'ordre dans lequel votre code s'exécute r
 
 > 🎥 Cliquez sur l'image ci-dessus pour une vidéo sur la prise de décisions.
 
-> Vous pouvez suivre cette leçon sur [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101-if-else/?WT.mc_id=academic-13441-cxa)!
 ## Un bref récapitulatif sur les booléens
 
 Les booléens ne peuvent avoir que deux valeurs : `true` ou `false`. Les booléens aident à prendre des décisions sur les lignes de code à exécuter lorsque certaines conditions sont remplies.

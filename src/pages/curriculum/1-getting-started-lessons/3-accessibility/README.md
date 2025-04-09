@@ -1,6 +1,6 @@
 # Creating Accessible Webpages
 
-![All About Accessibility](../../sketchnotes/webdev101-a11y.png)
+![All About Accessibility](../../../sketchnotes/webdev101-a11y.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Pre-Lecture Quiz
@@ -12,7 +12,6 @@
 
 This quote perfectly highlights the importance of creating accessible websites. An application that can't be accessed by all is by definition exclusionary. As web developers we should always have accessibility in mind. By having this focus from the beginning you will be well on your way to ensure everyone can access the pages you create. In this lesson, you'll learn about the tools that can help you ensure that your web assets are accessible and how to build with accessibility in mind. 
 
-> You can take this lesson on [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101/accessibility?WT.mc_id=academic-13441-cxa)!
 
 ## Tools to use
 

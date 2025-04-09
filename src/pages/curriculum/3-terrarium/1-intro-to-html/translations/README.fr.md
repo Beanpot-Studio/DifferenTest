@@ -1,6 +1,6 @@
 # Projet Terrarium Partie 1 : Introduction au HTML
 
-![Introduction au HTML](/sketchnotes/webdev101-html.png)
+![Introduction au HTML](../../../sketchnotes/webdev101-html.png)
 > Sketchnote par [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz préalable
@@ -225,7 +225,6 @@ Il existe quelques "vieilles" balises sauvages en HTML avec lesquelles il est en
 
 Le HTML est le système de blocs de construction qui a contribué à faire du Web ce qu'il est aujourd'hui. Apprenez-en un peu plus sur son histoire en étudiant certaines balises anciennes et nouvelles. Pouvez-vous comprendre pourquoi certaines balises ont été supprimées et d'autres ajoutées ? Quelles balises pourraient être introduites à l'avenir ?
 
-Pour en savoir plus sur la création de sites pour le web et les appareils mobiles, consultez le site [Microsoft Learn](https://docs.microsoft.com/learn/modules/build-simple-website/?WT.mc_id=academic-13441-cxa).
 
 
 ## Exercice

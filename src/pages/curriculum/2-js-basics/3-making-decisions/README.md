@@ -1,6 +1,6 @@
 # JavaScript Basics: Making Decisions
 
-![JavaScript Basics - Making decisions](/sketchnotes/webdev101-js-decisions.png)
+![JavaScript Basics - Making decisions](../../../sketchnotes/webdev101-js-decisions.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Pre-Lecture Quiz
@@ -12,7 +12,6 @@ Making decisions and controlling the order in which your code runs makes your co
 
 > 🎥 Click the image above for a video about making decisions.
 
-> You can take this lesson on [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101-if-else/?WT.mc_id=academic-13441-cxa)!
 ## A Brief Recap on Booleans
 
 Booleans can be only two values: `true` or `false`. Booleans help make decisions on which lines of code should run when certain conditions are met.

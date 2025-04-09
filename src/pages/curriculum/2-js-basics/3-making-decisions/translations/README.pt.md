@@ -1,5 +1,5 @@
 # Noções básicas de JavaScript: Tomando Decisões
-![Noções básicas de JavaScript - Tomando Decisões](/sketchnotes/webdev101-js-decisions.png)
+![Noções básicas de JavaScript - Tomando Decisões](../../../sketchnotes/webdev101-js-decisions.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz Pré-Aula
@@ -11,7 +11,6 @@ Tomar decisões e controlar a ordem do que é executado no seu código o torna r
 
 > 🎥 Clique na imagem acima para ver um video sobre tomada de decisões 
 
-> Você pode fazer essa aula em [Microsoft Learn](https://docs.microsoft.com/pt-br/learn/modules/web-development-101-if-else/?WT.mc_id=academic-13441-cxa)!
 
 ## Uma breve recapitulação sobre Booleanos
 

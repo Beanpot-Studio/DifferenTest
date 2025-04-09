@@ -98,4 +98,79 @@ export default {
   a:hover {
     text-decoration: underline;
   }
+
+  /* Code block styling */
+  pre {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  code {
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+    background-color: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    color: #1e293b;
+    font-size: 0.9em;
+  }
+
+  pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+   /* Typography styling */
+   h3 {
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+    list-style-type: disc;
+  }
+
+  li {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+    color: #334155;
+  }
+
+  li::marker {
+    color: #3b82f6;
+  }
+
+  em {
+    font-style: italic;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  /* Nested list styling */
+  ul ul {
+    margin: 0.5rem 0;
+    list-style-type: circle;
+  }
+
+  ul ul li::marker {
+    color: #94a3b8;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
 </style>

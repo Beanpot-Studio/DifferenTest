@@ -1,6 +1,6 @@
 # Proyecto de extensión del navegador Parte 1: Todo sobre los navegadores
 
-![Browser sketchnote](/sketchnotes/browser.jpg)
+![Browser sketchnote](../../../sketchnotes/browser.jpg)
 > Sketchnote de [Wassim Chegham](https://dev.to/wassimchegham/ever-wondered-what-happens-when-you-type-in-a-url-in-an-address-bar-in-a-browser-3dob)
 
 ## [Pre-lecture prueba](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/23)

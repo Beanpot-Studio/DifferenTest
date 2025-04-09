@@ -1,6 +1,6 @@
 # Terrarium Project Parte 1: Introducción a HTML
 
-![Introducción a HTML](/sketchnotes/webdev101-html.png)
+![Introducción a HTML](../../../sketchnotes/webdev101-html.png)
 > Sketchnote por [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## [Pre-lecture prueba](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/15)

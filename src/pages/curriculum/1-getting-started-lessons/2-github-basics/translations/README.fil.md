@@ -2,7 +2,7 @@
 
 Sinasaklaw ng araling ito ang mga pangunahing kaalaman ng GitHub, isang platform para mag-host at mamahala ng mga pagbabago sa iyong code.
 
-![Intro to GitHub](../sketchnotes/webdev101-github.png)
+![Intro to GitHub](..../../../sketchnotes/webdev101-github.png)
 > Sketchnote ni [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Pagsusulit bago ang lektura

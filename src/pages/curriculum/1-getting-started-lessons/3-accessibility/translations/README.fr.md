@@ -1,6 +1,6 @@
 # Création de Pages Web Accessibles
 
-! [Tout sur l'accessibilité](/sketchnotes/webdev101-a11y.png)
+! [Tout sur l'accessibilité](../../../sketchnotes/webdev101-a11y.png)
 > SketchNote par[Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz préalable
@@ -11,8 +11,6 @@
 > \- Sir Timothy Berners-Lee, directeur du W3C et inventeur du World Wide Web
 
 Cette citation met parfaitement l'accent sur l'importance de créer des sites Web accessibles. Une application qui ne peut pas être accessible par tous est par définition exclusionnaire. En tant que développeurs Web, nous devrions toujours avoir l'accessibilité à l'esprit. En ayant cet objectif dès le début, vous serez déjà bien lancé sur la façon de vous assurer que tout le monde peut accéder aux pages que vous créez. Dans cette leçon, vous découvrirez les outils pouvant vous aider à vous assurer que vos éléments Web sont accessibles et comment développer avec l'accessibilité à l'esprit. 
-
-> Vous pouvez accéder à cette leçon sur [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101/accessibility?WT.mc_id=academic-13441-cxa)!
 
 ## Outils à utiliser
 

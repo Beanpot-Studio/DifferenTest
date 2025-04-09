@@ -1,6 +1,6 @@
 # Projek Terrarium Bahagian 1: Pengenalan Kepada HTML
 
-![Pengenalan Kepada HTML](/sketchnotes/webdev101-html.png)
+![Pengenalan Kepada HTML](../../../sketchnotes/webdev101-html.png)
 > Sketchnote karya [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Kuiz Pra Kuliah
@@ -223,7 +223,6 @@ Terdapat beberapa tag 'lawas' liar dalam HTML yang masih menyeronokkan untuk dim
 
 HTML adalah sistem blok bangunan 'cuba dan benar' yang telah membantu membina web menjadi seperti sekarang. Ketahui sedikit mengenai sejarahnya dengan mempelajari beberapa tanda lama dan baru. Bolehkah anda mengetahui mengapa beberapa teg tidak digunakan lagi dan ada yang ditambahkan? Tag apa yang mungkin diperkenalkan pada masa akan datang?
 
-Ketahui lebih lanjut mengenai membina laman web dan peranti mudah alih di [Microsoft Learn](https://docs.microsoft.com/learn/modules/build-simple-website/?WT.mc_id=cxaall-4621-cxall).
 
 ## Tugasan
 

@@ -1,6 +1,6 @@
 # JavaScript Basics: Methods and Functions
 
-![JavaScript Basics - Functions](../../sketchnotes/webdev101-js-functions.png)
+![JavaScript Basics - Functions](../../../sketchnotes/webdev101-js-functions.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Pre-Lecture Quiz
@@ -12,7 +12,6 @@ When we think about writing code, we always want to ensure our code is readable.
 
 > 🎥 Click the image above for a video about methods and functions.
 
-> You can take this lesson on [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101-functions/?WT.mc_id=academic-13441-cxa)!
 
 ## Functions
 

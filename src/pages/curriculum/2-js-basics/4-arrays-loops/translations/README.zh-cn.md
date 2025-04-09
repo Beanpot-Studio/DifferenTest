@@ -1,6 +1,6 @@
 # JavaScript 基础：数组和循环
 
-![JavaScript Basics - Arrays](/sketchnotes/webdev101-js-arrays.png)
+![JavaScript Basics - Arrays](../../../sketchnotes/webdev101-js-arrays.png)
 > 涂鸦笔记作者：[Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## 课前小测

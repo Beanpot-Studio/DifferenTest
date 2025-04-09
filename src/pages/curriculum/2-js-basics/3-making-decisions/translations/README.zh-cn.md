@@ -1,6 +1,6 @@
 # JavaScript 基础：做出决定
 
-![JavaScript Basics - Making decisions](/sketchnotes/webdev101-js-decisions.png)
+![JavaScript Basics - Making decisions](../../../sketchnotes/webdev101-js-decisions.png)
 > 涂鸦笔记作者：[Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## 课前小测

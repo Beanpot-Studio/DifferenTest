@@ -2,7 +2,7 @@
 
 В этом уроке рассматриваются основы GitHub - платформы для хранения и управления изменениями вашего кода.
 
-![Введение в GitHub](/sketchnotes/webdev101-github.png)
+![Введение в GitHub](../../../sketchnotes/webdev101-github.png)
 
 > Скетчноут [Tomomi Imura](https://twitter.com/girlie_mac)
 

@@ -1,6 +1,6 @@
 # JavaScript 基础：数据类型
 
-![JavaScript Basics - Data types](/sketchnotes/webdev101-js-datatypes.png)
+![JavaScript Basics - Data types](../../../sketchnotes/webdev101-js-datatypes.png)
 > 涂鸦笔记作者：[Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## 课前小测

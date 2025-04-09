@@ -1,6 +1,6 @@
 # ब्राउज़र एक्सटेंशन प्रोजेक्ट पार्ट 1: ब्राउज़रों के बारे में सभी
 
-![ब्राउजर ब्राउज़र स्केचनोट  ](/sketchnotes/browser.jpg)
+![ब्राउजर ब्राउज़र स्केचनोट  ](../../../sketchnotes/browser.jpg)
 > स्केचनोट [वसीम चैघाम](https://dev.to/wassimchegham/ever-wondered-what-happens-when-you-type-in-a-url-in-an-address-bar-in-a-browser-3dob) द्वारा
 
 ## पूर्व व्याख्यान प्रश्नोत्तरी

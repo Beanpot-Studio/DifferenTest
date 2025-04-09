@@ -1,6 +1,6 @@
 # JavaScript Basics: Arrays and Loops
 
-![JavaScript Basics - Arrays](../../sketchnotes/webdev101-js-arrays.png)
+![JavaScript Basics - Arrays](../../../sketchnotes/webdev101-js-arrays.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Pre-Lecture Quiz
@@ -14,7 +14,6 @@ This lesson covers the basics of JavaScript, the language that provides interact
 
 > 🎥 Click the images above for videos about arrays and loops.
 
-> You can take this lesson on [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101-arrays/?WT.mc_id=academic-13441-cxa)!
 
 ## Arrays
 

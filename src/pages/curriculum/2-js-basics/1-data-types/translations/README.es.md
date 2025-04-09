@@ -1,6 +1,6 @@
 # Conceptos básicos de JavaScript: tipos de datos
 
-![JavaScript Basics - Data types](/sketchnotes/webdev101-js-datatypes.png)
+![JavaScript Basics - Data types](../../../sketchnotes/webdev101-js-datatypes.png)
 > Sketchnote por [Tomomi Imura](https://twitter.com/girlie_mac)
 
 [![Declaracion de Variables](https://img.youtube.com/vi/mUvddpeBCAs/0.jpg)](https://youtube.com/watch?v=mUvddpeBCAs "Declaracion de Variables")

@@ -1,6 +1,6 @@
 # Noções básicas de JavaScript: métodos e funções
 
-![Noções básicas de JavaScript - Funções](/sketchnotes/webdev101-js-functions.png)
+![Noções básicas de JavaScript - Funções](../../../sketchnotes/webdev101-js-functions.png)
 > Sketchnote por [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz Pré-Aula

@@ -1,6 +1,6 @@
 # JavaScript 基础：方法和函数
 
-![JavaScript Basics - Functions](/sketchnotes/webdev101-js-functions.png)
+![JavaScript Basics - Functions](../../../sketchnotes/webdev101-js-functions.png)
 > 涂鸦笔记作者：[Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## 课前小测

@@ -1,6 +1,6 @@
 # Bases de JavaScript: Types de Données
 
-![Bases de JavaScript - Types de Données](/sketchnotes/webdev101-js-datatypes.png)
+![Bases de JavaScript - Types de Données](../../../sketchnotes/webdev101-js-datatypes.png)
 > Sketchnote par [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Quiz préalable
@@ -8,7 +8,6 @@
 
 Cette leçon couvre les bases de JavaScript, le language qui permet l'interactivité sur le web.
 
-> Vous pouvez suivre cette leçon sur [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101-variables/?WT.mc_id=academic-13441-cxa)!
 
 [![Variables](https://img.youtube.com/vi/JNIXfGiDWM8/0.jpg)](https://youtube.com/watch?v=JNIXfGiDWM8 "Variables in JavaScript")
 

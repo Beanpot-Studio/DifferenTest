@@ -1,14 +1,12 @@
 # JavaScript Basics: Data Types
 
-![JavaScript Basics - Data types](../../sketchnotes/webdev101-js-datatypes.png)
+![JavaScript Basics - Data types](../../../sketchnotes/webdev101-js-datatypes.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## Pre-Lecture Quiz
 [Pre-lecture quiz](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/7)
 
 This lesson covers the basics of JavaScript, the language that provides interactivity on the web.
-
-> You can take this lesson on [Microsoft Learn](https://docs.microsoft.com/learn/modules/web-development-101-variables/?WT.mc_id=academic-13441-cxa)!
 
 [![Variables](https://img.youtube.com/vi/JNIXfGiDWM8/0.jpg)](https://youtube.com/watch?v=JNIXfGiDWM8 "Variables in JavaScript")
 

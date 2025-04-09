@@ -1,6 +1,6 @@
 # Creación de páginas web accesibles
 
-![Todo sobre accesibilidad](/sketchnotes/webdev101-a11y.png)
+![Todo sobre accesibilidad](../../../sketchnotes/webdev101-a11y.png)
 > Dibujo por [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## [Cuestionario](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/5)

@@ -1,6 +1,6 @@
 # テラリウムプロジェクト その1: HTML 入門
 
-![Introduction to HTML](/sketchnotes/webdev101-html.png)
+![Introduction to HTML](../../../sketchnotes/webdev101-html.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
 ## レッスン前の小テスト
@@ -223,7 +223,6 @@ HTMLに はまだ遊んで楽しいワイルドな「古い」タグがいくつ
 
 HTML は、今日のウェブを構築するのに役立ってきた「試行錯誤された」ビルディングブロックシステムです。古いタグと新しいタグを研究することで、その歴史について少し学びましょう。あるタグが非推奨になり、あるタグが追加された理由がわかりますか？将来的にはどのようなタグが導入されるかもしれませんか？
 
-Web やモバイル向けのサイト構築については、[Microsoft Learn](https://docs.microsoft.com/learn/modules/build-simple-website/?WT.mc_id=academic-13441-cxa) で詳しく解説しています。
 
 
 ## 課題
