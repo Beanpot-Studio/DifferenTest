@@ -6,10 +6,10 @@
         type="text"
         class="flex-1 p-2 border rounded-lg"
         placeholder="Search for classes..."
-        @input="searchClasses"
+        @input="handleSearch"
       />
       <button
-        @click="searchClasses"
+        @click="handleSearch"
         class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
       >
         Search
@@ -50,22 +50,28 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../stores/auth';
 
 export default {
   name: 'ClassSearch',
-  setup() {
+  emits: ['search', 'enrolled'],
+  setup(props, { emit }) {
     const searchQuery = ref('');
     const searchResults = ref([]);
     const hasSearched = ref(false);
     const loading = ref(false);
     const { user } = useAuth();
 
-    const searchClasses = async () => {
-      if (!searchQuery.value.trim()) return;
+    const handleSearch = async () => {
+      if (!searchQuery.value.trim()) {
+        searchResults.value = [];
+        hasSearched.value = false;
+        emit('search', '');
+        return;
+      }
       
       hasSearched.value = true;
       loading.value = true;
@@ -95,6 +101,7 @@ export default {
         }
         
         searchResults.value = results;
+        emit('search', searchQuery.value);
       } catch (error) {
         console.error('Error searching classes:', error);
       } finally {
@@ -117,7 +124,8 @@ export default {
         });
 
         // Emit event to refresh enrolled classes
-        searchClasses();
+        emit('enrolled');
+        handleSearch();
       } catch (error) {
         console.error('Error enrolling in class:', error);
       } finally {
@@ -125,12 +133,17 @@ export default {
       }
     };
 
+    // Watch for changes in the search query
+    watch(searchQuery, () => {
+      handleSearch();
+    });
+
     return {
       searchQuery,
       searchResults,
       hasSearched,
       loading,
-      searchClasses,
+      handleSearch,
       enrollInClass
     };
   }
