@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto p-6">
+  <div class="curriculum-content">
     
     <div v-if="loading" class="text-center py-10">
       <p>Loading curriculum...</p>
@@ -11,6 +11,10 @@
     </div>
     
     <div v-else class="prose max-w-none bg-white p-6 rounded shadow">
+    <!-- back to curriculum home  link -->
+    <div class="mb-4">
+      <router-link to="/curriculum" class="text-blue-500 hover:text-blue-700">Home</router-link>
+    </div>
       <div v-html="renderedCurriculum"></div>
     </div>
   </div>
@@ -58,119 +62,123 @@ export default {
 
 
 <style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 2rem 0;
-    font-size: 0.9rem;
-  }
+.curriculum-content {
+  /* Base styles */
+  line-height: 1.6;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.curriculum-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 0.9rem;
+}
   
-  th, td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-  }
+.curriculum-content th, 
+.curriculum-content td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
   
-  th {
-    background-color: #f8fafc;
-    font-weight: 600;
-    color: #1e293b;
-  }
+.curriculum-content th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+}
   
-  tr:nth-child(even) {
-    background-color: #f8fafc;
-  }
+.curriculum-content tr:nth-child(even) {
+  background-color: #f8fafc;
+}
   
-  tr:hover {
-    background-color: #f1f5f9;
-  }
+.curriculum-content tr:hover {
+  background-color: #f1f5f9;
+}
   
-  td:first-child {
-    font-weight: 600;
-    color: #1e293b;
-  }
+.curriculum-content td:first-child {
+  font-weight: 600;
+  color: #1e293b;
+}
   
-  a {
-    color: #3b82f6;
-    text-decoration: none;
-  }
+.curriculum-content a {
+  color: #3b82f6;
+  text-decoration: none;
+}
   
-  a:hover {
-    text-decoration: underline;
-  }
+.curriculum-content a:hover {
+  text-decoration: underline;
+}
 
-  /* Code block styling */
-  pre {
-    background-color: #1e293b;
-    color: #e2e8f0;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    margin: 1rem 0;
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
+/* Code block styling */
+.curriculum-content pre {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
 
-  code {
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-    background-color: #f1f5f9;
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.25rem;
-    color: #1e293b;
-    font-size: 0.9em;
-  }
+.curriculum-content code {
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  background-color: #f1f5f9;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  color: #1e293b;
+  font-size: 0.9em;
+}
 
-  pre code {
-    background-color: transparent;
-    padding: 0;
-    color: inherit;
-    font-size: inherit;
-  }
+.curriculum-content pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
 
-   /* Typography styling */
-   h3 {
-    color: #1e293b;
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 2rem 0 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e2e8f0;
-  }
+/* Typography styling */
+.curriculum-content h3 {
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 2rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
 
-  ul {
-    margin: 1rem 0;
-    padding-left: 1.5rem;
-    list-style-type: disc;
-  }
+.curriculum-content ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
 
-  li {
-    margin: 0.5rem 0;
-    line-height: 1.6;
-    color: #334155;
-  }
+.curriculum-content li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+  color: #334155;
+}
 
-  li::marker {
-    color: #3b82f6;
-  }
+.curriculum-content li::marker {
+  color: #3b82f6;
+}
 
-  em {
-    font-style: italic;
-    color: #64748b;
-    font-weight: 500;
-  }
+.curriculum-content em {
+  font-style: italic;
+  color: #64748b;
+  font-weight: 500;
+}
 
-  /* Nested list styling */
-  ul ul {
-    margin: 0.5rem 0;
-    list-style-type: circle;
-  }
+/* Nested list styling */
+.curriculum-content ul ul {
+  margin: 0.5rem 0;
+  list-style-type: circle;
+}
 
-  ul ul li::marker {
-    color: #94a3b8;
-  }
-  
-  a {
-    text-decoration: underline;
-  }
+.curriculum-content ul ul li::marker {
+  color: #94a3b8;
+}
 </style>
