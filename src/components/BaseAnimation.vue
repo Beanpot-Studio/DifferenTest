@@ -4,7 +4,7 @@
       :src="animationSrc"
       :autoplay="true"
       :loop="loop"
-      :style="{ height: `${size}px`, width: `${size}px` }"
+      :style="{ height: `${sizeValue}px`, width: `${sizeValue}px` }"
     />
   </div>
 </template>
@@ -29,8 +29,12 @@ export default {
       default: true
     },
     size: {
-      type: Number,
-      default: 100
+      type: [Number, String],
+      default: 200,
+      validator: (value) => {
+        const num = Number(value);
+        return !isNaN(num) && num > 0;
+      }
     }
   },
   setup(props) {
@@ -51,8 +55,11 @@ export default {
       }
     });
 
+    const sizeValue = computed(() => Number(props.size));
+
     return {
-      animationSrc
+      animationSrc,
+      sizeValue
     };
   }
 };

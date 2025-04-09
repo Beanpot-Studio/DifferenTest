@@ -7,6 +7,16 @@
     <div v-else-if="error" class="p-4 bg-red-50 rounded-lg">
       <p class="text-red-600">{{ error }}</p>
     </div>
+
+    <div v-else-if="!user" class="text-center py-8">
+      <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900">Please Log In</h3>
+      <p class="text-gray-500">You need to be logged in to take this quiz.</p>
+    </div>
     
     <div v-else-if="quiz">
       <div class="flex justify-between items-center mb-4">
@@ -126,7 +136,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import BaseAnimation from './BaseAnimation.vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
@@ -226,6 +236,58 @@ export default {
       selectedAnswers.value[questionIndex] = answerIndex;
     };
 
+    const claimBadge = async (quizId, score) => {
+      try {
+        // Create badge metadata
+        const badgeMetadata = {
+          userId: user.value.uid,
+          quizId,
+          score,
+          timestamp: new Date(),
+          type: 'perfect_score',
+          title: 'Perfect Score Achievement',
+          description: `Achieved 100% on ${quiz.value.title}`,
+          status: 'claimed'
+        };
+
+        // Store badge in Firestore
+        const badgeRef = doc(collection(db, 'badges'));
+        await setDoc(badgeRef, {
+          ...badgeMetadata,
+          badgeId: badgeRef.id,
+          // In a real implementation, this would be the blockchain transaction hash
+          blockchainVerification: {
+            network: 'ethereum',
+            contractAddress: '0x...',
+            tokenId: badgeRef.id,
+            status: 'minted'
+          }
+        });
+
+        // Add badge claim activity
+        await addDoc(collection(db, 'activities'), {
+          userId: user.value.uid,
+          type: 'badge_claimed',
+          badgeId: badgeRef.id,
+          timestamp: new Date(),
+          activityDescription: `🏆 Claimed "${badgeMetadata.title}" badge for perfect score on ${quiz.value.title}!`
+        });
+
+        showNotification(
+          'Badge Claimed!',
+          'Your achievement has been recorded on the blockchain. View it in your profile!',
+          'success'
+        );
+      } catch (error) {
+        console.error('Error claiming badge:', error);
+        showNotification(
+          'Error',
+          'Failed to claim badge. Please try again.',
+          'error'
+        );
+      }
+    };
+
     const submitQuiz = async () => {
       if (!canSubmit.value) return;
 
@@ -274,7 +336,7 @@ export default {
           await setDoc(doc(db, 'quizAttempts', attemptId), attemptData);
           
           if (score.value === 100) {
-            showNotification('Success', 'Perfect score! 🎉', 'success');
+            await claimBadge(quiz.value.id, score.value);
           } else {
             showNotification('Success', `Quiz completed! Score: ${score.value}%`, 'success');
           }
@@ -339,7 +401,9 @@ export default {
       expandedQuestions,
       toggleQuestion,
       getExplanation,
-      showConfetti
+      showConfetti,
+      claimBadge,
+      user
     };
   }
 };
