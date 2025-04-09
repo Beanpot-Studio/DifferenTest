@@ -1,0 +1,11 @@
+---
+import Layout from "../layouts/MainLayout.astro";
+import CurriculumViewer from "../components/CurriculumViewer.vue";
+import markdownContent from "./curriculum/README.md?raw";
+---
+
+<Layout title="Curriculum">
+  <main class="py-12">
+    <CurriculumViewer client:load markdownContent={markdownContent} />
+  </main>
+</Layout>

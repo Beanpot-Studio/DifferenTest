@@ -1,10 +1,9 @@
 <template>
   <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Curriculum Viewer</h1>
     
     <div v-if="loading" class="text-center py-10">
       <p>Loading curriculum...</p>
-      </div>
+    </div>
     
     <div v-else-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
       <strong class="font-bold">Error!</strong>
@@ -21,43 +20,23 @@
 import { ref, computed, onMounted } from 'vue';
 import { marked } from 'marked';
 
-// Sample Markdown Content (Replace with actual fetching logic later)
-const sampleMarkdown = `
-# Sample Curriculum: Introduction to Vue.js
-
-## Module 1: Getting Started
-
-- What is Vue.js?
-- Setting up your development environment
-- Your first Vue application
-
-## Module 2: Core Concepts
-
-- Template Syntax
-- Data Binding
-- Computed Properties and Watchers
-
-## Module 3: Components
-
-- Introduction to Components
-- Props and Events
-- Slots
-
----
-
-*This is a sample curriculum.*
-`;
-
 export default {
   name: 'CurriculumViewer',
-  setup() {
-    const curriculumContent = ref('');
-    const loading = ref(true);
+  props: {
+    markdownContent: {
+      type: String,
+      required: true,
+      default: '# No Curriculum Content Provided\n\nPlease ensure the content is passed correctly.'
+    }
+  },
+  setup(props) {
+    const loading = ref(false); // Content is passed via prop, no loading needed here
     const error = ref(null);
 
     const renderedCurriculum = computed(() => {
       try {
-        return marked(curriculumContent.value || '');
+        // Ensure marked is called with a string
+        return marked(props.markdownContent || '');
       } catch (err) {
         console.error('Error parsing Markdown:', err);
         error.value = 'Failed to render curriculum content.';
@@ -65,27 +44,11 @@ export default {
       }
     });
 
-    const loadCurriculum = async () => {
-      loading.value = true;
-      error.value = null;
-      try {
-        // Simulate fetching content
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-        curriculumContent.value = sampleMarkdown;
-      } catch (err) {
-        console.error('Error loading curriculum:', err);
-        error.value = 'Could not load curriculum content.';
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    onMounted(() => {
-      loadCurriculum();
-    });
+    // Removed loadCurriculum function as content is now passed via prop
+    // Removed onMounted hook related to loadCurriculum
 
     return {
-      loading,
+      loading, // Keep for consistency, though not strictly needed for rendering
       error,
       renderedCurriculum,
     };
@@ -93,9 +56,46 @@ export default {
 };
 </script>
 
+
 <style>
-/* Add any specific styles for the curriculum viewer if needed */
-.prose {
-  /* Tailwind's prose class provides default styling for markdown */
-}
-</style> 
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+  }
+  
+  th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  
+  tr:hover {
+    background-color: #f1f5f9;
+  }
+  
+  td:first-child {
+    font-weight: 600;
+    color: #1e293b;
+  }
+  
+  a {
+    color: #3b82f6;
+    text-decoration: none;
+  }
+  
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
