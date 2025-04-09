@@ -7,7 +7,7 @@ import BaseAnimation from "../components/BaseAnimation.vue";
   <div class="flex flex-col items-center justify-center px-4">
     <div class="text-center space-y-6">
       <div class="w-full flex justify-center">
-        <BaseAnimation type="lost" loop=true client:load />
+        <BaseAnimation type="lost" size="500" :loop="true" client:load/>
       </div>
       <h1 class="text-6xl font-bold text-gray-900">404</h1>
       <h2 class="text-2xl font-semibold text-gray-700">Page Not Found</h2>
@@ -21,7 +21,6 @@ import BaseAnimation from "../components/BaseAnimation.vue";
         >
           Go Home
         </a>
-       
       </div>
     </div>
   </div>

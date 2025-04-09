@@ -1,7 +1,7 @@
 <template>
   <div class="embeddable-quiz">
     <div v-if="loading" class="loading-state">
-      <BaseAnimation type="loading" loop=true />
+      <BaseAnimation type="loading" :loop="true" />
     </div>
     
     <div v-else-if="error" class="error-state">

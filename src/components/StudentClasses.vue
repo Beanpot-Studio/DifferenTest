@@ -7,7 +7,7 @@
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">My Classes</h2>
       <div v-if="loading" class="text-center py-4">
-        <BaseAnimation type="loading" loop=true />
+        <BaseAnimation type="loading" :loop="true" />
       </div>    
       
       <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
@@ -174,7 +174,7 @@
                 </span>
                 <span v-if="quizScore == 100">
                   <div class="flex justify-center items-center">
-                    <BaseAnimation type="confetti" />
+                    <BaseAnimation type="confetti" :style="{ height: '1200px', width: '300px' }" />
                   </div>
                  </span>
               </p>

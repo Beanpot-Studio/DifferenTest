@@ -18,7 +18,7 @@
       <div class="flex items-start">
         <div class="flex-shrink-0">
           <BaseAnimation
-            :type="type"
+            :type="type === 'success' ? 'confetti' : type === 'error' ? 'lost' : 'learning'"
             class="w-6 h-6"
           />
         </div>
