@@ -81,14 +81,14 @@ export default {
         const querySnapshot = await getDocs(q);
         const results = [];
         
-        for (const doc of querySnapshot.docs) {
-          const classData = doc.data();
+        for (const docSnapshot of querySnapshot.docs) {
+          const classData = docSnapshot.data();
           // Check if user is already enrolled
-          const enrollmentRef = await getDoc(doc(db, 'enrollments', `${user.value.uid}_${doc.id}`));
+          const enrollmentRef = await getDoc(doc(db, 'enrollments', `${user.value.uid}_${docSnapshot.id}`));
           
           if (!enrollmentRef.exists()) {
             results.push({
-              id: doc.id,
+              id: docSnapshot.id,
               ...classData
             });
           }

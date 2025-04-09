@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-6">
     <!-- Class Search -->
-    <ClassSearch @enrolled="loadClasses" />
+    <ClassSearch @enrolled="loadClasses" @search="handleSearch" />
 
     <!-- My Classes -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">My Classes</h2>
       <div v-if="loading" class="text-center py-4">
-        <BaseAnimation type="loading" />
+        <BaseAnimation type="loading" loop=true />
       </div>    
       
       <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
@@ -16,7 +16,7 @@
       </div>
       
       <div v-else class="space-y-6">
-        <div v-for="classItem in classes" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div v-for="classItem in filteredClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
           <div class="flex justify-between items-start">
             <div class="space-y-2">
               <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
@@ -308,7 +308,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { useAuth } from '../stores/auth';
@@ -347,6 +347,29 @@ export default {
       { id: 'activities', name: 'Activities' },
       { id: 'history', name: 'Quiz History' }
     ];
+
+    // Add search query ref and filtered classes computed property
+    const searchQuery = ref('');
+    const filteredClasses = computed(() => {
+      if (!searchQuery.value) return classes.value;
+      
+      const search = searchQuery.value.toLowerCase().trim();
+      return classes.value.filter(classItem => {
+        const nameMatch = classItem.name?.toLowerCase().includes(search);
+        const teacherMatch = classItem.teacherName?.toLowerCase().includes(search);
+        const descriptionMatch = classItem.description?.toLowerCase().includes(search);
+        const statusMatch = classItem.enrollmentStatus?.toLowerCase().includes(search);
+        
+        return nameMatch || teacherMatch || descriptionMatch || statusMatch;
+      });
+    });
+
+    // Handle search from ClassBrowser
+    const handleSearch = (query) => {
+      searchQuery.value = query;
+      // Force a re-render of the filtered classes
+      classes.value = [...classes.value];
+    };
 
     const loadClasses = async () => {
       if (!user.value?.uid) return;
@@ -816,7 +839,10 @@ export default {
       showConfetti,
       showNotification,
       activeTab,
-      tabs
+      tabs,
+      filteredClasses,
+      handleSearch,
+      searchQuery
     };
   }
 };

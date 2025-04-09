@@ -2,7 +2,7 @@
   <div>
     <!-- Loading state -->
     <div v-if="loading || !initialized" class="min-h-[400px] flex flex-col items-center justify-center p-6">
-      <BaseAnimation type="loading" />
+      <BaseAnimation type="loading" loop=true/>
     </div>
     
     <!-- Not logged in state -->

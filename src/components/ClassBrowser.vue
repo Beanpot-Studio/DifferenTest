@@ -40,6 +40,7 @@
             v-model="searchQuery"
             placeholder="Search classes..."
             class="w-full px-4 py-2 border rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            @input="handleSearch"
           />
           <svg
             class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
@@ -59,7 +60,7 @@
 
       <!-- Loading State -->
       <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
-        <BaseAnimation type="loading" />
+        <BaseAnimation type="loading" loop=true />
       </div>
 
       <!-- Error State -->
@@ -113,7 +114,7 @@
                 classItem.enrollmentStatus === 'accepted' ? 'Enrolled' : 
                 classItem.enrollmentStatus === 'pending' ? 'Pending' :
                 classItem.enrollmentStatus === 'rejected' ? 'Rejected' :
-                'Join Class' 
+                'Request to Join Class' 
               }}
             </button>
           </div>
@@ -166,8 +167,22 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- ... existing code ... -->
+      <!-- Class Details Content -->
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h3 class="font-semibold">Teacher</h3>
+            <p>{{ selectedClass.teacherName }}</p>
+          </div>
+          <div>
+            <h3 class="font-semibold">Students</h3>
+            <p>{{ selectedClass.studentCount || 0 }}</p>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-semibold">Quizzes</h3>
+          <p>{{ selectedClass.quizCount || 0 }} quizzes available</p>
+        </div>
       </div>
     </div>
   </div>
@@ -186,7 +201,7 @@ export default {
   components: {
     BaseAnimation
   },
-  setup() {
+  setup(props, { emit }) {
     const { user } = useAuth();
     const showModal = ref(false);
     const loading = ref(true);
@@ -205,12 +220,16 @@ export default {
     // Filter classes based on search query
     const filteredClasses = computed(() => {
       if (!searchQuery.value) return classes.value;
-      const search = searchQuery.value.toLowerCase();
-      return classes.value.filter(classItem => 
-        classItem.name.toLowerCase().includes(search) ||
-        classItem.teacherName.toLowerCase().includes(search) ||
-        classItem.description.toLowerCase().includes(search)
-      );
+      
+      const search = searchQuery.value.toLowerCase().trim();
+      return classes.value.filter(classItem => {
+        const nameMatch = classItem.name?.toLowerCase().includes(search);
+        const teacherMatch = classItem.teacherName?.toLowerCase().includes(search);
+        const descriptionMatch = classItem.description?.toLowerCase().includes(search);
+        const statusMatch = classItem.enrollmentStatus?.toLowerCase().includes(search);
+        
+        return nameMatch || teacherMatch || descriptionMatch || statusMatch;
+      });
     });
 
     // Show message function
@@ -303,7 +322,23 @@ export default {
 
     // Join a class
     const joinClass = async (classItem) => {
+      if (!user.value) return;
+      
       try {
+        // Check if already enrolled
+        const enrollmentsRef = collection(db, 'enrollments');
+        const q = query(
+          enrollmentsRef,
+          where('classId', '==', classItem.id),
+          where('studentId', '==', user.value.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          showNotification('Error', 'You are already enrolled in this class', 'error');
+          return;
+        }
+
         // Create enrollment document with pending status
         const enrollmentRef = await addDoc(collection(db, 'enrollments'), {
           classId: classItem.id,
@@ -340,15 +375,15 @@ export default {
         // Update local state
         classes.value = classes.value.map(c => 
           c.id === classItem.id 
-            ? { ...c, isEnrolled: true } 
+            ? { ...c, enrollmentStatus: 'pending' } 
             : c
         );
 
         // Show success message
-        showMessagePopup('Successfully requested to join the class. The teacher will review your request.');
+        showNotification('Success', 'Enrollment request sent successfully', 'success');
       } catch (error) {
         console.error('Error joining class:', error);
-        showMessagePopup('Failed to join class. Please try again.', 'error');
+        showNotification('Error', 'Failed to join class. Please try again.', 'error');
       }
     };
 
@@ -450,13 +485,23 @@ export default {
       }
     });
 
+    // Handle search input
+    const handleSearch = () => {
+      // Emit the search query to the parent component
+      emit('search', searchQuery.value);
+    };
+
+    // Watch for changes in the search query
+    watch(searchQuery, (newValue) => {
+      handleSearch();
+    });
+
     return {
       showModal,
       loading,
       error,
       classes,
       searchQuery,
-      filteredClasses,
       enrolledClasses,
       loadClasses,
       joinClass,
@@ -469,7 +514,9 @@ export default {
       enrollmentStatus,
       enrolling,
       checkEnrollmentStatus,
-      enrollInClass
+      enrollInClass,
+      handleSearch,
+      filteredClasses
     };
   }
 };

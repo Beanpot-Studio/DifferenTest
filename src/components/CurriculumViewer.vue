@@ -11,16 +11,17 @@
     </div>
     
     <div v-else class="prose max-w-none bg-white p-6 rounded shadow">
-   
+      <EmbeddableQuiz :quiz="0SBFcf7rnpWAxBFGZPmj" />
       <div v-html="renderedCurriculum"></div>
+      <EmbeddableQuiz :quiz="0SBFcf7rnpWAxBFGZPmj" />
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { marked } from 'marked';
-
+import EmbeddableQuiz from './EmbeddableQuiz.vue';
 export default {
   name: 'CurriculumViewer',
   props: {

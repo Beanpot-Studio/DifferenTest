@@ -6,13 +6,15 @@
         width: `${size}px`
       }"
       :autoplay="autoplay"
-      :src="getAnimationSource(type)"
+      :src="animationSrc"
+      :loop="loop"
     />
   </div>
 </template>
 
 <script>
 import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+import { computed } from 'vue';
 
 export default {
   name: 'BaseAnimation',
@@ -42,15 +44,26 @@ export default {
     autoplay: {
       type: Boolean,
       default: true
+    },
+    loop: {
+      type: Boolean,
+      default: true
     }
   },
   setup(props) {
-    const getAnimationSource = (type) => {
-      return `../${type}.lottie`;
-    };
+    const animationSrc = computed(() => {
+      switch (props.type) {
+        case 'loading':
+          return '/animations/loading.lottie';
+        case 'lock':
+          return '/animations/lock.lottie';
+        default:
+          return `/animations/${props.type}.lottie`;
+      }
+    });
 
     return {
-      getAnimationSource
+      animationSrc
     };
   }
 };
