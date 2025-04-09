@@ -11,16 +11,59 @@
     </div>
     
     <div v-else class="prose max-w-none bg-white p-6 rounded shadow">
-      <div v-html="renderedCurriculum"></div>
+      <div v-for="(node, index) in parsedContent" :key="index">
+        <component :is="node.type" v-bind="node.props" v-if="node.type">
+          <template v-if="node.children">
+            <component 
+              v-for="(child, childIndex) in node.children" 
+              :key="childIndex"
+              :is="child.type" 
+              v-bind="child.props"
+            />
+          </template>
+          <template v-else>
+            {{ node.content }}
+          </template>
+        </component>
+        <div v-else v-html="node.content"></div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue';
+import { ref, computed, h } from 'vue';
 import { marked } from 'marked';
+import EmbeddableQuiz from './EmbeddableQuiz.vue';
+
+// Custom renderer for marked
+const renderer = {
+  code(code, infostring) {
+    if (infostring === 'quiz') {
+      const quizId = code.trim();
+      if (!quizId) {
+        return '<div class="quiz-error">Error: Quiz ID is missing</div>';
+      }
+      return {
+        type: 'div',
+        props: { class: 'quiz-embed' },
+        children: [{
+          type: EmbeddableQuiz,
+          props: { quizId }
+        }]
+      };
+    }
+    return false; // Let marked handle other code blocks
+  }
+};
+
+marked.use({ renderer });
+
 export default {
   name: 'CurriculumViewer',
+  components: {
+    EmbeddableQuiz
+  },
   
   props: {
     markdownContent: {
@@ -30,27 +73,31 @@ export default {
     }
   },
   setup(props) {
-    const loading = ref(false); // Content is passed via prop, no loading needed here
+    const loading = ref(false);
     const error = ref(null);
 
-    const renderedCurriculum = computed(() => {
+    const parsedContent = computed(() => {
       try {
-        // Ensure marked is called with a string
-        return marked(props.markdownContent || '');
+        const tokens = marked.lexer(props.markdownContent || '');
+        return tokens.map(token => {
+          if (token.type === 'code' && token.lang === 'quiz') {
+            return renderer.code(token.text, token.lang);
+          }
+          return {
+            content: marked.parser([token])
+          };
+        });
       } catch (err) {
         console.error('Error parsing Markdown:', err);
         error.value = 'Failed to render curriculum content.';
-        return '<p>Error rendering content.</p>';
+        return [{ content: '<p>Error rendering content.</p>' }];
       }
     });
 
-    // Removed loadCurriculum function as content is now passed via prop
-    // Removed onMounted hook related to loadCurriculum
-
     return {
-      loading, // Keep for consistency, though not strictly needed for rendering
+      loading,
       error,
-      renderedCurriculum,
+      parsedContent,
     };
   },
 };

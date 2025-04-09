@@ -1,224 +1,214 @@
 <template>
-  <div class="embeddable-quiz">
-    <div v-if="loading" class="loading-state">
-      <BaseAnimation type="loading" :loop="true" />
+  <div class="my-6 p-4 border rounded-lg bg-white shadow-sm">
+    <div v-if="loading" class="flex justify-center items-center py-8">
+      <BaseAnimation type="loading" :size="50" />
     </div>
     
-    <div v-else-if="error" class="error-state">
-      <p class="error-message">{{ error }}</p>
+    <div v-else-if="error" class="p-4 bg-red-50 rounded-lg">
+      <p class="text-red-600">{{ error }}</p>
     </div>
     
-    <div v-else class="quiz-content">
-      <h3 class="quiz-title">{{ quiz.title }}</h3>
+    <div v-else-if="quiz">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">{{ quiz.title }}</h3>
+        <span class="text-sm text-gray-500">{{ quiz.questions.length }} questions</span>
+      </div>
       
-      <div v-for="(question, index) in quiz.questions" :key="index" class="question">
-        <p class="question-text">{{ question.text }}</p>
-        
-        <div class="options">
-          <div v-for="(option, optionIndex) in question.options" 
-               :key="optionIndex"
-               class="option"
-               :class="{ 
-                 'selected': selectedAnswers[index] === optionIndex,
-                 'correct': showResults && question.correctIndex === optionIndex,
-                 'incorrect': showResults && selectedAnswers[index] === optionIndex && question.correctIndex !== optionIndex
-               }"
-               @click="selectAnswer(index, optionIndex)">
-            {{ option.text }}
+      <div v-if="!quizCompleted">
+        <div v-for="(question, index) in quiz.questions" :key="index" class="mb-6">
+          <p class="font-medium mb-2">{{ index + 1 }}. {{ question.text }}</p>
+          <div class="space-y-2">
+            <div
+              v-for="(option, optionIndex) in question.options"
+              :key="optionIndex"
+              class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+              :class="{
+                'bg-primary-50 border-primary-200': selectedAnswers[index] === optionIndex,
+                'border-gray-200': selectedAnswers[index] !== optionIndex
+              }"
+              @click="selectAnswer(index, optionIndex)"
+            >
+              <input
+                type="radio"
+                :name="'question-' + index"
+                :value="optionIndex"
+                v-model="selectedAnswers[index]"
+                class="mr-3"
+              />
+              <span>{{ option.text }}</span>
+            </div>
           </div>
+        </div>
+        
+        <div class="flex justify-end mt-6">
+          <button
+            @click="submitQuiz"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            :disabled="!canSubmit"
+          >
+            Submit Quiz
+          </button>
         </div>
       </div>
       
-      <div class="quiz-actions">
-        <button v-if="!showResults" 
-                @click="submitQuiz" 
-                class="submit-button"
-                :disabled="!isComplete">
-          Submit Quiz
-        </button>
-        
-        <div v-else class="results">
-          <p class="score">Score: {{ score }}%</p>
-          <p class="feedback">{{ feedback }}</p>
+      <div v-else class="text-center py-6">
+        <h4 class="text-xl font-semibold mb-2">Quiz Results</h4>
+        <p class="text-lg mb-4">Your score: {{ score }}%</p>
+        <div class="space-y-4">
+          <div
+            v-for="(result, index) in results"
+            :key="index"
+            class="p-4 rounded-lg"
+            :class="{
+              'bg-green-50': result.isCorrect,
+              'bg-red-50': !result.isCorrect
+            }"
+          >
+            <p class="font-medium mb-2">{{ index + 1 }}. {{ result.questionText }}</p>
+            <p class="text-sm">
+              Your answer: {{ result.selectedAnswer }}<br>
+              <span v-if="!result.isCorrect">
+                Correct answer: {{ result.correctAnswer }}
+              </span>
+            </p>
+          </div>
         </div>
+        <button
+          @click="resetQuiz"
+          class="mt-6 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        >
+          Try Again
+        </button>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, computed, onMounted } from 'vue';
+import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
-import BaseAnimation from './AnimationComponents/BaseAnimation.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
-const props = defineProps({
-  quizId: {
-    type: String,
-    required: true
-  }
-});
-
-const loading = ref(true);
-const error = ref(null);
-const quiz = ref(null);
-const selectedAnswers = ref([]);
-const showResults = ref(false);
-const score = ref(0);
-
-const isComplete = computed(() => {
-  return selectedAnswers.value.length === quiz.value?.questions.length;
-});
-
-const feedback = computed(() => {
-  if (score.value >= 80) return 'Excellent work!';
-  if (score.value >= 60) return 'Good job!';
-  return 'Keep practicing!';
-});
-
-const loadQuiz = async () => {
-  try {
-    const quizDoc = await getDoc(doc(db, 'quizzes', props.quizId));
-    if (quizDoc.exists()) {
-      quiz.value = quizDoc.data();
-      selectedAnswers.value = new Array(quiz.value.questions.length).fill(null);
-    } else {
-      error.value = 'Quiz not found';
+export default {
+  name: 'EmbeddableQuiz',
+  components: {
+    BaseAnimation
+  },
+  props: {
+    quizId: {
+      type: String,
+      required: true
     }
-  } catch (err) {
-    error.value = 'Error loading quiz';
-    console.error(err);
-  } finally {
-    loading.value = false;
+  },
+  setup(props) {
+    const quiz = ref(null);
+    const loading = ref(true);
+    const error = ref(null);
+    const selectedAnswers = ref([]);
+    const quizCompleted = ref(false);
+    const score = ref(0);
+    const results = ref([]);
+
+    const canSubmit = computed(() => {
+      return selectedAnswers.value.length === quiz.value?.questions.length &&
+        !selectedAnswers.value.includes(undefined);
+    });
+
+    const loadQuiz = async () => {
+      try {
+        if (!props.quizId) {
+          throw new Error('Quiz ID is required');
+        }
+
+        const quizId = props.quizId.trim();
+        console.log('Loading quiz with ID:', quizId);
+
+        const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+        if (!quizDoc.exists()) {
+          throw new Error(`Quiz with ID ${quizId} not found`);
+        }
+
+        const quizData = quizDoc.data();
+        console.log('Quiz data:', quizData);
+
+        if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+          throw new Error('Quiz has no questions');
+        }
+
+        // Validate each question has required fields
+        quizData.questions.forEach((question, index) => {
+          if (!question.text || !question.options || !Array.isArray(question.options) || question.options.length === 0) {
+            throw new Error(`Question ${index + 1} is missing required fields`);
+          }
+        });
+
+        quiz.value = {
+          id: quizDoc.id,
+          ...quizData,
+          questions: quizData.questions.map((q, index) => ({
+            ...q,
+            id: index + 1,
+            selectedAnswer: null,
+            isCorrect: null
+          }))
+        };
+
+        console.log('Processed quiz:', quiz.value);
+      } catch (error) {
+        console.error('Error loading quiz:', error);
+        error.value = error.message;
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const selectAnswer = (questionIndex, answerIndex) => {
+      selectedAnswers.value[questionIndex] = answerIndex;
+    };
+
+    const submitQuiz = () => {
+      if (!canSubmit.value) return;
+
+      let correctCount = 0;
+      results.value = quiz.value.questions.map((question, index) => {
+        const isCorrect = selectedAnswers.value[index] === question.correctIndex;
+        if (isCorrect) correctCount++;
+        
+        return {
+          questionText: question.text,
+          selectedAnswer: question.options[selectedAnswers.value[index]].text,
+          correctAnswer: question.options[question.correctIndex].text,
+          isCorrect
+        };
+      });
+
+      score.value = Math.round((correctCount / quiz.value.questions.length) * 100);
+      quizCompleted.value = true;
+    };
+
+    const resetQuiz = () => {
+      selectedAnswers.value = new Array(quiz.value.questions.length).fill(undefined);
+      quizCompleted.value = false;
+      score.value = 0;
+      results.value = [];
+    };
+
+    onMounted(loadQuiz);
+
+    return {
+      quiz,
+      loading,
+      error,
+      selectedAnswers,
+      quizCompleted,
+      score,
+      results,
+      canSubmit,
+      selectAnswer,
+      submitQuiz,
+      resetQuiz
+    };
   }
 };
-
-const selectAnswer = (questionIndex, optionIndex) => {
-  if (!showResults.value) {
-    selectedAnswers.value[questionIndex] = optionIndex;
-  }
-};
-
-const submitQuiz = () => {
-  let correctCount = 0;
-  quiz.value.questions.forEach((question, index) => {
-    if (selectedAnswers.value[index] === question.correctIndex) {
-      correctCount++;
-    }
-  });
-  
-  score.value = Math.round((correctCount / quiz.value.questions.length) * 100);
-  showResults.value = true;
-};
-
-onMounted(() => {
-  loadQuiz();
-});
-</script>
-
-<style scoped>
-.embeddable-quiz {
-  background-color: white;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  margin: 2rem 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.loading-state, .error-state {
-  text-align: center;
-  padding: 2rem;
-}
-
-.error-message {
-  color: #ef4444;
-}
-
-.quiz-title {
-  color: #1e293b;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-}
-
-.question {
-  margin-bottom: 1.5rem;
-}
-
-.question-text {
-  font-weight: 500;
-  color: #334155;
-  margin-bottom: 1rem;
-}
-
-.options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.option {
-  padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.option:hover {
-  background-color: #f1f5f9;
-}
-
-.option.selected {
-  background-color: #dbeafe;
-  border-color: #3b82f6;
-}
-
-.option.correct {
-  background-color: #dcfce7;
-  border-color: #22c55e;
-}
-
-.option.incorrect {
-  background-color: #fee2e2;
-  border-color: #ef4444;
-}
-
-.quiz-actions {
-  margin-top: 2rem;
-  text-align: center;
-}
-
-.submit-button {
-  background-color: #3b82f6;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.submit-button:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-.submit-button:disabled {
-  background-color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.results {
-  text-align: center;
-}
-
-.score {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
-}
-
-.feedback {
-  color: #64748b;
-}
-</style> 
+</script> 
