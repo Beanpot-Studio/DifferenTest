@@ -100,6 +100,7 @@
                       Review
                     </button>
                     <button
+                      v-if="!getQuizAttempt(classItem.id, quiz.id) || getQuizAttempt(classItem.id, quiz.id)?.score < 100"
                       @click="startQuiz(classItem.id, quiz)"
                       class="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700"
                     >
@@ -226,13 +227,18 @@
     <div v-else-if="activeTab === 'history'" class="space-y-6">
       <QuizHistory />
     </div>
+
+    <!-- Achievements Tab -->
+    <div v-else-if="activeTab === 'achievements'" class="space-y-6">
+      <BadgeDisplay />
+    </div>
   </div>
 </template>
 
 <script>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, updateDoc, addDoc, arrayRemove } from 'firebase/firestore';
 import { useAuth } from '../stores/auth';
 import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -242,12 +248,13 @@ import QuizHistory from './QuizHistory.vue';
 import RecentActivity from './RecentActivity.vue';
 import QuizInterface from './QuizInterface.vue';
 import BaseModal from './BaseModal.vue';
+import BadgeDisplay from './BadgeDisplay.vue';
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal
+    ClassSearch, BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay
   },
   setup() {
     const { user, initialized } = useAuth();
@@ -272,7 +279,8 @@ export default {
     const enrollments = ref([]);
     const tabs = [
       { id: 'activities', name: 'Activities' },
-      { id: 'history', name: 'Quiz History' }
+      { id: 'history', name: 'Quiz History' },
+      { id: 'achievements', name: 'Achievements' }
     ];
 
     // Add search query ref and filtered classes computed property
@@ -299,77 +307,78 @@ export default {
     };
 
     const loadClasses = async () => {
-      if (!user.value?.uid) return;
-
-      loading.value = true;
+      if (!user.value) return;
+      
       try {
-        // Get user's enrollments
-        const enrollmentsRef = collection(db, 'enrollments');
+        loading.value = true;
+        
+        // Get all enrollments for the user
         const enrollmentsQuery = query(
-          enrollmentsRef, 
+          collection(db, 'enrollments'),
           where('studentId', '==', user.value.uid),
           where('status', '==', 'accepted')
         );
         const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
         
-        // Create a map of classId to enrollment status
-        const enrollmentStatusMap = {};
-        enrollmentsSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          enrollmentStatusMap[data.classId] = data.status;
-        });
-
-        // Get all classes
-        const classesRef = collection(db, 'classes');
-        const classesSnapshot = await getDocs(classesRef);
-        
-        const loadedClasses = [];
-        for (const classDoc of classesSnapshot.docs) {
-          const classData = classDoc.data();
-          const enrollmentStatus = enrollmentStatusMap[classDoc.id];
-
-          // Only include classes where the student is enrolled and accepted
-          if (enrollmentStatus === 'accepted') {
-            // Get teacher's details
-            const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-            const teacherData = teacherDoc.data();
-            const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
-
-            // Load full quiz data for each quiz in the class
-            const quizzes = await Promise.all((classData.quizzes || []).map(async (quizRef) => {
-              try {
-                // Handle both DocumentReference and string ID cases
-                const quizId = typeof quizRef === 'string' ? quizRef : quizRef.id;
-                const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
-                if (!quizDoc.exists()) return null;
-                const quizData = quizDoc.data();
-                return {
-                  id: quizDoc.id,
-                  ...quizData
-                };
-              } catch (error) {
-                console.error('Error loading quiz:', quizRef, error);
-                return null;
-              }
-            }));
-
-            loadedClasses.push({
-              id: classDoc.id,
-              ...classData,
-              teacherName,
-              code: classData.code || 'N/A',
-              quizzes: quizzes.filter(Boolean),
-              enrollmentStatus
-            });
-          }
+        if (enrollmentsSnapshot.empty) {
+          classes.value = [];
+          return;
         }
 
-        classes.value = loadedClasses;
+        // Get all class IDs from active enrollments
+        const classIds = enrollmentsSnapshot.docs.map(doc => doc.data().classId);
+        
+        // Get all classes in parallel
+        const classPromises = classIds.map(async (classId) => {
+          const classDoc = await getDoc(doc(db, 'classes', classId));
+          if (!classDoc.exists()) return null;
+
+          const classData = classDoc.data();
+          
+          // Verify the student is still in the class's students array
+          if (!classData.students?.includes(user.value.uid)) {
+            return null;
+          }
+          
+          // Get teacher's details
+          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+          const teacherData = teacherDoc.data();
+          const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
+
+          // Load full quiz data for each quiz in the class
+          const quizzes = await Promise.all((classData.quizzes || []).map(async (quizRef) => {
+            try {
+              const quizId = typeof quizRef === 'string' ? quizRef : quizRef.id;
+              const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+              if (!quizDoc.exists()) return null;
+              return {
+                id: quizDoc.id,
+                ...quizDoc.data()
+              };
+            } catch (error) {
+              console.error('Error loading quiz:', quizRef, error);
+              return null;
+            }
+          }));
+
+          return {
+            id: classDoc.id,
+            ...classData,
+            teacherName,
+            code: classData.code || 'N/A',
+            quizzes: quizzes.filter(Boolean)
+          };
+        });
+
+        const loadedClasses = (await Promise.all(classPromises)).filter(Boolean);
+        classes.value = loadedClasses.sort((a, b) => b.updatedAt?.toDate() - a.updatedAt?.toDate());
 
         // Load quiz attempts
         if (loadedClasses.length > 0) {
-          const attemptsRef = collection(db, 'quizAttempts');
-          const attemptsQuery = query(attemptsRef, where('userId', '==', user.value.uid));
+          const attemptsQuery = query(
+            collection(db, 'quizAttempts'),
+            where('userId', '==', user.value.uid)
+          );
           const attemptsSnapshot = await getDocs(attemptsQuery);
           
           quizAttempts.value = {};
@@ -381,8 +390,10 @@ export default {
             quizAttempts.value[data.classId][data.quizId] = data;
           });
         }
+          
       } catch (error) {
         console.error('Error loading classes:', error);
+        showNotification('Error', 'Failed to load classes', 'error');
       } finally {
         loading.value = false;
       }
@@ -426,7 +437,13 @@ export default {
       
       try {
         const enrollmentId = `${user.value.uid}_${classId}`;
-        await deleteDoc(doc(db, 'enrollments', enrollmentId));
+        const enrollmentRef = doc(db, 'enrollments', enrollmentId);
+        
+        // Update enrollment status to 'departed' instead of deleting
+        await updateDoc(enrollmentRef, {
+          status: 'departed',
+          departedAt: new Date()
+        });
 
         // Get class and teacher details
         const classRef = doc(db, 'classes', classId);
@@ -439,9 +456,10 @@ export default {
           const teacherData = teacherDoc.data();
           const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
           
-          // Update class student count
+          // Update class student count and remove student from students array
           await updateDoc(classRef, {
             studentCount: Math.max((classData.studentCount || 1) - 1, 0),
+            students: arrayRemove(user.value.uid),
             updatedAt: new Date()
           });
 
@@ -456,12 +474,16 @@ export default {
           });
         }
 
+        // Remove the class from the local state
+        classes.value = classes.value.filter(c => c.id !== classId);
+
         // Dispatch event to update dashboard
         window.dispatchEvent(new CustomEvent('classLeft'));
 
-        await loadClasses();
+        showNotification('Success', 'Successfully left the class', 'success');
       } catch (error) {
         console.error('Error leaving class:', error);
+        showNotification('Error', 'Failed to leave the class. Please try again.', 'error');
       }
     };
 

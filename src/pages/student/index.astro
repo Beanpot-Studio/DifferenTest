@@ -38,7 +38,7 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
     </div>
 
     <div>
-      <RoleBasedContent client:load required-role="student">
+      <RoleBasedContent client:only :required-roles="['student']">
         <div class="space-y-6">
           <!-- Class Browser Modal -->
           <ClassBrowser client:load />
@@ -151,11 +151,9 @@ import BaseAnimation from "../../components/BaseAnimation.vue";
     collection,
     query,
     where,
-    getDocs
+    getDocs,
   } from "firebase/firestore";
   import { auth, db } from "../../lib/firebase";
-
-  
 
   // Update dashboard stats
   const updateDashboardStats = async (userId) => {

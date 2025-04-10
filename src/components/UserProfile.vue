@@ -153,12 +153,6 @@
         </div>
       </div>
 
-      <!-- Badges Section -->
-      <div class="space-y-8">
-        <h3 class="text-xl font-semibold text-gray-900">Achievements</h3>
-        <BadgeDisplay :user-id="user?.uid" />
-      </div>
-
       <!-- Save Button -->
       <div class="flex justify-end">
         <button
@@ -210,13 +204,9 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
-import BadgeDisplay from './BadgeDisplay.vue';
 
 export default {
   name: 'UserProfile',
-  components: {
-    BadgeDisplay
-  },
   setup() {
     const { user, role } = useAuth();
     const loading = ref(false);

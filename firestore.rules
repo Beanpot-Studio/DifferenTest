@@ -46,10 +46,7 @@ service cloud.firestore {
 
     // Activities collection rules
     match /activities/{activityId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
 
     // Badges collection rules

@@ -123,6 +123,7 @@
           </div>
         </div>
         <button
+          v-if="score < 100"
           @click="resetQuiz"
           class="mt-6 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
         >
@@ -237,54 +238,61 @@ export default {
     };
 
     const claimBadge = async (quizId, score) => {
+      if (!user.value || score !== 100) return;
+
       try {
-        // Create badge metadata
+        // Check if badge already exists for this quiz
+        const badgeRef = doc(db, 'badges', `${user.value.uid}_${quizId}`);
+        const badgeDoc = await getDoc(badgeRef);
+
+        if (badgeDoc.exists()) {
+          console.log('Badge already claimed for this quiz');
+          return;
+        }
+
+        // Get quiz details for badge metadata
+        const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+        if (!quizDoc.exists()) {
+          console.error('Quiz not found');
+          return;
+        }
+
+        const quizData = quizDoc.data();
         const badgeMetadata = {
-          userId: user.value.uid,
-          quizId,
-          score,
-          timestamp: new Date(),
-          type: 'perfect_score',
-          title: 'Perfect Score Achievement',
-          description: `Achieved 100% on ${quiz.value.title}`,
-          status: 'claimed'
+          title: `Perfect Score: ${quizData.title}`,
+          description: `Achieved a perfect score on the ${quizData.title} quiz`,
+          type: 'quiz_perfect_score',
+          difficulty: 'hard',
+          icon: '🏆',
+          color: 'gold'
         };
 
-        // Store badge in Firestore
-        const badgeRef = doc(collection(db, 'badges'));
+        // Create badge
         await setDoc(badgeRef, {
-          ...badgeMetadata,
-          badgeId: badgeRef.id,
-          // In a real implementation, this would be the blockchain transaction hash
-          blockchainVerification: {
-            network: 'ethereum',
-            contractAddress: '0x...',
-            tokenId: badgeRef.id,
-            status: 'minted'
-          }
+          userId: user.value.uid,
+          quizId: quizId,
+          quizTitle: quizData.title,
+          classId: props.classId,
+          timestamp: new Date(),
+          metadata: badgeMetadata
         });
 
-        // Add badge claim activity
+        // Log activity
         await addDoc(collection(db, 'activities'), {
           userId: user.value.uid,
           type: 'badge_claimed',
           badgeId: badgeRef.id,
+          quizId: quiz.value.id,
+          quizTitle: quiz.value.title,
+          classId: props.classId,
           timestamp: new Date(),
           activityDescription: `🏆 Claimed "${badgeMetadata.title}" badge for perfect score on ${quiz.value.title}!`
         });
 
-        showNotification(
-          'Badge Claimed!',
-          'Your achievement has been recorded on the blockchain. View it in your profile!',
-          'success'
-        );
+        showNotification('Achievement Unlocked!', `You've earned the "${badgeMetadata.title}" badge!`, 'success');
       } catch (error) {
         console.error('Error claiming badge:', error);
-        showNotification(
-          'Error',
-          'Failed to claim badge. Please try again.',
-          'error'
-        );
+        showNotification('Error', 'Failed to claim badge', 'error');
       }
     };
 
@@ -315,7 +323,7 @@ export default {
         }, 5000); // Hide confetti after 5 seconds
       }
 
-      if (!props.isEmbedded && user.value) {
+      if (user.value) {
         try {
           const attemptId = `${user.value.uid}_${props.classId || 'standalone'}_${quiz.value.id}`;
           
@@ -330,7 +338,8 @@ export default {
             questionCount: quiz.value.questions.length,
             correctAnswers: correctCount,
             questionResults: results.value,
-            timeSpent: Date.now() - quizStartTime.value
+            timeSpent: Date.now() - quizStartTime.value,
+            isEmbedded: props.isEmbedded
           };
           
           await setDoc(doc(db, 'quizAttempts', attemptId), attemptData);
@@ -338,6 +347,20 @@ export default {
           if (score.value === 100) {
             await claimBadge(quiz.value.id, score.value);
           } else {
+            // Add quiz completion activity only for non-perfect scores
+            await addDoc(collection(db, 'activities'), {
+              userId: user.value.uid,
+              type: 'quiz_completed',
+              classId: props.classId,
+              quizId: quiz.value.id,
+              quizTitle: quiz.value.title,
+              score: score.value,
+              timestamp: new Date(),
+              correctAnswers: correctCount,
+              totalQuestions: quiz.value.questions.length,
+              timeSpent: Date.now() - quizStartTime.value,
+              isEmbedded: props.isEmbedded
+            });
             showNotification('Success', `Quiz completed! Score: ${score.value}%`, 'success');
           }
         } catch (error) {
