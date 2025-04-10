@@ -11,10 +11,10 @@
       
       <!-- Quiz List -->
       <div v-if="quizzes.length > 0" class="space-y-2">
-        <div v-for="quiz in quizzes" :key="quiz.id" class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+        <div v-for="quiz in quizzes" :key="quiz.id" class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
           <div>
-            <h3 class="text-lg font-semibold">{{ quiz.title }}</h3>
-            <p class="text-sm text-gray-500">{{ quiz.questions?.length || 0 }} questions</p>
+            <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
+            <p class="text-sm text-gray-500">Class: {{ quiz.className }} / {{ quiz.questions?.length || 0 }} questions</p>
           </div>
           <div class="flex space-x-2">
             <button

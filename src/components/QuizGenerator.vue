@@ -2,13 +2,22 @@
   <div class="bg-white rounded-lg shadow-md p-6">
     <h2 class="text-2xl font-bold mb-4">Generate Quiz from Lesson Plan</h2>
     
-    <!-- Notification -->
-    <div v-if="notification.show" 
-         :class="['mb-4 p-4 rounded-lg', notification.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800']">
-      {{ notification.message }}
+    <!-- Class Selection -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Select Class
+      </label>
+      <select
+        v-model="selectedClassId"
+        class="w-full p-2 border rounded-lg"
+        required
+      >
+        <option value="">Select a class</option>
+        <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
+          {{ classItem.name }}
+        </option>
+      </select>
     </div>
-    
-   
 
     <!-- Number of Questions -->
     <div class="mb-6">
@@ -151,7 +160,7 @@ export default {
   },
   setup() {
     const { user } = useAuth();
-    const { showNotification: showGlobalNotification } = useNotification();
+    const { showNotification } = useNotification();
     const fileInput = ref(null);
     const fileName = ref('');
     const loading = ref(false);
@@ -159,7 +168,8 @@ export default {
     const fileContent = ref('');
     const numQuestions = ref(3);
     const quizTitle = ref('');
-    const notification = ref({ show: false, message: '', type: 'success' });
+    const selectedClassId = ref('');
+    const classes = ref([]);
 
     // Get API key from environment variable
     const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
@@ -171,13 +181,26 @@ export default {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    const showNotification = (message, type = 'success') => {
-      showGlobalNotification(
-        type === 'success' ? 'Success' : 'Error',
-        message,
-        type
-      );
+    const loadClasses = async () => {
+      try {
+        const q = query(
+          collection(db, 'classes'),
+          where('teacherId', '==', user.value.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        classes.value = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error('Error loading classes:', error);
+        showNotification('Error', 'Failed to load classes', 'error');
+      }
     };
+
+    onMounted(() => {
+      loadClasses();
+    });
 
     const handleFileUpload = async (event) => {
       const file = event.target.files[0];
@@ -192,7 +215,7 @@ export default {
         await generateQuiz(text);
       } catch (error) {
         console.error('Error processing file:', error);
-        showNotification('Error processing file. Please try again.', 'error');
+        showNotification('Error', 'Error processing file. Please try again.', 'error');
       } finally {
         loading.value = false;
       }
@@ -233,20 +256,32 @@ export default {
         quiz.value.title = quizTitle.value || quiz.value.title;
         
         await saveQuiz();
-        showNotification('Quiz generated successfully!');
+        showNotification('Success', 'Quiz generated successfully!');
       } catch (error) {
         console.error('Error generating quiz:', error);
-        showNotification('Error generating quiz. Please try again.', 'error');
+        showNotification('Error', 'Error generating quiz. Please try again.', 'error');
       }
     };
 
     const saveQuiz = async () => {
-      if (!quiz.value || !user.value) return;
+      if (!quiz.value || !user.value || !selectedClassId.value) {
+        showNotification('Error', 'Please select a class before saving the quiz', 'error');
+        return;
+      }
 
       try {
+        const classDoc = await getDoc(doc(db, 'classes', selectedClassId.value));
+        if (!classDoc.exists()) {
+          showNotification('Error', 'Selected class not found', 'error');
+          return;
+        }
+
+        const classData = classDoc.data();
         const quizData = {
           ...quiz.value,
           userId: user.value.uid,
+          classId: selectedClassId.value,
+          className: classData.name,
           createdAt: new Date(),
           updatedAt: new Date(),
           lessonPlan: fileContent.value
@@ -255,14 +290,14 @@ export default {
         if (!quiz.value.id) {
           const docRef = await addDoc(collection(db, 'quizzes'), quizData);
           quiz.value.id = docRef.id;
-          showNotification('Quiz saved successfully!');
+          showNotification('Success', 'Quiz saved successfully!');
         } else {
           await updateDoc(doc(db, 'quizzes', quiz.value.id), quizData);
-          showNotification('Quiz updated successfully!');
+          showNotification('Success', 'Quiz updated successfully!');
         }
       } catch (error) {
         console.error('Error saving quiz:', error);
-        showNotification('Error saving quiz. Please try again.', 'error');
+        showNotification('Error', 'Error saving quiz. Please try again.', 'error');
       }
     };
 
@@ -289,7 +324,8 @@ export default {
       quiz,
       numQuestions,
       quizTitle,
-      notification,
+      selectedClassId,
+      classes,
       handleFileUpload,
       addOption,
       removeOption,
