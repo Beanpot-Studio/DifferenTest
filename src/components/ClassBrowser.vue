@@ -38,7 +38,7 @@
             class="w-full px-4 py-2 border rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-primary-500"
             @input="handleSearch"
           />
-          <IconService name="view" size="4" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <IconService name="search" size="4" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
       </div>
 

@@ -9,7 +9,7 @@
           placeholder="Search help articles..."
           class="w-full p-4 pl-12 border rounded-lg"
         />
-       <IconService name="view" size="6" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+       <IconService name="search" size="6" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
     </div>
 

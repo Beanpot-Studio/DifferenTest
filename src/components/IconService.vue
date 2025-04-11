@@ -51,9 +51,12 @@ export default {
       ].includes(value)
     },
     size: {
-      type: String,
-      default: '5',
-      validator: (value) => ['3', '4', '5', '6', '8', '12'].includes(value)
+      type: [String, Number],
+      default: 5,
+      validator: (value) => {
+        const num = Number(value);
+        return [3, 4, 5, 6, 8, 12].includes(num);
+      }
     },
     color: {
       type: String,

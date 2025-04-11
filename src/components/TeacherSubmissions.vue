@@ -104,7 +104,7 @@
                 class="text-primary-600 hover:text-primary-900 mr-4"
                 title="View Details"
               >
-                <IconService name="view" size="4" />
+                <IconService name="search" :size="4" />
               </button>
             </td>
           </tr>
@@ -119,7 +119,7 @@
           @click="closeSubmissionModal"
           class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
-          <IconService name="x" size="6" />
+          <IconService name="x" :size="6" />
         </button>
 
         <div v-if="currentSubmission">

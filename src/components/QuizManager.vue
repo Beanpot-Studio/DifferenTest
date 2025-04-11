@@ -31,7 +31,7 @@
               @click="viewLessonPlan(quiz)"
               class="px-3 py-1 text-blue-600"
             >
-            <IconService name="view" size="6" />
+            <IconService name="search" size="6" />
             </button>
            
             <button
