@@ -52,11 +52,10 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   name: 'BadgeDisplay',
@@ -76,17 +75,7 @@ export default {
           throw new Error('User must be logged in to view badges');
         }
 
-        const badgesQuery = query(
-          collection(db, 'badges'),
-          where('userId', '==', user.value.uid),
-          orderBy('timestamp', 'desc')
-        );
-
-        const querySnapshot = await getDocs(badgesQuery);
-        badges.value = querySnapshot.docs.map(doc => ({
-          badgeId: doc.id,
-          ...doc.data()
-        }));
+        badges.value = await FirebaseService.getUserBadges(user.value.uid);
       } catch (err) {
         console.error('Error loading badges:', err);
         error.value = err.message;

@@ -10,11 +10,24 @@
             Class Name
           </label>
           <input
-            v-model="newClassName"
+            v-model="newClass.name"
             type="text"
             class="w-full p-2 border rounded-lg"
             placeholder="Enter class name"
           />
+        </div>
+        <div class="mb-4">
+          <label class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              v-model="newClass.isPublic"
+              class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span class="text-sm font-medium text-gray-700">Make this class public</span>
+          </label>
+          <p class="text-xs text-gray-500 mt-1">
+            Public classes can be discovered and joined by any student.
+          </p>
         </div>
         <button
           @click="createClass"
@@ -174,10 +187,11 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import ClassRoster from './ClassRoster.vue';
-import { useNotification } from '../composables/useNotification';import IconService from './IconService.vue';
+import { useNotification } from '../composables/useNotification';
+import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
 export default {
   name: 'ClassManager',
   components: {
@@ -187,35 +201,53 @@ export default {
     const { user } = useAuth();
     const classes = ref([]);
     const availableQuizzes = ref([]);
-    const newClassName = ref('');
+    const newClass = ref({
+      name: '',
+      description: '',
+      code: '',
+      isPublic: false
+    });
     const editingClass = ref(null);
     const selectedQuiz = ref('');
     const { showNotification } = useNotification();
-
-    const generateClassCode = () => {
-      return Math.random().toString(36).substring(2, 8).toUpperCase();
-    };
+    const loading = ref(false);
+    const showCreateClassModal = ref(true);
 
     const createClass = async () => {
-      if (!newClassName.value.trim()) return;
-
+      if (!user.value) return;
+      
       try {
+        loading.value = true;
         const classData = {
-          name: newClassName.value.trim(),
-          code: generateClassCode(),
+          name: newClass.value.name,
+          description: newClass.value.description,
+          code: newClass.value.code,
+          isPublic: newClass.value.isPublic,
           teacherId: user.value.uid,
-          students: [],
-          quizzes: [],
+          teacherName: user.value.displayName || 'Unknown Teacher',
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          quizzes: [],
+          students: []
         };
-
-        await addDoc(collection(db, 'classes'), classData);
-        newClassName.value = '';
-        fetchClasses();
+        
+        await FirebaseService.createClass(classData);
+        
+        // Reset form
+        newClass.value = {
+          name: '',
+          description: '',
+          code: '',
+          isPublic: false
+        };
+        
+        showCreateClassModal.value = false;
+        showNotification('Success', 'Class created successfully', 'success');
+        await fetchClasses();
       } catch (error) {
-        console.error('Error creating class:', error);
-        showNotification('Error', 'Error creating class. Please try again.', 'error');
+        showNotification('Error', 'Failed to create class', 'error');
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -223,38 +255,11 @@ export default {
       if (!user.value) return;
 
       try {
-        const q = query(
-          collection(db, 'classes'),
-          where('teacherId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        const classesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const { classes: loadedClasses, totalSubmissions } = await FirebaseService.getTeacherClasses(user.value.uid);
+        classes.value = loadedClasses.map(classItem => ({
+          ...classItem,
+          totalSubmissions
         }));
-
-        // Get quiz submissions from activities
-        const activitiesRef = collection(db, 'activities');
-        let submissionsQuery = query(activitiesRef, where('type', '==', 'quiz_completed'));
-        
-        // Get submissions for all teacher's classes
-        const classIds = classesData.map(c => c.id);
-        let totalSubmissions = 0;
-        
-        // Process classIds in chunks of 10
-        for (let i = 0; i < classIds.length; i += 10) {
-          const chunk = classIds.slice(i, i + 10);
-          const chunkQuery = query(submissionsQuery, where('classId', 'in', chunk));
-          const activitiesSnapshot = await getDocs(chunkQuery);
-          totalSubmissions += activitiesSnapshot.size;
-        }
-
-        // Add total submissions to each class
-        classesData.forEach(classItem => {
-          classItem.totalSubmissions = totalSubmissions;
-        });
-
-        classes.value = classesData;
       } catch (error) {
         console.error('Error fetching classes:', error);
         showNotification('Error', 'Error fetching classes. Please try again.', 'error');
@@ -265,15 +270,7 @@ export default {
       if (!user.value) return;
 
       try {
-        const q = query(
-          collection(db, 'quizzes'),
-          where('userId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        availableQuizzes.value = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        availableQuizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
       } catch (error) {
         console.error('Error fetching quizzes:', error);
         showNotification('Error', 'Error fetching quizzes. Please try again.', 'error');
@@ -288,7 +285,7 @@ export default {
       if (!editingClass.value) return;
 
       try {
-        await updateDoc(doc(db, 'classes', editingClass.value.id), {
+        await FirebaseService.updateClass(editingClass.value.id, {
           name: editingClass.value.name,
           updatedAt: new Date()
         });
@@ -299,6 +296,7 @@ export default {
         }
         
         editingClass.value = null;
+        showNotification('Success', 'Class updated successfully', 'success');
       } catch (error) {
         console.error('Error saving class:', error);
         showNotification('Error', 'Error saving class. Please try again.', 'error');
@@ -309,8 +307,9 @@ export default {
       if (!confirm('Are you sure you want to delete this class?')) return;
 
       try {
-        await deleteDoc(doc(db, 'classes', classId));
+        await FirebaseService.deleteClass(classId);
         classes.value = classes.value.filter(c => c.id !== classId);
+        showNotification('Success', 'Class deleted successfully', 'success');
       } catch (error) {
         console.error('Error deleting class:', error);
         showNotification('Error', 'Error deleting class. Please try again.', 'error');
@@ -324,12 +323,9 @@ export default {
         const quiz = availableQuizzes.value.find(q => q.id === selectedQuiz.value);
         if (!quiz) return;
 
-        await updateDoc(doc(db, 'classes', classId), {
-          quizzes: arrayUnion({
-            id: quiz.id,
-            title: quiz.title
-          }),
-          updatedAt: new Date()
+        await FirebaseService.addQuizToClass(classId, {
+          id: quiz.id,
+          title: quiz.title
         });
 
         const classIndex = classes.value.findIndex(c => c.id === classId);
@@ -341,6 +337,7 @@ export default {
         }
 
         selectedQuiz.value = '';
+        showNotification('Success', 'Quiz added to class successfully', 'success');
       } catch (error) {
         console.error('Error adding quiz to class:', error);
         showNotification('Error', 'Error adding quiz to class. Please try again.', 'error');
@@ -349,10 +346,7 @@ export default {
 
     const removeQuizFromClass = async (classId, quizId) => {
       try {
-        await updateDoc(doc(db, 'classes', classId), {
-          quizzes: arrayRemove({ id: quizId }),
-          updatedAt: new Date()
-        });
+        await FirebaseService.removeQuizFromClass(classId, quizId);
 
         const classIndex = classes.value.findIndex(c => c.id === classId);
         if (classIndex !== -1) {
@@ -360,8 +354,8 @@ export default {
             q => q.id !== quizId
           );
         }
+        showNotification('Success', 'Quiz removed from class successfully', 'success');
       } catch (error) {
-        console.error('Error removing quiz from class:', error);
         showNotification('Error', 'Error removing quiz from class. Please try again.', 'error');
       }
     };
@@ -386,7 +380,7 @@ export default {
     return {
       classes,
       availableQuizzes,
-      newClassName,
+      newClass,
       editingClass,
       selectedQuiz,
       createClass,
@@ -396,8 +390,7 @@ export default {
       addQuizToClass,
       removeQuizFromClass,
       copyClassCode,
-      formatDate,
-      showNotification
+      formatDate
     };
   }
 };

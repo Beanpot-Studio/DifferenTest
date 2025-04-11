@@ -132,13 +132,13 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, collection, addDoc } from 'firebase/firestore';
 import BaseAnimation from './BaseAnimation.vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
 export default {
   name: 'QuizInterface',
   components: {
@@ -189,12 +189,11 @@ export default {
         const quizId = props.quizId.trim();
         console.log('Loading quiz with ID:', quizId);
 
-        const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
-        if (!quizDoc.exists()) {
+        const quizData = await FirebaseService.getQuiz(quizId);
+        if (!quizData) {
           throw new Error(`Quiz with ID ${quizId} not found`);
         }
 
-        const quizData = quizDoc.data();
         console.log('Quiz data:', quizData);
 
         if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
@@ -209,7 +208,7 @@ export default {
         });
 
         quiz.value = {
-          id: quizDoc.id,
+          id: quizId,
           ...quizData,
           questions: quizData.questions.map((q, index) => ({
             ...q,
@@ -231,65 +230,6 @@ export default {
 
     const selectAnswer = (questionIndex, answerIndex) => {
       selectedAnswers.value[questionIndex] = answerIndex;
-    };
-
-    const claimBadge = async (quizId, score) => {
-      if (!user.value || score !== 100) return;
-
-      try {
-        // Check if badge already exists for this quiz
-        const badgeRef = doc(db, 'badges', `${user.value.uid}_${quizId}`);
-        const badgeDoc = await getDoc(badgeRef);
-
-        if (badgeDoc.exists()) {
-          console.log('Badge already claimed for this quiz');
-          return;
-        }
-
-        // Get quiz details for badge metadata
-        const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
-        if (!quizDoc.exists()) {
-          console.error('Quiz not found');
-          return;
-        }
-
-        const quizData = quizDoc.data();
-        const badgeMetadata = {
-          title: `Perfect Score: ${quizData.title}`,
-          description: `Achieved a perfect score on the ${quizData.title} quiz`,
-          type: 'quiz_perfect_score',
-          difficulty: 'hard',
-          icon: '🏆',
-          color: 'gold'
-        };
-
-        // Create badge
-        await setDoc(badgeRef, {
-          userId: user.value.uid,
-          quizId: quizId,
-          quizTitle: quizData.title,
-          classId: props.classId,
-          timestamp: new Date(),
-          metadata: badgeMetadata
-        });
-
-        // Log activity
-        await addDoc(collection(db, 'activities'), {
-          userId: user.value.uid,
-          type: 'badge_claimed',
-          badgeId: badgeRef.id,
-          quizId: quiz.value.id,
-          quizTitle: quiz.value.title,
-          classId: props.classId,
-          timestamp: new Date(),
-          activityDescription: `🏆 Claimed "${badgeMetadata.title}" badge for perfect score on ${quiz.value.title}!`
-        });
-
-        showNotification('Achievement Unlocked!', `You've earned the "${badgeMetadata.title}" badge!`, 'success');
-      } catch (error) {
-        console.error('Error claiming badge:', error);
-        showNotification('Error', 'Failed to claim badge', 'error');
-      }
     };
 
     const submitQuiz = async () => {
@@ -321,8 +261,6 @@ export default {
 
       if (user.value) {
         try {
-          const attemptId = `${user.value.uid}_${props.classId || 'standalone'}_${quiz.value.id}`;
-          
           const attemptData = {
             userId: user.value.uid,
             classId: props.classId,
@@ -338,13 +276,13 @@ export default {
             isEmbedded: props.isEmbedded
           };
           
-          await setDoc(doc(db, 'quizAttempts', attemptId), attemptData);
+          await FirebaseService.submitQuizAttempt(attemptData);
           
           if (score.value === 100) {
-            await claimBadge(quiz.value.id, score.value);
+            await FirebaseService.claimBadge(quiz.value.id, score.value);
           } else {
             // Add quiz completion activity only for non-perfect scores
-            await addDoc(collection(db, 'activities'), {
+            await FirebaseService.createActivity({
               userId: user.value.uid,
               type: 'quiz_completed',
               classId: props.classId,
@@ -421,7 +359,6 @@ export default {
       toggleQuestion,
       getExplanation,
       showConfetti,
-      claimBadge,
       user
     };
   }

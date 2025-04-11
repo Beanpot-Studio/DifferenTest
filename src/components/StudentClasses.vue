@@ -73,7 +73,7 @@
                   <div>
                     <h5 class="font-medium">{{ quiz.title }}</h5>
                     <p class="text-sm text-gray-500">
-                      {{ quiz.questions ? quiz.questions.length : 0 }} questions
+                      {{ quiz.questionCount }} questions
                     </p>
                     <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="mt-1">
                       <p class="text-sm">
@@ -228,8 +228,6 @@
 
 <script>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, deleteDoc, setDoc, getDoc, updateDoc, addDoc, arrayRemove } from 'firebase/firestore';
 import { useAuth } from '../stores/auth';
 import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -240,8 +238,10 @@ import RecentActivity from './RecentActivity.vue';
 import QuizInterface from './QuizInterface.vue';
 import BaseModal from './BaseModal.vue';
 import BadgeDisplay from './BadgeDisplay.vue';
-const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
+const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
@@ -268,7 +268,7 @@ export default {
     const error = ref(null);
     const { showNotification } = useNotification();
     const activeTab = ref('activities');
-    const enrollments = ref([]);
+    const enrolledClasses = ref([]);
     const tabs = [
       { id: 'activities', name: 'Activities' },
       { id: 'history', name: 'Quiz History' },
@@ -299,87 +299,38 @@ export default {
     };
 
     const loadClasses = async () => {
-      if (!user.value) return;
+      if (!user.value?.uid) {
+        console.error('No user ID available');
+        return;
+      }
       
       try {
         loading.value = true;
+        console.log('Loading classes for user:', user.value.uid);
+        const loadedClasses = await FirebaseService.getClassesByStudent(user.value.uid);
+        console.log('Loaded classes:', loadedClasses);
         
-        // Get all enrollments for the user
-        const enrollmentsQuery = query(
-          collection(db, 'enrollments'),
-          where('studentId', '==', user.value.uid),
-          where('status', '==', 'accepted')
-        );
-        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-        
-        if (enrollmentsSnapshot.empty) {
-          classes.value = [];
-          return;
-        }
+        classes.value = loadedClasses.map(classItem => ({
+          ...classItem,
+          id: classItem.id,
+          name: classItem.name || 'Unnamed Class',
+          teacherName: classItem.teacherName || 'Unknown Teacher',
+          code: classItem.code || 'N/A',
+          quizzes: classItem.quizzes || []
+        })).sort((a, b) => b.updatedAt?.toDate() - a.updatedAt?.toDate());
 
-        // Get all class IDs from active enrollments
-        const classIds = enrollmentsSnapshot.docs.map(doc => doc.data().classId);
-        
-        // Get all classes in parallel
-        const classPromises = classIds.map(async (classId) => {
-          const classDoc = await getDoc(doc(db, 'classes', classId));
-          if (!classDoc.exists()) return null;
-
-          const classData = classDoc.data();
-          
-          // Verify the student is still in the class's students array
-          if (!classData.students?.includes(user.value.uid)) {
-            return null;
-          }
-          
-          // Get teacher's details
-          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-          const teacherData = teacherDoc.data();
-          const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
-
-          // Load full quiz data for each quiz in the class
-          const quizzes = await Promise.all((classData.quizzes || []).map(async (quizRef) => {
-            try {
-              const quizId = typeof quizRef === 'string' ? quizRef : quizRef.id;
-              const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
-              if (!quizDoc.exists()) return null;
-              return {
-                id: quizDoc.id,
-                ...quizDoc.data()
-              };
-            } catch (error) {
-              console.error('Error loading quiz:', quizRef, error);
-              return null;
-            }
-          }));
-
-          return {
-            id: classDoc.id,
-            ...classData,
-            teacherName,
-            code: classData.code || 'N/A',
-            quizzes: quizzes.filter(Boolean)
-          };
-        });
-
-        const loadedClasses = (await Promise.all(classPromises)).filter(Boolean);
-        classes.value = loadedClasses.sort((a, b) => b.updatedAt?.toDate() - a.updatedAt?.toDate());
+        // Also update enrolledClasses for components that need it
+        enrolledClasses.value = classes.value;
 
         // Load quiz attempts
         if (loadedClasses.length > 0) {
-          const attemptsQuery = query(
-            collection(db, 'quizAttempts'),
-            where('userId', '==', user.value.uid)
-          );
-          const attemptsSnapshot = await getDocs(attemptsQuery);
-          
+          const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
           quizAttempts.value = {};
-          attemptsSnapshot.docs.forEach(doc => {
-            const data = doc.data();
-            if (!quizAttempts.value[data.classId]) {
-              quizAttempts.value[data.classId] = {};
+          attempts.forEach(attempt => {
+            if (!quizAttempts.value[attempt.classId]) {
+              quizAttempts.value[attempt.classId] = {};
             }
-            quizAttempts.value[data.classId][data.quizId] = data;
+            quizAttempts.value[attempt.classId][attempt.quizId] = attempt;
           });
         }
           
@@ -391,35 +342,16 @@ export default {
       }
     };
 
-    const loadEnrollments = async () => {
-      try {
-        loading.value = true;
-        if (!user.value?.uid) return;
-
-        const enrollmentsQuery = query(
-          collection(db, 'enrollments'),
-          where('studentId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(enrollmentsQuery);
-        enrollments.value = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (err) {
-        console.error('Error loading enrollments:', err);
-        error.value = 'Failed to load enrollments';
-      } finally {
-        loading.value = false;
-      }
-    };
-
     // Watch for both user and initialization changes
     watch([() => user.value?.uid, () => initialized.value], ([newUserId, isInitialized]) => {
       console.log('Auth state changed:', { userId: newUserId, initialized: isInitialized });
       if (isInitialized && newUserId) {
+        console.log('Loading classes for user:', newUserId);
         loadClasses();
       } else if (isInitialized) {
+        console.log('No user, clearing classes');
         classes.value = [];
+        enrolledClasses.value = [];
         loading.value = false;
       }
     }, { immediate: true });
@@ -428,44 +360,8 @@ export default {
       if (!user.value) return;
       
       try {
-        const enrollmentId = `${user.value.uid}_${classId}`;
-        const enrollmentRef = doc(db, 'enrollments', enrollmentId);
+        await FirebaseService.leaveClass(user.value.uid, classId);
         
-        // Update enrollment status to 'departed' instead of deleting
-        await updateDoc(enrollmentRef, {
-          status: 'departed',
-          departedAt: new Date()
-        });
-
-        // Get class and teacher details
-        const classRef = doc(db, 'classes', classId);
-        const classDoc = await getDoc(classRef);
-        if (classDoc.exists()) {
-          const classData = classDoc.data();
-          
-          // Get teacher's details
-          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-          const teacherData = teacherDoc.data();
-          const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
-          
-          // Update class student count and remove student from students array
-          await updateDoc(classRef, {
-            studentCount: Math.max((classData.studentCount || 1) - 1, 0),
-            students: arrayRemove(user.value.uid),
-            updatedAt: new Date()
-          });
-
-          // Log activity
-          await addDoc(collection(db, 'activities'), {
-            userId: user.value.uid,
-            type: 'class_left',
-            classId: classId,
-            className: classData.name || 'Unknown Class',
-            teacherName: teacherName,
-            timestamp: new Date()
-          });
-        }
-
         // Remove the class from the local state
         classes.value = classes.value.filter(c => c.id !== classId);
 
@@ -482,34 +378,34 @@ export default {
     const startQuiz = async (classId, quiz) => {
       if (!user.value) return;
 
-      const enrollment = enrollments.value.find(e => e.classId === classId);
+      const enrollment = enrolledClasses.value.find(e => e.classId === classId);
       if (enrollment?.status !== 'accepted') {
         showNotification('Error', 'Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.', 'error');
         return;
       }
 
-      const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
-      if (!quizDoc.exists()) {
-        showNotification('Error', 'Quiz not found.', 'error');
-        return;
-      }
-
       try {
+        const quizData = await FirebaseService.getQuiz(quiz.id);
+        if (!quizData) {
+          showNotification('Error', 'Quiz not found.', 'error');
+          return;
+        }
+
         selectedClass.value = classes.value.find(c => c.id === classId);
         selectedQuiz.value = {
           id: quiz.id,
-          title: quizDoc.data().title,
-          questions: quizDoc.data().questions,
+          title: quizData.title,
+          //questions: quiz.questionCount,
           classId: classId
         };
         isQuizModalOpen.value = true;
 
         // Log quiz start activity
-        await addDoc(collection(db, 'activities'), {
+        await FirebaseService.createActivity({
           userId: user.value.uid,
           type: 'quiz_started',
           quizId: quiz.id,
-          quizTitle: quizDoc.data().title,
+          quizTitle: quizData.title,
           classId: classId,
           timestamp: new Date(),
           isRetake: !!getQuizAttempt(classId, quiz.id)
@@ -535,13 +431,6 @@ export default {
         }
       }
       
-      console.log('Quiz scoring:', {
-        correctAnswers,
-        totalQuestions,
-        answers: answers.value,
-        questions: currentQuiz.value.questions.map(q => q.correctIndex)
-      });
-      
       return Math.round((correctAnswers / totalQuestions) * 100);
     };
 
@@ -560,9 +449,6 @@ export default {
       quizCompleted.value = true;
       
       try {
-        const attemptId = `${user.value.uid}_${currentClassId.value}_${currentQuiz.value.id}`;
-        
-        // Create detailed question results
         const questionResults = currentQuiz.value.questions.map((question, index) => ({
           questionIndex: index,
           questionText: question.text,
@@ -586,11 +472,10 @@ export default {
           timeSpent: Date.now() - quizStartTime.value
         };
         
-        console.log('Saving quiz attempt:', attemptData);
-        await setDoc(doc(db, 'quizAttempts', attemptId), attemptData);
+        await FirebaseService.createQuizAttempt(attemptData);
         
         // Log detailed activity
-        await addDoc(collection(db, 'activities'), {
+        await FirebaseService.createActivity({
           userId: user.value.uid,
           type: 'quiz_completed',
           classId: currentClassId.value,
@@ -617,7 +502,7 @@ export default {
 
         // If this is a perfect score, add a special achievement activity
         if (score === 100) {
-          await addDoc(collection(db, 'activities'), {
+          await FirebaseService.createActivity({
             userId: user.value.uid,
             type: 'achievement',
             classId: currentClassId.value,
@@ -633,7 +518,7 @@ export default {
         // If there was improvement from previous attempts, log it as a progress activity
         const improvement = await calculateImprovement(currentClassId.value, currentQuiz.value.id, score);
         if (improvement > 0) {
-          await addDoc(collection(db, 'activities'), {
+          await FirebaseService.createActivity({
             userId: user.value.uid,
             type: 'progress',
             classId: currentClassId.value,
@@ -682,8 +567,6 @@ export default {
 
     const getExplanation = async (questionIndex) => {
       if (!currentQuiz.value) return;
-      //the chosen answer is: question.options[answers.value[questionIndex]].text
-      //the correct answer is: question.options[question.correctIndex].text
       try {
         const question = currentQuiz.value.questions[questionIndex];
         const prompt = `Explain in simple, concise language why "${question.options[question.correctIndex].text}" is the correct answer 
@@ -719,18 +602,11 @@ export default {
 
     const calculateImprovement = async (classId, quizId, currentScore) => {
       try {
-        const previousAttempts = await getDocs(
-          query(
-            collection(db, 'quizAttempts'),
-            where('userId', '==', user.value.uid),
-            where('quizId', '==', quizId),
-            where('timestamp', '<', new Date())
-          )
-        );
+        const previousAttempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
         
-        if (previousAttempts.empty) return null;
+        if (previousAttempts.length === 0) return null;
         
-        const scores = previousAttempts.docs.map(doc => doc.data().score);
+        const scores = previousAttempts.map(attempt => attempt.score);
         const previousBest = Math.max(...scores);
         return currentScore > previousBest ? currentScore - previousBest : 0;
       } catch (error) {
@@ -740,23 +616,23 @@ export default {
     };
 
     onMounted(async () => {
-      console.log('StudentClasses mounted, user:', user.value?.uid);
+      //console.log('StudentClasses mounted, user:', user.value?.uid);
       if (user.value?.uid && initialized.value) {
-        await Promise.all([loadClasses(), loadEnrollments()]);
+        await loadClasses();
       }
       
       // Listen for class joined event
       window.addEventListener('classJoined', async () => {
-        console.log('Class joined event received');
-        await Promise.all([loadClasses(), loadEnrollments()]);
+        //console.log('Class joined event received');
+        await loadClasses();
       });
 
       // Listen for custom refresh event
       const component = document.querySelector('student-classes');
       if (component) {
         component.addEventListener('refreshClasses', async () => {
-          console.log('Refresh classes event received');
-          await Promise.all([loadClasses(), loadEnrollments()]);
+          //console.log('Refresh classes event received');
+          await loadClasses();
         });
       }
     });
@@ -801,7 +677,7 @@ export default {
       filteredClasses,
       handleSearch,
       searchQuery,
-      loadEnrollments
+      enrolledClasses
     };
   }
 };

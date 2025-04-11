@@ -3,23 +3,15 @@ import { ref } from 'vue';
 const notifications = ref([]);
 
 export function useNotification() {
-  const showNotification = (title, message, type = 'info', duration = 5000) => {
-    const id = Date.now();
-    notifications.value.push({
-      id,
-      title,
-      message,
-      type,
-      duration,
-      timestamp: new Date()
+  const showNotification = (title, message, type = 'info') => {
+    const event = new CustomEvent('show-notification', {
+      detail: {
+        title,
+        message,
+        type
+      }
     });
-
-    // Remove notification after duration
-    if (duration > 0) {
-      setTimeout(() => {
-        removeNotification(id);
-      }, duration);
-    }
+    window.dispatchEvent(event);
   };
 
   const showSuccess = (message, title = 'Success', duration = 5000) => {

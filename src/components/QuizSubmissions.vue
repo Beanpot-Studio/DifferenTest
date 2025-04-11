@@ -134,9 +134,9 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
 export default {
   name: 'QuizSubmissions',
   components: {
@@ -154,15 +154,7 @@ export default {
       if (!user.value) return;
 
       try {
-        const q = query(
-          collection(db, 'classes'),
-          where('teacherId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        classes.value = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        classes.value = await FirebaseService.getTeacherClasses(user.value.uid);
       } catch (error) {
         console.error('Error fetching classes:', error);
       }
@@ -172,41 +164,8 @@ export default {
       if (!user.value) return;
 
       try {
-        let q;
-        if (selectedClass.value) {
-          q = query(
-            collection(db, 'submissions'),
-            where('classId', '==', selectedClass.value),
-            where('teacherId', '==', user.value.uid)
-          );
-        } else {
-          q = query(
-            collection(db, 'submissions'),
-            where('teacherId', '==', user.value.uid)
-          );
-        }
-
-        const querySnapshot = await getDocs(q);
-        const submissionsPromises = querySnapshot.docs.map(async doc => {
-          const data = doc.data();
-          
-          // Get student name
-          const studentDoc = await getDoc(doc(db, 'users', data.studentId));
-          const studentName = studentDoc.data()?.name || 'Unknown Student';
-          
-          // Get class name
-          const classDoc = await getDoc(doc(db, 'classes', data.classId));
-          const className = classDoc.data()?.name || 'Unknown Class';
-
-          return {
-            id: doc.id,
-            ...data,
-            studentName,
-            className
-          };
-        });
-
-        submissions.value = await Promise.all(submissionsPromises);
+        const submissionsData = await FirebaseService.getQuizSubmissions(user.value.uid, selectedClass.value);
+        submissions.value = submissionsData;
       } catch (error) {
         console.error('Error fetching submissions:', error);
       }

@@ -194,10 +194,10 @@
 
 <script>
 import { ref, onMounted, watch, computed } from 'vue';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
 export default {
   name: 'UserProfile',
   components: {
@@ -233,24 +233,23 @@ export default {
       if (!user.value?.uid) return;
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.value.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
+        const profile = await FirebaseService.getUserProfile(user.value.uid);
+        if (profile) {
           // Ensure subjects is always an array
-          const subjects = data.subjects || [];
+          const subjects = profile.subjects || [];
           const subjectsArray = Array.isArray(subjects) ? subjects : 
             typeof subjects === 'string' ? subjects.split(',').map(s => s.trim()) : [];
 
           formData.value = {
-            name: data.name || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            bio: data.bio || '',
-            school: data.school || '',
-            grade: data.grade || '',
+            name: profile.name || '',
+            email: profile.email || '',
+            phone: profile.phone || '',
+            bio: profile.bio || '',
+            school: profile.school || '',
+            grade: profile.grade || '',
             subjects: subjectsArray,
-            availability: data.availability || '',
-            timezone: data.timezone || ''
+            availability: profile.availability || '',
+            timezone: profile.timezone || ''
           };
         }
       } catch (err) {
@@ -272,7 +271,7 @@ export default {
           ? formData.value.subjects.split(',').map(s => s.trim())
           : formData.value.subjects;
 
-        await updateDoc(doc(db, 'users', user.value.uid), {
+        await FirebaseService.updateUserProfile(user.value.uid, {
           ...formData.value,
           subjects: subjectsArray,
           updatedAt: new Date()

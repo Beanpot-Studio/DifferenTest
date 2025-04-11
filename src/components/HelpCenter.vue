@@ -90,9 +90,9 @@
 
 <script>
 import { ref, computed } from 'vue';
-import { doc, updateDoc, increment } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
 export default {
   name: 'HelpCenter',
   components: {
@@ -223,11 +223,7 @@ export default {
       if (!selectedArticle.value) return;
 
       try {
-        const articleRef = doc(db, 'help_articles', selectedArticle.value.id);
-        await updateDoc(articleRef, {
-          helpful: increment(isHelpful ? 1 : 0),
-          notHelpful: increment(isHelpful ? 0 : 1)
-        });
+        await FirebaseService.updateArticleRating(selectedArticle.value.id, isHelpful);
         closeArticleModal();
       } catch (error) {
         console.error('Error rating article:', error);

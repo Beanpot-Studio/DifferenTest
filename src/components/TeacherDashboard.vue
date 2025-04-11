@@ -8,11 +8,11 @@
       </div>
       <div class="bg-white rounded-lg shadow-md p-6">
         <h3 class="text-lg font-semibold text-secondary-900">Active Quizzes</h3>
-        <p class="text-3xl font-bold text-primary-600">{{ stats.activeQuizzes }}</p>
+        <p class="text-3xl font-bold text-primary-600">{{ stats.totalQuizzes }}</p>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6">
         <h3 class="text-lg font-semibold text-secondary-900">Quiz Submissions</h3>
-        <p class="text-3xl font-bold text-primary-600">{{ stats.pendingSubmissions }}</p>
+        <p class="text-3xl font-bold text-primary-600">{{ stats.totalSubmissions }}</p>
       </div>
     </div>
 
@@ -75,14 +75,14 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '../stores/auth';
+import { useNotification } from '../composables/useNotification';
 import QuizGenerator from './QuizGenerator.vue';
 import QuizManager from './QuizManager.vue';
 import ClassManager from './ClassManager.vue';
 import TeacherSubmissions from './TeacherSubmissions.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   name: 'TeacherDashboard',
@@ -94,13 +94,15 @@ export default {
   },
   setup() {
     const { user } = useAuth();
+    const { showNotification } = useNotification();
     const activeTab = ref('classes');
     const selectedClassId = ref(null);
     const stats = ref({
       totalClasses: 0,
-      activeQuizzes: 0,
-      pendingSubmissions: 0
+      totalQuizzes: 0,
+      totalSubmissions: 0
     });
+    const isLoading = ref(true);
 
     const tabs = [
       { id: 'classes', name: 'Classes' },
@@ -109,47 +111,17 @@ export default {
     ];
 
     const loadStats = async () => {
-      if (!user.value?.uid) return;
-
+      if (!user.value) return;
+      
       try {
-        // Get total classes and their quizzes
-        const classesQuery = query(
-          collection(db, 'classes'),
-          where('teacherId', '==', user.value.uid)
-        );
-        const classesSnapshot = await getDocs(classesQuery);
-        stats.value.totalClasses = classesSnapshot.size;
-
-        // Count total quizzes across all classes
-        let totalQuizzes = 0;
-        classesSnapshot.docs.forEach(classDoc => {
-          const classData = classDoc.data();
-          totalQuizzes += classData.quizzes?.length || 0;
-        });
-        stats.value.activeQuizzes = totalQuizzes;
-
-        // Get quiz submissions from activities for teacher's classes
-        const classIds = classesSnapshot.docs.map(doc => doc.id);
-        let totalSubmissions = 0;
-        
-        if (classIds.length > 0) {
-          // Process classIds in chunks of 10
-          for (let i = 0; i < classIds.length; i += 10) {
-            const chunk = classIds.slice(i, i + 10);
-            const activitiesQuery = query(
-              collection(db, 'activities'),
-              where('classId', 'in', chunk),
-              where('type', '==', 'quiz_completed')
-            );
-            const activitiesSnapshot = await getDocs(activitiesQuery);
-            totalSubmissions += activitiesSnapshot.size;
-          }
-        }
-        
-        stats.value.pendingSubmissions = totalSubmissions;
+        isLoading.value = true;
+        const dashboardStats = await FirebaseService.getTeacherDashboardStats(user.value.uid);
+        stats.value = dashboardStats;
       } catch (error) {
-        console.error('Error loading stats:', error);
-        showNotification('Error', 'Error loading dashboard stats. Please try again.', 'error');
+        console.error('Error loading dashboard stats:', error);
+        showNotification('Error', 'Failed to load dashboard statistics', 'error');
+      } finally {
+        isLoading.value = false;
       }
     };
 
@@ -159,13 +131,22 @@ export default {
     };
 
     onMounted(() => {
-      loadStats();
+      if (user.value) {
+        loadStats();
+      }
+    });
+
+    watch(user, (newUser) => {
+      if (newUser) {
+        loadStats();
+      }
     });
 
     return {
       activeTab,
       selectedClassId,
       stats,
+      isLoading,
       handleQuizSelect,
       tabs
     };

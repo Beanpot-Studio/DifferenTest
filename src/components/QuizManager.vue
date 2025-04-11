@@ -140,20 +140,16 @@
     <div v-if="showLessonPlanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold">Lesson Plan</h3>
+          <h3 class="text-xl font-bold">Lesson Plan: {{ currentLessonPlan?.title }}</h3>
           <button @click="closeLessonPlanModal" class="text-gray-500 hover:text-gray-700">
             <IconService name="x" size="6" />
           </button>
         </div>
 
         <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Lesson Plan</label>
-          <textarea
-            v-model="currentLessonPlan.content"
-            class="w-full p-2 border rounded-lg"
-            rows="3"
-            readonly
-          ></textarea>
+          <div class="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-4 rounded-lg">
+            {{ currentLessonPlan?.content }}
+          </div>
         </div>
 
         <div class="flex justify-end space-x-4 mt-6">
@@ -172,12 +168,10 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
+import BaseAnimation from './BaseAnimation.vue';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   name: 'QuizManager',
@@ -209,15 +203,7 @@ export default {
       if (!user.value) return;
 
       try {
-        const q = query(
-          collection(db, 'quizzes'),
-          where('userId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        quizzes.value = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        quizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
       } catch (error) {
         console.error('Error fetching quizzes:', error);
         showNotification('Error', 'Error fetching quizzes', 'error');
@@ -239,7 +225,7 @@ export default {
       if (!currentQuiz.value) return;
 
       try {
-        await updateDoc(doc(db, 'quizzes', currentQuiz.value.id), {
+        await FirebaseService.updateQuiz(currentQuiz.value.id, {
           ...currentQuiz.value,
           updatedAt: new Date()
         });
@@ -254,13 +240,30 @@ export default {
       if (!confirm('Are you sure you want to delete this quiz?')) return;
 
       try {
-        await deleteDoc(doc(db, 'quizzes', quizId));
-        quizzes.value = quizzes.value.filter(q => q.id !== quizId);
+        await FirebaseService.deleteQuiz(quizId);
         showNotification('Success', 'Quiz deleted successfully', 'success');
+        fetchQuizzes(); // Refresh the list
       } catch (error) {
         console.error('Error deleting quiz:', error);
         showNotification('Error', 'Error deleting quiz', 'error');
       }
+    };
+
+    const viewLessonPlan = (quiz) => {
+      if (!quiz.lessonPlan) {
+        showNotification('Info', 'No lesson plan available for this quiz', 'info');
+        return;
+      }
+      currentLessonPlan.value = {
+        title: quiz.title,
+        content: quiz.lessonPlan
+      };
+      showLessonPlanModal.value = true;
+    };
+
+    const closeLessonPlanModal = () => {
+      showLessonPlanModal.value = false;
+      currentLessonPlan.value = null;
     };
 
     const addOption = (questionIndex) => {
@@ -273,26 +276,32 @@ export default {
       saveQuiz();
     };
 
-    
-
-    const viewLessonPlan = async (quiz) => {
-      if (!quiz.lessonPlan) {
-        error.value = 'No lesson plan available for this quiz';
-        return;
-      }
-
+    const addQuizToClass = async (classId, quizId) => {
       try {
-        currentLessonPlan.value = { content: quiz.lessonPlan };
-        showLessonPlanModal.value = true;
-      } catch (err) {
-        console.error('Error loading lesson plan:', err);
-        error.value = 'Failed to load lesson plan';
+        loading.value = true;
+        await FirebaseService.addQuizToClass(classId, quizId);
+        showNotification('Success', 'Quiz added to class successfully', 'success');
+        await fetchQuizzes();
+      } catch (error) {
+        console.error('Error adding quiz to class:', error);
+        showNotification('Error', 'Failed to add quiz to class', 'error');
+      } finally {
+        loading.value = false;
       }
     };
 
-    const closeLessonPlanModal = () => {
-      showLessonPlanModal.value = false;
-      currentLessonPlan.value = null;
+    const removeQuizFromClass = async (classId, quizId) => {
+      try {
+        loading.value = true;
+        await FirebaseService.removeQuizFromClass(classId, quizId);
+        showNotification('Success', 'Quiz removed from class successfully', 'success');
+        await fetchQuizzes();
+      } catch (error) {
+        console.error('Error removing quiz from class:', error);
+        showNotification('Error', 'Failed to remove quiz from class', 'error');
+      } finally {
+        loading.value = false;
+      }
     };
 
     onMounted(() => {
@@ -301,6 +310,7 @@ export default {
 
     return {
       quizzes,
+      loading,
       showEditModal,
       currentQuiz,
       showLessonPlanModal,
@@ -309,15 +319,16 @@ export default {
       generating,
       error,
       success,
-      viewLessonPlan,
-      closeLessonPlanModal,
-      loading,
       openEditModal,
       closeEditModal,
       saveQuiz,
       deleteQuiz,
+      viewLessonPlan,
+      closeLessonPlanModal,
       addOption,
-      removeOption
+      removeOption,
+      addQuizToClass,
+      removeQuizFromClass
     };
   }
 };

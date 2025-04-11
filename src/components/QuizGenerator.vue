@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold mb-4">Generate Quiz from Lesson Plan</h2>
+    <h2 class="text-2xl font-bold mb-4">Generate Quiz from Lesson</h2>
     
     <!-- Class Selection -->
     <div class="mb-6">
@@ -119,7 +119,6 @@
             v-model="question.text"
             class="w-full p-2 border rounded-lg"
             rows="3"
-            @input="saveQuiz"
           ></textarea>
         </div>
         
@@ -129,13 +128,12 @@
               type="radio"
               :name="'correct-' + index"
               :checked="optionIndex === question.correctIndex"
-              @change="question.correctIndex = optionIndex; saveQuiz()"
+              @change="question.correctIndex = optionIndex"
               class="text-primary-600"
             />
             <input
               v-model="option.text"
               class="flex-1 p-2 border rounded-lg"
-              @input="saveQuiz"
             />
             <button
               @click="removeOption(index, optionIndex)"
@@ -174,14 +172,13 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, deleteDoc, doc, updateDoc, addDoc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   name: 'QuizGenerator',
@@ -202,6 +199,9 @@ export default {
     const classes = ref([]);
     const isPublic = ref(false);
     const isClassPublic = ref(false);
+    const selectedClass = ref('');
+    const questions = ref([]);
+    const isLoading = ref(false);
 
     // Get API key from environment variable
     const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
@@ -214,24 +214,31 @@ export default {
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const loadClasses = async () => {
+      if (!user.value) return;
+      
       try {
-        const q = query(
-          collection(db, 'classes'),
-          where('teacherId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        classes.value = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        isLoading.value = true;
+        const teacherClasses = await FirebaseService.getClassesByTeacher(user.value.uid);
+        classes.value = teacherClasses;
+        console.log('Loaded classes:', teacherClasses);
       } catch (error) {
         console.error('Error loading classes:', error);
         showNotification('Error', 'Failed to load classes', 'error');
+      } finally {
+        isLoading.value = false;
       }
     };
 
     onMounted(() => {
-      loadClasses();
+      if (user.value) {
+        loadClasses();
+      }
+    });
+
+    watch(user, (newUser) => {
+      if (newUser) {
+        loadClasses();
+      }
     });
 
     const handleFileUpload = async (event) => {
@@ -304,7 +311,6 @@ export default {
         quiz.value = JSON.parse(text);
         quiz.value.title = quizTitle.value || quiz.value.title;
         
-        await saveQuiz();
         showNotification('Success', 'Quiz generated successfully!');
       } catch (error) {
         console.error('Error generating quiz:', error);
@@ -319,32 +325,26 @@ export default {
       }
 
       try {
-        const classDoc = await getDoc(doc(db, 'classes', selectedClassId.value));
-        if (!classDoc.exists()) {
-          showNotification('Error', 'Selected class not found', 'error');
-          return;
-        }
-        const classData = classDoc.data();
-
         const quizData = {
           ...quiz.value,
           userId: user.value.uid,
           classId: selectedClassId.value,
-          className: classData.name,
-          isPublic: classData.isPublic, // Inherit class's public status
+          isPublic: isPublic.value,
           createdAt: new Date(),
           updatedAt: new Date(),
           lessonPlan: fileContent.value
         };
 
-        if (!quiz.value.id) {
-          const docRef = await addDoc(collection(db, 'quizzes'), quizData);
-          quiz.value.id = docRef.id;
-          showNotification('Success', `Quiz "${quiz.value.title}" saved to ${classData.name}${classData.isPublic ? ' (Public Class)' : ''}`, 'success');
-        } else {
-          await updateDoc(doc(db, 'quizzes', quiz.value.id), quizData);
-          showNotification('Success', `Quiz "${quiz.value.title}" updated in ${classData.name}${classData.isPublic ? ' (Public Class)' : ''}`, 'success');
-        }
+        await FirebaseService.createQuiz(quizData);
+        showNotification('Success', `Quiz "${quiz.value.title}" saved successfully!`, 'success');
+        
+        // Reset form after successful save
+        quiz.value = null;
+        fileContent.value = '';
+        fileName.value = '';
+        quizTitle.value = '';
+        selectedClassId.value = '';
+        isPublic.value = false;
       } catch (error) {
         console.error('Error saving quiz:', error);
         showNotification('Error', `Error saving quiz "${quiz.value.title}". Please try again.`, 'error');
@@ -353,12 +353,10 @@ export default {
 
     const addOption = (questionIndex) => {
       quiz.value.questions[questionIndex].options.push({ text: '' });
-      saveQuiz();
     };
 
     const removeOption = (questionIndex, optionIndex) => {
       quiz.value.questions[questionIndex].options.splice(optionIndex, 1);
-      saveQuiz();
     };
 
     const generateNewQuiz = () => {

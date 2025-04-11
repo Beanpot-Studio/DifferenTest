@@ -59,10 +59,9 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { collection, query, where, getDocs, orderBy, getDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   components: {
@@ -85,48 +84,7 @@ export default {
       loading.value = true;
       error.value = null;
       try {
-        // Query quiz attempts
-        const attemptsRef = collection(db, 'quizAttempts');
-        const attemptsQuery = query(
-          attemptsRef,
-          where('userId', '==', user.value.uid),
-          orderBy('timestamp', 'desc')
-        );
-        const attemptsSnapshot = await getDocs(attemptsQuery);
-        
-        const attempts = [];
-        for (const docSnap of attemptsSnapshot.docs) {
-          const attempt = docSnap.data();
-          
-          // Get class name
-          let className = 'Unknown Class';
-          if (attempt.classId) {
-            const classDocRef = doc(db, 'classes', attempt.classId);
-            const classDoc = await getDoc(classDocRef);
-            if (classDoc.exists()) {
-              className = classDoc.data().name || className;
-            }
-          }
-
-          // Get quiz details
-          let quizTitle = attempt.quizTitle || 'Unknown Quiz';
-          if (attempt.quizId) {
-            const quizDocRef = doc(db, 'quizzes', attempt.quizId);
-            const quizDoc = await getDoc(quizDocRef);
-            if (quizDoc.exists()) {
-              quizTitle = quizDoc.data().title || quizTitle;
-            }
-          }
-
-          attempts.push({
-            id: docSnap.id,
-            ...attempt,
-            className,
-            quizTitle,
-            submittedAt: attempt.timestamp?.toDate() || new Date()
-          });
-        }
-        
+        const attempts = await FirebaseService.getUserQuizHistory(user.value.uid);
         quizHistory.value = attempts;
       } catch (err) {
         console.error('Error loading quiz history:', err);
@@ -145,8 +103,6 @@ export default {
         minute: '2-digit'
       });
     };
-
-    
 
     onMounted(() => {
       loadQuizHistory();

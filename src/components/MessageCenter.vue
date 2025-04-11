@@ -145,10 +145,13 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, addDoc, doc, getDoc, orderBy } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
+  components: {
+    IconService
+  },
   name: 'MessageCenter',
   setup() {
     const { user } = useAuth();
@@ -167,24 +170,15 @@ export default {
       if (!user.value) return;
 
       try {
-        const q = query(
-          collection(db, 'messages'),
-          where('recipientId', '==', user.value.uid),
-          orderBy('createdAt', 'desc')
-        );
-        const querySnapshot = await getDocs(q);
+        const messages = await FirebaseService.getUserMessages(user.value.uid);
         
-        const messagePromises = querySnapshot.docs.map(async doc => {
-          const data = doc.data();
-          const senderDoc = await getDoc(doc(db, 'users', data.senderId));
-          const senderData = senderDoc.data();
-
+        const messagePromises = messages.map(async message => {
+          const senderData = await FirebaseService.getUserProfile(message.senderId);
           return {
-            id: doc.id,
-            ...data,
+            ...message,
             senderName: senderData?.name || 'Unknown User',
             senderEmail: senderData?.email || 'unknown@email.com',
-            preview: data.content.substring(0, 100) + (data.content.length > 100 ? '...' : '')
+            preview: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : '')
           };
         });
 
@@ -198,13 +192,8 @@ export default {
       if (!user.value) return;
 
       try {
-        const querySnapshot = await getDocs(collection(db, 'users'));
-        recipients.value = querySnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-          .filter(u => u.id !== user.value.uid); // Exclude current user
+        const users = await FirebaseService.getAllUsers();
+        recipients.value = users.filter(u => u.id !== user.value.uid); // Exclude current user
       } catch (error) {
         console.error('Error fetching recipients:', error);
       }
@@ -237,7 +226,7 @@ export default {
       if (!user.value) return;
 
       try {
-        await addDoc(collection(db, 'messages'), {
+        await FirebaseService.createMessage({
           senderId: user.value.uid,
           recipientId: newMessage.value.recipientId,
           subject: newMessage.value.subject,

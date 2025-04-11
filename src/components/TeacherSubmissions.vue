@@ -182,10 +182,10 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import BaseAnimation from './BaseAnimation.vue';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
+
 export default {
   name: 'TeacherSubmissions',
   components: {
@@ -205,17 +205,7 @@ export default {
 
     const loadClasses = async () => {
       try {
-        console.log('Loading classes for teacher:', user.value.uid);
-        const classesRef = collection(db, 'classes');
-        const q = query(classesRef, where('teacherId', '==', user.value.uid));
-        const querySnapshot = await getDocs(q);
-        
-        const loadedClasses = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        console.log('Loaded classes:', loadedClasses);
-        classes.value = loadedClasses;
+        classes.value = await FirebaseService.getTeacherClasses(user.value.uid);
       } catch (error) {
         console.error('Error loading classes:', error);
       }
@@ -223,146 +213,27 @@ export default {
 
     const loadQuizzes = async () => {
       try {
-        console.log('Loading quizzes for teacher:', user.value.uid);
-        // Since quizzes are stored within classes, we'll get them from the loaded classes
-        const allQuizzes = [];
-        
-        // If a class is selected, only show quizzes from that class
         if (selectedClass.value) {
-          const selectedClassData = classes.value.find(c => c.id === selectedClass.value);
-          if (selectedClassData?.quizzes && Array.isArray(selectedClassData.quizzes)) {
-            selectedClassData.quizzes.forEach(quiz => {
-              allQuizzes.push({
-                id: quiz.id,
-                title: quiz.title,
-                classId: selectedClassData.id
-              });
-            });
-          }
+          quizzes.value = await FirebaseService.getClassQuizzes(selectedClass.value);
         } else {
-          // If no class is selected, show all quizzes from all teacher's classes
-          classes.value.forEach(classItem => {
-            if (classItem.quizzes && Array.isArray(classItem.quizzes)) {
-              classItem.quizzes.forEach(quiz => {
-                allQuizzes.push({
-                  id: quiz.id,
-                  title: quiz.title,
-                  classId: classItem.id
-                });
-              });
-            }
-          });
-        }
-        
-        console.log('Loaded quizzes from classes:', allQuizzes);
-        quizzes.value = allQuizzes;
-        
-        // If a quiz is selected but it's not in the current list, clear the selection
-        if (selectedQuiz.value && !allQuizzes.some(q => q.id === selectedQuiz.value)) {
-          selectedQuiz.value = '';
+          quizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
         }
       } catch (error) {
         console.error('Error loading quizzes:', error);
-        console.error('Error details:', {
-          message: error.message,
-          code: error.code,
-          stack: error.stack
-        });
       }
     };
 
     const loadSubmissions = async () => {
       loading.value = true;
       try {
-        console.log('Loading student activities');
-        const activitiesRef = collection(db, 'activities');
-        let q = query(activitiesRef, where('type', '==', 'quiz_completed'));
-        console.log('Base query:', q);
-
-        if (selectedClass.value) {
-          q = query(q, where('classId', '==', selectedClass.value));
-          console.log('Query with class filter:', q);
-        }
-
-        if (selectedQuiz.value) {
-          q = query(q, where('quizId', '==', selectedQuiz.value));
-          console.log('Query with quiz filter:', q);
-        }
-
-        const querySnapshot = await getDocs(q);
-        console.log('Query snapshot:', {
-          empty: querySnapshot.empty,
-          size: querySnapshot.size,
-          docs: querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            data: doc.data()
-          }))
-        });
-        
-        if (querySnapshot.empty) {
-          console.log('No quiz activities found');
-          submissions.value = [];
-          return;
-        }
-
-        const submissionsData = [];
-
-        for (const docSnapshot of querySnapshot.docs) {
-          const activity = docSnapshot.data();
-          console.log('Processing activity:', activity);
-          
-          try {
-            // Get student data using userId
-            const studentDocRef = doc(db, 'users', activity.userId);
-            const studentDoc = await getDoc(studentDocRef);
-            console.log('Student document:', {
-              id: activity.userId,
-              exists: studentDoc.exists(),
-              data: studentDoc.exists() ? studentDoc.data() : null
-            });
-
-            const submissionData = {
-              id: docSnapshot.id,
-              ...activity,
-              studentName: studentDoc.exists() ? studentDoc.data()?.name || 'Unknown Student' : 'Unknown Student',
-              score: activity.score || 0,
-              submittedAt: activity.timestamp || new Date(),
-              totalQuestions: activity.totalQuestions || 0,
-              correctAnswers: activity.correctAnswers || 0,
-              timeSpent: activity.timeSpent || 0,
-              isRetake: activity.isRetake || false,
-              status: activity.status || 'completed',
-              improvement: activity.improvement || 0,
-              incorrectAnswers: activity.incorrectAnswers || []
-            };
-            console.log('Processed submission data:', submissionData);
-            submissionsData.push(submissionData);
-          } catch (error) {
-            console.error('Error processing activity:', error);
-            console.error('Error details:', {
-              message: error.message,
-              code: error.code,
-              stack: error.stack
-            });
-          }
-        }
-
-        // Sort submissions by submission date, most recent first
-        submissionsData.sort((a, b) => {
-          const dateA = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt);
-          const dateB = b.submittedAt?.toDate ? b.submittedAt.toDate() : new Date(b.submittedAt);
-          return dateB.getTime() - dateA.getTime();
-        });
-        
-        console.log('Final submissions data:', submissionsData);
+        const submissionsData = await FirebaseService.getTeacherSubmissions(
+          user.value.uid,
+          selectedClass.value,
+          selectedQuiz.value
+        );
         submissions.value = submissionsData;
       } catch (error) {
-        console.error('Error loading activities:', error);
-        console.error('Error details:', {
-          message: error.message,
-          code: error.code,
-          stack: error.stack
-        });
+        console.error('Error loading submissions:', error);
       } finally {
         loading.value = false;
       }
@@ -381,7 +252,6 @@ export default {
     const formatDate = (timestamp) => {
       if (!timestamp) return 'N/A';
       try {
-        // Check if it's a Firestore timestamp
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
       } catch (error) {
@@ -393,7 +263,6 @@ export default {
     const formatTimeSpent = (timeSpent) => {
       if (!timeSpent) return 'N/A';
       try {
-        // Convert milliseconds to seconds
         const totalSeconds = Math.floor(timeSpent / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = Math.floor(totalSeconds % 60);
@@ -405,11 +274,7 @@ export default {
     };
 
     onMounted(async () => {
-      console.log('Component mounted, user:', user.value);
-      if (!user.value) {
-        console.error('No user found');
-        return;
-      }
+      if (!user.value) return;
       await loadClasses();
       await loadQuizzes();
       await loadSubmissions();

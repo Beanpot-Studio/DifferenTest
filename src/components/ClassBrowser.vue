@@ -151,7 +151,7 @@
           </div>
           <div>
             <h3 class="font-semibold">Students</h3>
-            <p>{{ selectedClass.studentCount || 0 }}</p>
+            <p>{{ selectedClass.students?.length || 0 }}</p>
           </div>
         </div>
         <div>
@@ -165,12 +165,11 @@
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { collection, query, getDocs, doc, setDoc, getDoc, where, addDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
 import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   name: 'ClassBrowser',
@@ -228,65 +227,9 @@ export default {
       loading.value = true;
       error.value = null;
       try {
-        // Get user's enrolled classes and their statuses
-        const enrollmentsRef = collection(db, 'enrollments');
-        const enrollmentsQuery = query(enrollmentsRef, where('studentId', '==', user.value.uid));
-        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-        
-        // Create a map of classId to enrollment status
-        const enrollmentStatusMap = {};
-        enrollmentsSnapshot.docs.forEach(doc => {
-          const data = doc.data();
-          enrollmentStatusMap[data.classId] = data.status;
-        });
-        enrolledClasses.value = Object.keys(enrollmentStatusMap);
-
-        // Get all classes
-        const classesRef = collection(db, 'classes');
-        const classesSnapshot = await getDocs(classesRef);
-        
-        if (classesSnapshot.empty) {
-          classes.value = [];
-          return;
-        }
-
-        const classPromises = classesSnapshot.docs.map(async (classDoc) => {
-          try {
-            const classData = classDoc.data();
-            
-            // Get teacher's details
-            const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-            const teacherData = teacherDoc.data();
-            
-            // Count students
-            const studentsQuery = query(enrollmentsRef, where('classId', '==', classDoc.id));
-            const studentsSnapshot = await getDocs(studentsQuery);
-            
-            return {
-              id: classDoc.id,
-              ...classData,
-              teacherName: teacherData?.name || 'Unknown Teacher',
-              teacherId: classData.teacherId,
-              studentCount: studentsSnapshot.size,
-              quizCount: classData.quizzes?.length || 0,
-              enrollmentStatus: enrollmentStatusMap[classDoc.id] || null
-            };
-          } catch (err) {
-            console.error(`Error processing class ${classDoc.id}:`, err);
-            const classData = classDoc.data();
-            return {
-              id: classDoc.id,
-              ...classData,
-              teacherName: 'Unknown Teacher',
-              studentCount: 0,
-              quizCount: 0,
-              enrollmentStatus: null
-            };
-          }
-        });
-
-        const loadedClasses = await Promise.all(classPromises);
-        classes.value = loadedClasses.filter(Boolean);
+        const { classes: loadedClasses, enrolledClasses: enrolled } = await FirebaseService.getAvailableClasses(user.value.uid);
+        classes.value = loadedClasses;
+        enrolledClasses.value = enrolled;
       } catch (err) {
         console.error('Error loading classes:', err);
         error.value = 'Failed to load classes. Please try again.';
@@ -301,53 +244,8 @@ export default {
       if (!user.value) return;
       
       try {
-        // Check if already enrolled
-        const enrollmentsRef = collection(db, 'enrollments');
-        const q = query(
-          enrollmentsRef,
-          where('classId', '==', classItem.id),
-          where('studentId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
+        await FirebaseService.enrollInClass(user.value.uid, classItem.id);
         
-        if (!querySnapshot.empty) {
-          showNotification('Error', 'You are already enrolled in this class', 'error');
-          return;
-        }
-
-        // Create enrollment document with pending status
-        const enrollmentRef = await addDoc(collection(db, 'enrollments'), {
-          classId: classItem.id,
-          studentId: user.value.uid,
-          status: 'pending',
-          enrolledAt: new Date()
-        });
-
-        // Update student's classes array
-        await updateDoc(doc(db, 'users', user.value.uid), {
-          classes: arrayUnion(classItem.id)
-        });
-
-        // Update class's students array
-        await updateDoc(doc(db, 'classes', classItem.id), {
-          students: arrayUnion(user.value.uid)
-        });
-
-        // Get teacher's name
-        const teacherDoc = await getDoc(doc(db, 'users', classItem.teacherId));
-        const teacherData = teacherDoc.data();
-        const teacherName = teacherData?.name || teacherData?.fullName || 'Unknown Teacher';
-
-        // Log activity
-        await addDoc(collection(db, 'activities'), {
-          userId: user.value.uid,
-          type: 'class_joined',
-          classId: classItem.id,
-          className: classItem.name,
-          teacherName: teacherName,
-          timestamp: new Date()
-        });
-
         // Update local state
         classes.value = classes.value.map(c => 
           c.id === classItem.id 
@@ -394,20 +292,7 @@ export default {
       if (!user.value) return;
       
       try {
-        const enrollmentsRef = collection(db, 'enrollments');
-        const q = query(
-          enrollmentsRef,
-          where('classId', '==', classId),
-          where('studentId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const enrollment = querySnapshot.docs[0].data();
-          enrollmentStatus.value = enrollment.status;
-        } else {
-          enrollmentStatus.value = null;
-        }
+        enrollmentStatus.value = await FirebaseService.getEnrollmentStatus(user.value.uid, classId);
       } catch (error) {
         console.error('Error checking enrollment status:', error);
         enrollmentStatus.value = null;
@@ -419,29 +304,7 @@ export default {
       
       try {
         enrolling.value = true;
-        
-        // Check if already enrolled
-        const enrollmentsRef = collection(db, 'enrollments');
-        const q = query(
-          enrollmentsRef,
-          where('classId', '==', classId),
-          where('studentId', '==', user.value.uid)
-        );
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          showNotification('Error', 'You are already enrolled in this class', 'error');
-          return;
-        }
-        
-        // Create enrollment
-        await addDoc(enrollmentsRef, {
-          classId,
-          studentId: user.value.uid,
-          status: 'pending',
-          enrolledAt: new Date()
-        });
-        
+        await FirebaseService.enrollInClass(user.value.uid, classId);
         enrollmentStatus.value = 'pending';
         showNotification('Success', 'Enrollment request sent successfully', 'success');
       } catch (error) {

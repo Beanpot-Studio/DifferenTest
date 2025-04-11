@@ -23,7 +23,6 @@ classes
     quizzes
         id
         title
-    studentCount
     students
         (id of student is the value of the index)
     teacherId
@@ -58,6 +57,7 @@ quizzes
             options
                 text
         text
+    teacherId
 
 users 
     bio

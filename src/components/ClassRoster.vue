@@ -105,10 +105,13 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import { collection, query, where, getDocs, doc, updateDoc, getDoc, addDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
+  components: {
+    IconService
+  },
   name: 'ClassRoster',
   props: {
     classId: {
@@ -125,7 +128,6 @@ export default {
     const enrollments = ref([]);
     const currentFilter = ref('all');
     const loading = ref(true);
-
 
     // Filter students based on current filter
     const filteredStudents = computed(() => {
@@ -144,21 +146,16 @@ export default {
     const loadStudents = async () => {
       try {
         loading.value = true;
-        const enrollmentsRef = collection(db, 'enrollments');
-        const enrollmentsQuery = query(enrollmentsRef, where('classId', '==', props.classId));
-        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-
-        const studentPromises = enrollmentsSnapshot.docs.map(async (enrollmentDoc) => {
-          const enrollmentData = enrollmentDoc.data();
-          const studentDoc = await getDoc(doc(db, 'users', enrollmentData.studentId));
-          const studentData = studentDoc.data();
-
+        const enrollments = await FirebaseService.getEnrollmentsByClass(props.classId);
+        
+        const studentPromises = enrollments.map(async (enrollment) => {
+          const studentData = await FirebaseService.getUserProfile(enrollment.studentId);
           return {
-            id: enrollmentDoc.id,
+            id: enrollment.id,
             name: studentData?.name || 'Unknown Student',
             email: studentData?.email || 'No email',
-            enrolledAt: enrollmentData.enrolledAt,
-            status: enrollmentData.status
+            enrolledAt: enrollment.enrolledAt,
+            status: enrollment.status
           };
         });
 
@@ -170,48 +167,27 @@ export default {
       }
     };
 
-    // Load enrollments
-    const loadEnrollments = async () => {
-      try {
-        const enrollmentsRef = collection(db, 'enrollments');
-        const enrollmentsQuery = query(enrollmentsRef, where('classId', '==', props.classId));
-        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-
-        enrollments.value = enrollmentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (error) {
-        console.error('Error loading enrollments:', error);
-      }
-    };
-
     // Update student status
     const updateStudentStatus = async (enrollmentId, newStatus) => {
       try {
-        const enrollmentRef = doc(db, 'enrollments', enrollmentId);
-        const enrollmentDoc = await getDoc(enrollmentRef);
-        const enrollmentData = enrollmentDoc.data();
-
-        // Update enrollment status
-        await updateDoc(enrollmentRef, {
-          status: newStatus
-        });
-
-        // Get student details
-        const studentDoc = await getDoc(doc(db, 'users', enrollmentData.studentId));
-        const studentData = studentDoc.data();
-
-        // Log activity
-        await addDoc(collection(db, 'activities'), {
-          userId: enrollmentData.studentId,
-          type: 'enrollment_status_changed',
-          classId: props.classId,
-          className: props.className,
-          teacherName: studentData?.name || 'Unknown Teacher',
-          status: newStatus,
-          timestamp: new Date()
-        });
+        await FirebaseService.updateEnrollment(enrollmentId, { status: newStatus });
+        
+        // Get the enrollment to find the student ID
+        const enrollment = enrollments.value.find(e => e.id === enrollmentId);
+        if (enrollment) {
+          const studentData = await FirebaseService.getUserProfile(enrollment.studentId);
+          
+          // Log activity
+          await FirebaseService.createActivity({
+            userId: enrollment.studentId,
+            type: 'enrollment_status_changed',
+            classId: props.classId,
+            className: props.className,
+            teacherName: studentData?.name || 'Unknown Teacher',
+            status: newStatus,
+            timestamp: new Date()
+          });
+        }
 
         // Dispatch event to update student's view
         window.dispatchEvent(new CustomEvent('enrollmentStatusChanged'));
@@ -225,7 +201,6 @@ export default {
 
     onMounted(() => {
       loadStudents();
-      loadEnrollments();
     });
 
     return {

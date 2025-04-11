@@ -96,11 +96,10 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { collection, query, where, getDocs, orderBy, limit, getDoc, doc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
-import IconService from './IconService.vue'
+import IconService from './IconService.vue';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   components: {
@@ -123,47 +122,7 @@ export default {
       loading.value = true;
       error.value = null;
       try {
-        const activitiesRef = collection(db, 'activities');
-        const activitiesQuery = query(
-          activitiesRef,
-          where('userId', '==', user.value.uid),
-          orderBy('timestamp', 'desc'),
-          limit(5)
-        );
-        const activitiesSnapshot = await getDocs(activitiesQuery);
-        
-        const activityList = [];
-        for (const docSnap of activitiesSnapshot.docs) {
-          const activity = docSnap.data();
-          let className = 'Unknown Class';
-          let teacherName = 'Unknown Teacher';
-          
-          if (activity.classId) {
-            try {
-              const classDoc = await getDoc(doc(db, 'classes', activity.classId));
-              if (classDoc.exists()) {
-                className = classDoc.data().name || 'Unknown Class';
-                const teacherId = classDoc.data().teacherId;
-                if (teacherId) {
-                  const teacherDoc = await getDoc(doc(db, 'users', teacherId));
-                  teacherName = teacherDoc.exists() ? teacherDoc.data().name : 'Unknown Teacher';
-                }
-              }
-            } catch (err) {
-              console.error('Error loading class or teacher details:', err);
-            }
-          }
-          
-          activityList.push({
-            id: docSnap.id,
-            ...activity,
-            timestamp: activity.timestamp?.toDate() || new Date(),
-            className: className,
-            teacherName: teacherName
-          });
-        }
-        
-        activities.value = activityList;
+        activities.value = await FirebaseService.getActivitiesByUser(user.value.uid, 5);
       } catch (err) {
         console.error('Error loading recent activity:', err);
         error.value = 'Failed to load recent activity. Please try again.';

@@ -51,9 +51,8 @@
 
 <script>
 import { ref, watch } from 'vue';
-import { db } from '../lib/firebase';
-import { collection, query, where, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../stores/auth';
+import FirebaseService from '../lib/firebaseService';
 
 export default {
   name: 'ClassSearch',
@@ -77,26 +76,16 @@ export default {
       loading.value = true;
       
       try {
-        const classesRef = collection(db, 'classes');
-        const q = query(
-          classesRef,
-          where('name', '>=', searchQuery.value),
-          where('name', '<=', searchQuery.value + '\uf8ff')
-        );
-        
-        const querySnapshot = await getDocs(q);
+        const classes = await FirebaseService.searchClasses(searchQuery.value);
         const results = [];
         
-        for (const docSnapshot of querySnapshot.docs) {
-          const classData = docSnapshot.data();
+        for (const classItem of classes) {
           // Check if user is already enrolled
-          const enrollmentRef = await getDoc(doc(db, 'enrollments', `${user.value.uid}_${docSnapshot.id}`));
+          const enrollments = await FirebaseService.getEnrollmentsByClass(classItem.id);
+          const isEnrolled = enrollments.some(e => e.studentId === user.value.uid);
           
-          if (!enrollmentRef.exists()) {
-            results.push({
-              id: docSnapshot.id,
-              ...classData
-            });
+          if (!isEnrolled) {
+            results.push(classItem);
           }
         }
         
@@ -114,9 +103,7 @@ export default {
       
       loading.value = true;
       try {
-        // Create enrollment record
-        const enrollmentId = `${user.value.uid}_${classId}`;
-        await setDoc(doc(db, 'enrollments', enrollmentId), {
+        await FirebaseService.createEnrollment({
           userId: user.value.uid,
           classId: classId,
           enrolledAt: new Date(),
