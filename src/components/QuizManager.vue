@@ -13,32 +13,39 @@
       <div v-if="quizzes.length > 0" class="space-y-2">
         <div v-for="quiz in quizzes" :key="quiz.id" class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
           <div>
-            <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
+            <div class="flex items-center space-x-2">
+              <span v-if="quiz.isPublic" class="text-yellow-500" title="Public Class">
+                <IconService name="star" size="4" />
+              </span>
+              <span v-else class="text-gray-600" title="Private Class">
+                <IconService name="lock" size="4" />
+              </span>
+              <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
+              
+            </div>
             <p class="text-sm text-gray-500">Class: {{ quiz.className }} / {{ quiz.questions?.length || 0 }} questions</p>
           </div>
           <div class="flex space-x-2">
             <button
               v-if="quiz.lessonPlan"
               @click="viewLessonPlan(quiz)"
-              class="px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+              class="px-3 py-1 text-blue-600"
             >
-              View Lesson Plan
+            <IconService name="view" size="6" />
             </button>
            
             <button
               @click="openEditModal(quiz)"
               class="text-primary-600 hover:text-primary-800 font-medium"
             >
-              Edit
+            <IconService name="edit" size="6" />
             </button>
             <button
               @click="deleteQuiz(quiz.id)"
               class="text-red-600 hover:text-red-800 p-1"
               title="Delete quiz"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-              </svg>
+            <IconService name="trash" size="6" />
             </button>
           </div>
         </div>
@@ -52,9 +59,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">Edit Quiz: {{ currentQuiz.title }}</h3>
           <button @click="closeEditModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconService name="x" size="6" />
           </button>
         </div>
 
@@ -100,9 +105,7 @@
                 class="text-red-600 hover:text-red-800 p-1"
                 title="Remove option"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
+                <IconService name="x" size="6" />
               </button>
             </div>
             
@@ -139,9 +142,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">Lesson Plan</h3>
           <button @click="closeLessonPlanModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconService name="x" size="6" />
           </button>
         </div>
 
@@ -176,13 +177,12 @@ import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
-
-const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
+import IconService from './IconService.vue';
 
 export default {
   name: 'QuizManager',
   components: {
-    BaseAnimation
+    BaseAnimation, IconService
   },
   props: {
     classId: {

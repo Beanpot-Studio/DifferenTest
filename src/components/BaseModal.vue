@@ -5,9 +5,7 @@
         @click="$emit('close')"
         class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
       >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+       <IconService name="x" size="6" />
       </button>
 
       <h3 v-if="title" class="text-xl font-bold mb-4">{{ title }}</h3>
@@ -18,7 +16,11 @@
 </template>
 
 <script>
+import IconService from './IconService.vue';
 export default {
+  components: {
+    IconService
+  },
   name: 'BaseModal',
   props: {
     isOpen: {

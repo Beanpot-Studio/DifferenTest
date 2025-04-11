@@ -69,9 +69,7 @@
                   class="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-100"
                   title="Accept student"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
+                 <IconService name="check" size="6" />
                 </button>
                 <button
                   v-if="student.status === 'pending'"
@@ -79,9 +77,7 @@
                   class="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-100"
                   title="Reject student"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <IconService name="x" size="6" />
                 </button>
                 <button
                   v-if="student.status === 'accepted'"
@@ -89,9 +85,7 @@
                   class="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-100"
                   title="Remove student"
                 >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <IconService name="x" size="6" />
                 </button>
               </div>
             </td>

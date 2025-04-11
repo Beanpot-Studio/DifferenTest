@@ -132,21 +132,24 @@ export default {
         const classIds = classesSnapshot.docs.map(doc => doc.id);
         let totalSubmissions = 0;
         
-        // Process classIds in chunks of 10
-        for (let i = 0; i < classIds.length; i += 10) {
-          const chunk = classIds.slice(i, i + 10);
-          const activitiesQuery = query(
-            collection(db, 'activities'),
-            where('classId', 'in', chunk),
-            where('type', '==', 'quiz_completed')
-          );
-          const activitiesSnapshot = await getDocs(activitiesQuery);
-          totalSubmissions += activitiesSnapshot.size;
+        if (classIds.length > 0) {
+          // Process classIds in chunks of 10
+          for (let i = 0; i < classIds.length; i += 10) {
+            const chunk = classIds.slice(i, i + 10);
+            const activitiesQuery = query(
+              collection(db, 'activities'),
+              where('classId', 'in', chunk),
+              where('type', '==', 'quiz_completed')
+            );
+            const activitiesSnapshot = await getDocs(activitiesQuery);
+            totalSubmissions += activitiesSnapshot.size;
+          }
         }
         
         stats.value.pendingSubmissions = totalSubmissions;
-      } catch (err) {
-        console.error('Error loading stats:', err);
+      } catch (error) {
+        console.error('Error loading stats:', error);
+        showNotification('Error', 'Error loading dashboard stats. Please try again.', 'error');
       }
     };
 

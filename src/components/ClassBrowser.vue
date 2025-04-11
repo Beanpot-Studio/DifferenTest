@@ -6,9 +6,7 @@
         @click="closeModal"
         class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
       >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <IconService name="x" size="6" />
       </button>
 
       <!-- Header -->
@@ -24,9 +22,7 @@
               <p class="font-medium">{{ message }}</p>
             </div>
             <button @click="showMessage = false" class="ml-4">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <IconService name="x" size="4" />
             </button>
           </div>
         </div>
@@ -42,19 +38,7 @@
             class="w-full px-4 py-2 border rounded-lg pl-10 focus:outline-none focus:ring-2 focus:ring-primary-500"
             @input="handleSearch"
           />
-          <svg
-            class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
+          <IconService name="view" size="4" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
       </div>
 
@@ -65,11 +49,6 @@
 
       <!-- Error State -->
       <div v-else-if="error" class="text-center py-8">
-        <div class="text-red-600 mb-2">
-          <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
         <p class="text-gray-900">{{ error }}</p>
         <button
           @click="loadClasses"
@@ -93,9 +72,7 @@
               <p class="mt-2 text-sm text-gray-600">{{ classItem.description }}</p>
               <div class="mt-2 flex items-center space-x-4">
                 <span class="text-sm text-gray-500 flex items-center">
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
+                  <IconService name="quiz" size="4" class="mr-1"/>
                   {{ classItem.quizCount }} Quizzes
                 </span>
               </div>
@@ -137,9 +114,7 @@
           <p class="text-gray-600">{{ selectedClass.description }}</p>
         </div>
         <button @click="selectedClass = null" class="text-gray-500 hover:text-gray-700">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+         <IconService name="x" size="6" />
         </button>
       </div>
 
@@ -195,11 +170,12 @@ import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
+import IconService from './IconService.vue';
 
 export default {
   name: 'ClassBrowser',
   components: {
-    BaseAnimation
+    BaseAnimation, IconService
   },
   setup(props, { emit }) {
     const { user } = useAuth();

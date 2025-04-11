@@ -18,21 +18,17 @@
       <div v-else class="space-y-6">
         <div v-for="classItem in filteredClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
           <div class="flex justify-between items-start">
-            <div class="space-y-2">
+            <div >
               <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
               <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <p class="text-sm font-medium text-gray-700">
+                <IconService name="user" size="4" />
+                <p class="text-sm pt-4 font-medium text-gray-700">
                   Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
                 </p>
               </div>
               <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                </svg>
-                <p class="text-sm font-medium text-gray-700">
+                <IconService name="key" size="4" />
+                <p class="text-sm pt-4 font-medium text-gray-700">
                   Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
                 </p>
               </div>
@@ -41,9 +37,6 @@
               @click="leaveClass(classItem.id)"
               class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-1"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
               <span>Leave Class</span>
             </button>
           </div>
@@ -66,7 +59,7 @@
 
           <!-- Class Quizzes -->
           <div class="mt-6">
-            <h4 class="font-medium mb-2">Available Quizzes</h4>
+            <h4 class="font-lg font-bold mb-2">Available Quizzes</h4>
             <div v-if="!classItem.quizzes || classItem.quizzes.length === 0" class="text-gray-500 text-sm">
               No quizzes available yet.
             </div>
@@ -136,9 +129,7 @@
           @click="closeReviewModal"
           class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <IconService name="x" size="4" />
         </button>
 
         <div v-if="currentQuiz">
@@ -250,11 +241,12 @@ import QuizInterface from './QuizInterface.vue';
 import BaseModal from './BaseModal.vue';
 import BadgeDisplay from './BadgeDisplay.vue';
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
+import IconService from './IconService.vue';
 
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay
+    ClassSearch, BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay, IconService
   },
   setup() {
     const { user, initialized } = useAuth();

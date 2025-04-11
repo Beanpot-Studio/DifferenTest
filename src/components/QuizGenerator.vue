@@ -4,19 +4,50 @@
     
     <!-- Class Selection -->
     <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Select Class
-      </label>
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-medium text-gray-700">
+          Select Class
+        </label>
+      </div>
       <select
         v-model="selectedClassId"
         class="w-full p-2 border rounded-lg"
+        :class="{ 'border-red-500': !selectedClassId }"
         required
       >
         <option value="">Select a class</option>
         <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
           {{ classItem.name }}
+          <template v-if="classItem.isPublic">
+            (Public)
+          </template>
         </option>
       </select>
+      <p v-if="!selectedClassId" class="mt-1 text-sm text-red-600">
+        Please select a class
+      </p>
+    </div>
+
+    <!-- Public Enrollment -->
+    <div class="mb-6 p-4 border rounded-lg bg-gray-50">
+      <div class="flex items-center justify-between">
+        <div>
+          <label class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              v-model="isPublic"
+              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
+            />
+            <span class="text-sm font-medium text-gray-700">Make this quiz public</span>
+          </label>
+          <p class="mt-1 text-sm text-gray-500">When enabled, any student can access this quiz without needing to register and be accepted.</p>
+        </div>
+        <div v-if="isPublic" class="flex items-center space-x-2">
+          <span class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
+            Public Quiz
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Number of Questions -->
@@ -45,16 +76,16 @@
       />
     </div>
 
-     <!-- Upload Section -->
-     <div class="mb-6">
+    <!-- Upload Section -->
+    <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">
-        Upload Lesson Plan (PDF or Text)
+        Upload Lesson Plan (PDF, Text, or Markdown)
       </label>
       <div class="flex items-center">
         <input
           type="file"
           ref="fileInput"
-          accept=".pdf,.txt"
+          accept=".pdf,.txt,.md,.markdown"
           class="hidden"
           @change="handleFileUpload"
         />
@@ -111,9 +142,7 @@
               class="text-red-600 hover:text-red-800 p-1"
               title="Remove option"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
+              <IconService name="x" size="6" />
             </button>
           </div>
           
@@ -152,11 +181,12 @@ import { db } from '../lib/firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
+import IconService from './IconService.vue';
 
 export default {
   name: 'QuizGenerator',
   components: {
-    BaseAnimation
+    BaseAnimation, IconService
   },
   setup() {
     const { user } = useAuth();
@@ -170,6 +200,8 @@ export default {
     const quizTitle = ref('');
     const selectedClassId = ref('');
     const classes = ref([]);
+    const isPublic = ref(false);
+    const isClassPublic = ref(false);
 
     // Get API key from environment variable
     const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
@@ -210,7 +242,24 @@ export default {
       loading.value = true;
 
       try {
-        const text = await file.text();
+        let text;
+        if (file.type === 'application/pdf') {
+          // Handle PDF files (you'll need to implement PDF parsing)
+          showNotification('Error', 'PDF parsing not yet implemented', 'error');
+          return;
+        } else {
+          // Handle text and markdown files
+          text = await file.text();
+          
+          // If it's a markdown file, we can optionally convert it to plain text
+          // or keep the markdown formatting for better quiz generation
+          if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
+            // For now, we'll keep the markdown formatting as it might help with
+            // better quiz generation by preserving structure
+            text = text;
+          }
+        }
+        
         fileContent.value = text;
         await generateQuiz(text);
       } catch (error) {
@@ -265,7 +314,7 @@ export default {
 
     const saveQuiz = async () => {
       if (!quiz.value || !user.value || !selectedClassId.value) {
-        showNotification('Error', 'Please select a class before saving the quiz', 'error');
+        showNotification('Error', 'Please select a class', 'error');
         return;
       }
 
@@ -275,13 +324,14 @@ export default {
           showNotification('Error', 'Selected class not found', 'error');
           return;
         }
-
         const classData = classDoc.data();
+
         const quizData = {
           ...quiz.value,
           userId: user.value.uid,
           classId: selectedClassId.value,
           className: classData.name,
+          isPublic: classData.isPublic, // Inherit class's public status
           createdAt: new Date(),
           updatedAt: new Date(),
           lessonPlan: fileContent.value
@@ -290,14 +340,14 @@ export default {
         if (!quiz.value.id) {
           const docRef = await addDoc(collection(db, 'quizzes'), quizData);
           quiz.value.id = docRef.id;
-          showNotification('Success', 'Quiz saved successfully!');
+          showNotification('Success', `Quiz "${quiz.value.title}" saved to ${classData.name}${classData.isPublic ? ' (Public Class)' : ''}`, 'success');
         } else {
           await updateDoc(doc(db, 'quizzes', quiz.value.id), quizData);
-          showNotification('Success', 'Quiz updated successfully!');
+          showNotification('Success', `Quiz "${quiz.value.title}" updated in ${classData.name}${classData.isPublic ? ' (Public Class)' : ''}`, 'success');
         }
       } catch (error) {
         console.error('Error saving quiz:', error);
-        showNotification('Error', 'Error saving quiz. Please try again.', 'error');
+        showNotification('Error', `Error saving quiz "${quiz.value.title}". Please try again.`, 'error');
       }
     };
 
@@ -326,6 +376,8 @@ export default {
       quizTitle,
       selectedClassId,
       classes,
+      isPublic,
+      isClassPublic,
       handleFileUpload,
       addOption,
       removeOption,

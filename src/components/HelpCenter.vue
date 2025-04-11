@@ -9,9 +9,7 @@
           placeholder="Search help articles..."
           class="w-full p-4 pl-12 border rounded-lg"
         />
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 absolute left-3 top-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+       <IconService name="view" size="6" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
     </div>
 
@@ -60,9 +58,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">{{ selectedArticle?.title }}</h3>
           <button @click="closeArticleModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconService name="x" size="6" />
           </button>
         </div>
 
@@ -96,9 +92,12 @@
 import { ref, computed } from 'vue';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-
+import IconService from './IconService.vue';
 export default {
   name: 'HelpCenter',
+  components: {
+    IconService
+  },
   setup() {
     const searchQuery = ref('');
     const selectedArticle = ref(null);

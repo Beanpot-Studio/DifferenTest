@@ -17,7 +17,7 @@
       </div>
 
       <div v-else class="space-y-4">
-        <div v-for="attempt in quizHistory" :key="attempt.id" class="border-b">
+        <div v-for="attempt in quizHistory" :key="attempt.id" class="border rounded p-5">
           <div class="flex justify-between items-start mb-4">
             <div>
               <h3 class="text-lg font-semibold">{{ attempt.quizTitle }}</h3>

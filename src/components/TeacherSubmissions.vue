@@ -38,7 +38,7 @@
     </div>
 
     <!-- Submissions Table -->
-    <div v-else class="bg-white rounded-lg shadow overflow-hidden">
+    <div v-else class="bg-white rounded-lg shadow overflow-scroll">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -91,10 +91,11 @@
                   'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
                   'bg-blue-100 text-blue-800': submission.status === 'completed',
                   'bg-purple-100 text-purple-800': submission.isRetake,
-                  'bg-gray-100 text-gray-800': submission.status !== 'completed'
+                  'bg-yellow-100 text-yellow-800': submission.status === 'needs_improvement',
+                  'bg-gray-100 text-gray-800': submission.status !== 'completed' && submission.status !== 'needs_improvement'
                 }"
               >
-                {{ submission.isRetake ? 'Retake' : submission.status }}
+                {{ submission.isRetake ? 'Retake' : submission.status === 'needs_improvement' ? 'Needs Improvement' : submission.status }}
               </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -103,9 +104,7 @@
                 class="text-primary-600 hover:text-primary-900 mr-4"
                 title="View Details"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <IconService name="view" size="4" />
               </button>
             </td>
           </tr>
@@ -120,9 +119,7 @@
           @click="closeSubmissionModal"
           class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <IconService name="x" size="6" />
         </button>
 
         <div v-if="currentSubmission">
@@ -188,11 +185,11 @@ import { useAuth } from '../stores/auth';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import BaseAnimation from './BaseAnimation.vue';
-
+import IconService from './IconService.vue';
 export default {
   name: 'TeacherSubmissions',
   components: {
-    BaseAnimation
+    BaseAnimation, IconService
   },
   setup() {
     const { user } = useAuth();

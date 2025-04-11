@@ -27,9 +27,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">{{ currentMessage?.subject }}</h3>
           <button @click="closeMessageModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+           <IconService name="x" size="6" />
           </button>
         </div>
 
@@ -70,9 +68,7 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">New Message</h3>
           <button @click="closeNewMessageModal" class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <IconService name="x" size="6" />
           </button>
         </div>
 
@@ -141,9 +137,7 @@
       @click="openNewMessageModal"
       class="fixed bottom-6 right-6 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 flex items-center justify-center"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
+      <IconService name="plus" size="6" />
     </button>
   </div>
 </template>

@@ -49,18 +49,14 @@
                 class="text-primary-600 hover:text-primary-800 p-1"
                 title="Edit class"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                </svg>
+              <IconService name="edit" size="6" />
               </button>
               <button
                 @click="deleteClass(classItem.id)"
                 class="text-red-600 hover:text-red-800 p-1"
                 title="Delete class"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
+              <IconService name="trash" size="6" />
               </button>
             </div>
           </div>
@@ -81,6 +77,9 @@
                     >
                       {{ quiz.title }}
                     </button>
+                    <p class="text-sm text-gray-500 mt-1">
+                      Total Submissions: {{ classItem.totalSubmissions || 0 }}
+                    </p>
                   </div>
                   <div class="flex space-x-2">
                     <button
@@ -88,9 +87,7 @@
                       class="text-red-600 hover:text-red-800 p-1"
                       title="Remove from class"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                      </svg>
+                    <IconService name="trash" size="6" />
                     </button>
                   </div>
                 </div>
@@ -180,12 +177,11 @@ import { useAuth } from '../stores/auth';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import ClassRoster from './ClassRoster.vue';
-import { useNotification } from '../composables/useNotification';
-
+import { useNotification } from '../composables/useNotification';import IconService from './IconService.vue';
 export default {
   name: 'ClassManager',
   components: {
-    ClassRoster
+    ClassRoster, IconService
   },
   setup() {
     const { user } = useAuth();
@@ -232,10 +228,33 @@ export default {
           where('teacherId', '==', user.value.uid)
         );
         const querySnapshot = await getDocs(q);
-        classes.value = querySnapshot.docs.map(doc => ({
+        const classesData = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+
+        // Get quiz submissions from activities
+        const activitiesRef = collection(db, 'activities');
+        let submissionsQuery = query(activitiesRef, where('type', '==', 'quiz_completed'));
+        
+        // Get submissions for all teacher's classes
+        const classIds = classesData.map(c => c.id);
+        let totalSubmissions = 0;
+        
+        // Process classIds in chunks of 10
+        for (let i = 0; i < classIds.length; i += 10) {
+          const chunk = classIds.slice(i, i + 10);
+          const chunkQuery = query(submissionsQuery, where('classId', 'in', chunk));
+          const activitiesSnapshot = await getDocs(chunkQuery);
+          totalSubmissions += activitiesSnapshot.size;
+        }
+
+        // Add total submissions to each class
+        classesData.forEach(classItem => {
+          classItem.totalSubmissions = totalSubmissions;
+        });
+
+        classes.value = classesData;
       } catch (error) {
         console.error('Error fetching classes:', error);
         showNotification('Error', 'Error fetching classes. Please try again.', 'error');

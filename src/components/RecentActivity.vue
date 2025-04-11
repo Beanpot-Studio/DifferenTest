@@ -13,50 +13,75 @@
     <!-- Recent Activity -->
     <div v-else class="space-y-4">
       <div v-if="activities.length === 0" class="text-center py-8">
-        <p class="text-gray-500">No recent activity found.</p>
+        <IconService name="activity" size="8" color="text-gray-400" />
+        <h3 class="mt-4 text-lg font-semibold text-gray-900">No Recent Activity</h3>
+        <p class="mt-2 text-gray-500">Your activity will appear here</p>
       </div>
 
       <div v-else class="space-y-4">
-        <div v-for="activity in activities" :key="activity.id" class="border-b">
-          <div class="flex justify-between items-start mb-4">
-            <div class="flex items-center">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center mr-4"
-                   :class="{
-                     'bg-purple-100': activity.type === 'class_joined',
-                     'bg-red-100': activity.type === 'class_left',
-                     'bg-green-100': activity.type === 'quiz_completed',
-                     'bg-blue-100': activity.type === 'quiz_started' || activity.type === 'enrollment_status_changed',
-                     'bg-yellow-100': activity.type === 'badge_claimed'
-                   }">
-                <svg v-if="activity.type === 'class_joined'" class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <svg v-else-if="activity.type === 'class_left'" class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-                </svg>
-                <svg v-else-if="activity.type === 'quiz_completed'" class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <svg v-else-if="activity.type === 'quiz_started'" class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <svg v-else-if="activity.type === 'enrollment_status_changed'" class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div v-else-if="activity.type === 'badge_claimed'" class="w-6 h-6 ">
-                 🏆
-                </div>
-              </div>
-              <div>
-                <h3 class="text-lg font-semibold">{{ getActivityTypeText(activity.type) }}</h3>
-                <p class="text-sm text-gray-500">Class: {{ activity.className }}</p>
-                <p class="text-sm text-gray-500">Teacher: {{ activity.teacherName || 'Unknown Teacher' }}</p>
-              </div>
+        <div v-for="activity in activities" :key="activity.id" class="flex items-start space-x-3 p-4 bg-white border rounded ">
+          <div class="flex-shrink-0">
+            <div class="p-2 rounded-full" :class="{
+              'bg-purple-100': activity.type === 'class_joined',
+              'bg-red-100': activity.type === 'class_left',
+              'bg-green-100': activity.type === 'quiz_completed',
+              'bg-yellow-100': activity.type === 'badge_claimed',
+              'bg-blue-100': activity.type === 'quiz_started' || activity.type === 'enrollment_status_changed'
+            }">
+              <IconService 
+                v-if="activity.type === 'class_joined'" 
+                name="class-joined" 
+                size="4" 
+                color="text-purple-600"
+              />
+              <IconService 
+                v-else-if="activity.type === 'class_left'" 
+                name="x" 
+                size="4" 
+                color="text-red-600"
+              />
+              <IconService 
+                v-else-if="activity.type === 'quiz_completed'" 
+                name="quiz-completed" 
+                size="4" 
+                color="text-green-600"
+              />
+              <IconService 
+                v-else-if="activity.type === 'quiz_started'" 
+                name="quiz-started" 
+                size="4" 
+                color="text-blue-600"
+              />
+              <IconService 
+                v-else-if="activity.type === 'enrollment_status_changed'" 
+                name="enrollment-changed" 
+                size="4" 
+                color="text-blue-600"
+              />
+              <IconService 
+                v-else-if="activity.type === 'badge_claimed'" 
+                name="star" 
+                size="4" 
+                color="text-yellow-600"
+              />
             </div>
-            <div class="text-right">
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">{{ getActivityTypeText(activity.type) }}</h3>
               <p class="text-sm text-gray-500">{{ formatRelativeTime(activity.timestamp) }}</p>
-              <span v-if="activity.type === 'enrollment_status_changed'" :class="[
-                'px-2 py-1 rounded text-sm',
+            </div>
+            <div class="mt-1 space-y-1">
+              <p class="text-sm text-gray-500">
+                {{ activity.className }}
+              </p>
+              <p class="text-sm text-gray-500">
+                {{ activity.teacherName || 'Unknown Teacher' }}
+              </p>
+            </div>
+            <div v-if="activity.type === 'enrollment_status_changed'" class="mt-2">
+              <span :class="[
+                'px-2 py-1 rounded-full text-xs font-medium',
                 activity.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               ]">
                 {{ getStatusText(activity.status) }}
@@ -75,10 +100,12 @@ import { collection, query, where, getDocs, orderBy, limit, getDoc, doc } from '
 import { db } from '../lib/firebase';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
+import IconService from './IconService.vue'
 
 export default {
   components: {
-    BaseAnimation
+    BaseAnimation,
+    IconService
   },
   setup() {
     const { user } = useAuth();
