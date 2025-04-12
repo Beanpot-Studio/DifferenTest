@@ -665,40 +665,93 @@ class FirebaseService {
   }
 
   // Teacher Submissions
-  static async getTeacherSubmissions(teacherId) {
+  static async getTeacherSubmissions(teacherId, classId = null, quizId = null) {
     try {
-      // Get all quiz attempts for the teacher's classes
-      const submissionsQuery = query(
-        collection(db, 'quizAttempts'),
-        where('teacherId', '==', teacherId),
-        orderBy('timestamp', 'desc')
+      // First get all classes for this teacher
+      const classesQuery = query(
+        collection(db, 'classes'),
+        where('teacherId', '==', teacherId)
       );
-      const submissionsSnapshot = await getDocs(submissionsQuery);
+      const classesSnapshot = await getDocs(classesQuery);
+      const classIds = classesSnapshot.docs.map(doc => doc.id);
 
+      if (classIds.length === 0) {
+        return [];
+      }
+
+      // Build the quiz attempts query
+      let attemptsQuery;
+      if (classId && quizId) {
+        // Filter by specific class and quiz
+        attemptsQuery = query(
+          collection(db, 'quizAttempts'),
+          where('classId', '==', classId),
+          where('quizId', '==', quizId),
+          orderBy('timestamp', 'desc')
+        );
+      } else if (classId) {
+        // Filter by specific class
+        attemptsQuery = query(
+          collection(db, 'quizAttempts'),
+          where('classId', '==', classId),
+          orderBy('timestamp', 'desc')
+        );
+      } else {
+        // Get all attempts for teacher's classes
+        attemptsQuery = query(
+          collection(db, 'quizAttempts'),
+          where('classId', 'in', classIds),
+          orderBy('timestamp', 'desc')
+        );
+      }
+
+      const attemptsSnapshot = await getDocs(attemptsQuery);
       const submissions = [];
-      for (const doc of submissionsSnapshot.docs) {
-        const submission = doc.data();
-        submission.id = doc.id;
+
+      for (const snapDoc of attemptsSnapshot.docs) {
+        const attempt = snapDoc.data();
+        attempt.id = snapDoc.id;
+
+        // Debug log the timestamp
+        console.log('Raw timestamp:', attempt.timestamp);
+
+        // Ensure timestamp is properly formatted
+        if (attempt.timestamp) {
+          attempt.timestamp = attempt.timestamp.toDate ? attempt.timestamp.toDate() : new Date(attempt.timestamp);
+        }
 
         // Get student details
-        const studentDoc = await getDoc(doc(db, 'users', submission.studentId));
+        const studentDoc = await getDoc(doc(db, 'users', attempt.userId));
         if (studentDoc.exists()) {
-          submission.studentName = studentDoc.data().name;
+          attempt.studentName = studentDoc.data().name;
         }
 
         // Get quiz details
-        const quizDoc = await getDoc(doc(db, 'quizzes', submission.quizId));
+        const quizDoc = await getDoc(doc(db, 'quizzes', attempt.quizId));
         if (quizDoc.exists()) {
-          submission.quizTitle = quizDoc.data().title;
+          attempt.quizTitle = quizDoc.data().title;
         }
 
         // Get class details
-        const classDoc = await getDoc(doc(db, 'classes', submission.classId));
+        const classDoc = await getDoc(doc(db, 'classes', attempt.classId));
         if (classDoc.exists()) {
-          submission.className = classDoc.data().name;
+          attempt.className = classDoc.data().name;
         }
 
-        submissions.push(submission);
+        // Get enrollment status
+        const enrollmentQuery = query(
+          collection(db, 'enrollments'),
+          where('classId', '==', attempt.classId),
+          where('studentId', '==', attempt.userId)
+        );
+        const enrollmentSnapshot = await getDocs(enrollmentQuery);
+        if (!enrollmentSnapshot.empty) {
+          attempt.enrollmentStatus = enrollmentSnapshot.docs[0].data().status;
+        } else {
+          attempt.enrollmentStatus = 'not_enrolled';
+        }
+
+        submissions.push(attempt);
       }
 
       return submissions;

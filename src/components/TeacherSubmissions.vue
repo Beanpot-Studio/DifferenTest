@@ -48,7 +48,7 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Spent</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <!--<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>-->
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
@@ -83,9 +83,9 @@
               {{ formatTimeSpent(submission.timeSpent) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ formatDate(submission.submittedAt) }}
+              {{ formatDate(submission.timestamp) }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            <!--<td class="px-6 py-4 whitespace-nowrap">
               <span 
                 :class="{
                   'px-2 inline-flex text-xs leading-5 font-semibold rounded-full': true,
@@ -97,7 +97,7 @@
               >
                 {{ submission.isRetake ? 'Retake' : submission.status === 'needs_improvement' ? 'Needs Improvement' : submission.status }}
               </span>
-            </td>
+            </td>-->
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <button 
                 @click="viewSubmission(submission)"
