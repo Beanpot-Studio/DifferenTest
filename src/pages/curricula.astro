@@ -1,127 +1,45 @@
 ---
-import MainLayout from "../layouts/MainLayout.astro";
-import { db } from "../lib/firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  doc,
-  getDoc,
-} from "firebase/firestore";
-import IconService from "../components/IconService.vue";
+import Layout from "../layouts/MainLayout.astro";
+import CurriculumCard from "../components/CurriculumCard.vue";
 
-interface ClassData {
-  id: string;
-  name: string;
-  teacherId: string;
-  createdAt: any;
-  quizzes: Array<{
-    id: string;
-    title: string;
-    questionCount?: number;
-  }>;
-  teacherName: string;
-}
-
-// Get public classes and their quizzes
-const getPublicClasses = async (): Promise<ClassData[]> => {
-  const classesQuery = query(
-    collection(db, "classes"),
-    where("isPublic", "==", true),
-    orderBy("createdAt", "desc")
-  );
-  const classesSnapshot = await getDocs(classesQuery);
-
-  const classes = await Promise.all(
-    classesSnapshot.docs.map(async (classDoc) => {
-      const classData = classDoc.data() as ClassData;
-
-      // Get teacher information
-      const teacherDoc = await getDoc(doc(db, "users", classData.teacherId));
-      const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-
-      // Get quiz details
-      const quizzesWithDetails = await Promise.all(
-        (classData.quizzes || []).map(async (quiz) => {
-          const quizDoc = await getDoc(doc(db, "quizzes", quiz.id));
-          if (quizDoc.exists()) {
-            const quizData = quizDoc.data();
-            return {
-              ...quiz,
-              questionCount: quizData.questions?.length || 0,
-            };
-          }
-          return quiz;
-        })
-      );
-
-      return {
-        ...classData,
-        id: classDoc.id,
-        quizzes: quizzesWithDetails,
-        teacherName: teacherData?.name || "Unknown Teacher",
-      };
-    })
-  );
-
-  return classes;
-};
-
-const publicClasses = await getPublicClasses();
+// Static stub data for development
+const curricula = [
+  {
+    id: "1",
+    title: "Introduction to Web Development",
+    description: "Learn the basics of HTML, CSS, and JavaScript",
+    isPublic: true,
+    quizzes: [
+      { id: "q1", title: "HTML Basics" },
+      { id: "q2", title: "CSS Fundamentals" },
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "2",
+    title: "Advanced JavaScript",
+    description: "Deep dive into modern JavaScript concepts",
+    isPublic: true,
+    quizzes: [
+      { id: "q3", title: "ES6 Features" },
+      { id: "q4", title: "Async Programming" },
+    ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 ---
 
-<MainLayout title="Public Curricula">
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-8">Public Curricula</h1>
-
+<Layout title="Curricula">
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Available Curricula</h1>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {
-        publicClasses.map((classItem) => (
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex items-center gap-2 mb-4">
-              <IconService name="book" color="blue" size="4" />
-              <h2 class="text-xl font-semibold">{classItem.name}</h2>
-            </div>
-
-            <p class="text-gray-600 mb-4">By {classItem.teacherName}</p>
-
-            {classItem.quizzes?.length > 0 ? (
-              <div class="space-y-3">
-                <h3 class="font-medium text-gray-700">Available Quizzes:</h3>
-                <ul class="space-y-2">
-                  {classItem.quizzes.map((quiz) => (
-                    <li class="flex items-center justify-between bg-gray-50 p-3 rounded">
-                      <span class="text-gray-800">{quiz.title}</span>
-                      <span class="text-sm text-gray-500">
-                        {quiz.questionCount} questions
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p class="text-gray-500 italic">No quizzes available yet</p>
-            )}
-
-            <div class="mt-4 pt-4 border-t">
-              <p class="text-sm text-gray-500">
-                Created:{" "}
-                {new Date(classItem.createdAt?.toDate()).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
+        curricula.map((curriculum) => (
+          <CurriculumCard client:load curriculum={curriculum} />
         ))
       }
     </div>
-
-    {
-      publicClasses.length === 0 && (
-        <div class="text-center py-12">
-          <p class="text-gray-500">No public curricula available yet.</p>
-        </div>
-      )
-    }
-  </div>
-</MainLayout>
+  </main>
+</Layout>
