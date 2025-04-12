@@ -32,7 +32,7 @@
     
     
     <!-- Login Modal -->
-    <LoginModal 
+    <LoginModal id="login-modal"
       v-if="showLoginModal" 
       @close="showLoginModal = false"
       @login-success="handleLoginSuccess"
@@ -40,7 +40,7 @@
     />
 
     <!-- Register Modal -->
-    <RegisterModal 
+    <RegisterModal id="register-modal"
       v-if="showRegisterModal" 
       @close="showRegisterModal = false"
       @register-success="handleRegisterSuccess"

@@ -34,13 +34,13 @@
     </div>
     
     <div v-else class="space-x-2">
-      <button 
+      <button id="login-button"
         @click="$emit('login')" 
         class="px-4 py-1.5 text-sm rounded-lg bg-primary-700 hover:bg-primary-300 transition"
       >
         Log In
       </button>
-      <button 
+      <button id="register-button"
         @click="$emit('register')" 
         class="px-4 py-1.5 text-sm border border-white rounded-lg hover:bg-white hover:text-primary-600 transition"
       >

@@ -5,7 +5,7 @@ import TeacherDashboard from "../../components/TeacherDashboard.vue";
 ---
 
 <MainLayout title="Teacher Portal">
-  <div class="max-w-7xl mx-auto px-4">
+  <div class="max-w-7xl mx-auto px-4" id="teacher-portal">
     <h1 class="text-3xl font-bold mb-6">Teacher Portal</h1>
 
     <RoleBasedContent client:only :required-roles="['teacher']">

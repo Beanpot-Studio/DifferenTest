@@ -229,6 +229,7 @@ export default {
       try {
         const { classes: loadedClasses, enrolledClasses: enrolled } = await FirebaseService.getAvailableClasses(user.value.uid);
         classes.value = loadedClasses;
+        console.log(classes.value);
         enrolledClasses.value = enrolled;
       } catch (err) {
         console.error('Error loading classes:', err);
@@ -244,7 +245,7 @@ export default {
       if (!user.value) return;
       
       try {
-        await FirebaseService.enrollInClass(user.value.uid, classItem.id);
+        await FirebaseService.enrollInClass(classItem.id, user.value.uid);
         
         // Update local state
         classes.value = classes.value.map(c => 
@@ -304,7 +305,7 @@ export default {
       
       try {
         enrolling.value = true;
-        await FirebaseService.enrollInClass(user.value.uid, classId);
+        await FirebaseService.enrollInClass(classId, user.value.uid);
         enrollmentStatus.value = 'pending';
         showNotification('Success', 'Enrollment request sent successfully', 'success');
       } catch (error) {

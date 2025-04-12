@@ -76,6 +76,7 @@ export default {
         }
 
         badges.value = await FirebaseService.getUserBadges(user.value.uid);
+       
       } catch (err) {
         console.error('Error loading badges:', err);
         error.value = err.message;

@@ -38,7 +38,7 @@
         </div>
         
         <button 
-          type="submit" 
+          type="submit" id="login-submit-button" 
           class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500 transition"
           :disabled="loading"
         >

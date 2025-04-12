@@ -18,91 +18,99 @@
       <div v-else class="space-y-6">
         <div v-for="classItem in filteredClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
           <div class="flex justify-between items-start">
-            <div >
-              <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
-              <div class="flex items-center space-x-2">
-                <IconService name="user" size="4" />
-                <p class="text-sm pt-4 font-medium text-gray-700">
-                  Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
-                </p>
+            <div>
+              <div class="flex items-center ">
+                <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
+                <span :class="{
+                  'bg-yellow-100 text-yellow-800': classItem.enrollmentStatus === 'pending',
+                  'bg-green-100 text-green-800': classItem.enrollmentStatus === 'accepted',
+                  'bg-red-100 text-red-800': classItem.enrollmentStatus === 'rejected',
+                  'bg-gray-100 text-gray-800': !classItem.enrollmentStatus
+                }" class="px-3 ml-5 py-1 rounded-full text-sm font-medium">
+                  {{ 
+                    classItem.enrollmentStatus === 'accepted' ? 'Enrolled' : 
+                    classItem.enrollmentStatus === 'pending' ? 'Pending Approval' :
+                    classItem.enrollmentStatus === 'rejected' ? 'Rejected' :
+                    'Not Enrolled' 
+                  }}
+                </span>
               </div>
-              <div class="flex items-center space-x-2">
-                <IconService name="key" size="4" />
-                <p class="text-sm pt-4 font-medium text-gray-700">
-                  Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
-                </p>
+              <div class="flex items-center space-x-4 mt-2">
+                <div class="flex items-center space-x-2">
+                  <IconService name="user" size="4" />
+                  <p class="text-sm font-medium text-gray-700 pt-4">
+                    Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
+                  </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <IconService name="key" size="4" />
+                  <p class="text-sm font-medium text-gray-700 pt-4">
+                    Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
+                  </p>
+                </div>
               </div>
             </div>
             <button
               @click="leaveClass(classItem.id)"
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-1"
+              :disabled="classItem.enrollmentStatus !== 'accepted'"
+              :class="{
+                'bg-red-600 hover:bg-red-700': classItem.enrollmentStatus === 'accepted',
+                'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus !== 'accepted'
+              }"
+              class="px-4 py-2 text-white rounded-lg transition-colors flex items-center space-x-1"
             >
               <span>Leave Class</span>
             </button>
           </div>
 
           <!-- Class Progress -->
-          <!--<div class="mt-4">
-            <div class="flex justify-between items-center mb-2">
-              <h4 class="font-medium">Class Progress</h4>
-              <span class="text-sm text-gray-500">
-                {{ calculateProgress(classItem) }}% Complete
-              </span>
-            </div>
-            <div class="bg-gray-200 rounded-full h-2">
-              <div
-                class="bg-green-500 rounded-full h-2"
-                :style="{ width: `${calculateProgress(classItem)}%` }"
-              ></div>
-            </div>
-          </div>-->
-
-          <!-- Class Quizzes -->
-          <div class="mt-6">
-            <h4 class="font-lg font-bold mb-2">Available Quizzes</h4>
-            <div v-if="!classItem.quizzes || classItem.quizzes.length === 0" class="text-gray-500 text-sm">
+          <div v-if="classItem.enrollmentStatus === 'accepted'" class="mt-4">
+            <h4 class="font-lg font-bold mb-2">Quizzes</h4>
+            <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
               No quizzes available yet.
             </div>
-            <div v-else class="space-y-3">
-              <div 
-                v-for="quiz in classItem.quizzes" 
-                :key="quiz.id" 
-                class="border rounded p-4"
-              >
+            <div v-else class="space-y-2">
+              <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
                 <div class="flex justify-between items-start">
                   <div>
-                    <h5 class="font-medium">{{ quiz.title }}</h5>
-                    <p class="text-sm text-gray-500">
-                      {{ quiz.questionCount }} questions
+                    <h4 class="font-medium text-gray-900">{{ quiz.title }}</h4>
+                    <p class="text-sm text-gray-500 mt-1">
+                      Questions: {{ quiz.questionCount || 0 }}
                     </p>
-                    <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="mt-1">
-                      <p class="text-sm">
-                        Last attempt: 
-                        <span :class="{'text-green-600': getQuizAttempt(classItem.id, quiz.id).score >= 80, 'text-yellow-600': getQuizAttempt(classItem.id, quiz.id).score >= 60, 'text-red-600': getQuizAttempt(classItem.id, quiz.id).score < 60}">
-                          {{ getQuizAttempt(classItem.id, quiz.id).score }}%
-                        </span>
-                      </p>
-                    </div>
                   </div>
-                  <div class="flex space-x-2">
-                    <button
-                      v-if="getQuizAttempt(classItem.id, quiz.id)?.score < 100"
-                      @click="reviewQuiz(classItem.id, quiz)"
-                      class="px-3 py-1 bg-secondary-600 text-white rounded hover:bg-secondary-700"
-                    >
-                      Review
-                    </button>
-                    <button
-                      v-if="!getQuizAttempt(classItem.id, quiz.id) || getQuizAttempt(classItem.id, quiz.id)?.score < 100"
-                      @click="startQuiz(classItem.id, quiz)"
-                      class="px-3 py-1 bg-primary-600 text-white rounded hover:bg-primary-700"
-                    >
-                      {{ getQuizAttempt(classItem.id, quiz.id) ? 'Retake' : 'Start' }}
-                    </button>
+                  <div class="flex items-center space-x-2">
+                    <span v-if="getQuizAttempt(classItem.id, quiz.id)" class="text-sm text-gray-500">
+                      Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
+                    </span>
+                    <div class="flex space-x-2">
+                      <button
+                        v-if="getQuizAttempt(classItem.id, quiz.id)"
+                        @click="reviewQuiz(classItem.id, quiz)"
+                        class="text-primary-600 hover:text-primary-800 text-sm font-medium"
+                      >
+                        Review
+                      </button>
+                      <button
+                        @click="startQuiz(classItem.id, quiz)"
+                        class="px-3 py-1 text-md font-medium rounded-md"
+                        :class="{
+                          'bg-primary-700 text-white hover:bg-primary-500': !getQuizAttempt(classItem.id, quiz.id),
+                          'bg-orange-700 text-white hover:bg-orange-500': getQuizAttempt(classItem.id, quiz.id)
+                        }"
+                      >
+                        {{ getQuizAttempt(classItem.id, quiz.id) ? 'Retake Quiz' : 'Take Quiz' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+          <div v-else-if="classItem.enrollmentStatus === 'pending'" class="mt-4 text-yellow-600">
+            <p class="text-sm">Your enrollment request is pending approval. You will be able to access quizzes once approved.</p>
+          </div>
+          <div v-else-if="classItem.enrollmentStatus === 'rejected'" class="mt-4 text-red-600">
+            <p class="text-sm">Your enrollment request was rejected. Please contact the teacher if you believe this is an error.</p>
           </div>
         </div>
       </div>
@@ -116,9 +124,11 @@
       :title="selectedQuiz.title"
     >
       <QuizInterface
+        v-if="selectedQuiz"
         :quiz-id="selectedQuiz.id"
         :class-id="selectedClass?.id"
         :is-embedded="false"
+        @quiz-completed="handleQuizCompleted"
       />
     </BaseModal>
 
@@ -132,12 +142,25 @@
           <IconService name="x" size="4" />
         </button>
 
-        <div v-if="currentQuiz">
-          <h3 class="text-xl font-bold mb-4">Review: {{ currentQuiz.title }}</h3>
+        <div v-if="reviewData?.quiz">
+          <h3 class="text-xl font-bold mb-4">Review: {{ reviewData.quiz.title }}</h3>
+          
+          <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-600">Score</p>
+                <p class="text-2xl font-bold">{{ reviewData.attempt.score }}%</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">Time Spent</p>
+                <p class="text-2xl font-bold">{{ Math.floor(reviewData.attempt.timeSpent / 1000) }}s</p>
+              </div>
+            </div>
+          </div>
           
           <div class="space-y-8">
             <div 
-              v-for="(question, index) in currentQuiz.questions" 
+              v-for="(question, index) in reviewData.quiz.questions" 
               :key="index"
               class="border-b pb-6"
             >
@@ -149,19 +172,19 @@
                     :key="optionIndex"
                     :class="{
                       'text-green-600': optionIndex === question.correctIndex,
-                      'text-red-600': optionIndex === answers[index] && optionIndex !== question.correctIndex
+                      'text-red-600': optionIndex === question.userAnswer && optionIndex !== question.correctIndex
                     }"
                     class="flex items-center space-x-2"
                   >
                     <span v-if="optionIndex === question.correctIndex">✓</span>
-                    <span v-else-if="optionIndex === answers[index]">✗</span>
+                    <span v-else-if="optionIndex === question.userAnswer">✗</span>
                     <span v-else>&nbsp;&nbsp;</span>
                     <span>{{ option.text }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="answers[index] !== question.correctIndex" class="mt-4">
+              <div v-if="!question.isCorrect" class="mt-4">
                 <button
                   @click="getExplanation(index)"
                   class="text-primary-600 hover:text-primary-700 text-sm"
@@ -177,18 +200,24 @@
 
           <div class="mt-6 flex justify-end space-x-4">
             <button
+              v-if="reviewData.attempt.score === 100 && !reviewData.hasBadge"
+              @click="claimBadge"
+              class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center space-x-2"
+            >
+              <span>🏆</span>
+              <span>Claim Badge</span>
+            </button>
+            <button v-else-if="reviewData.attempt.score !== 100"
               @click="retakeQuiz"
               class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
               Retake Quiz
             </button>
-            <button
-              @click="closeReviewModal"
-              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              Close Review
-            </button>
+           
           </div>
+        </div>
+        <div v-else-if="loading" class="text-center py-4">
+          <BaseAnimation type="loading" :loop="true" />
         </div>
       </div>
     </div>
@@ -240,6 +269,8 @@ import BaseModal from './BaseModal.vue';
 import BadgeDisplay from './BadgeDisplay.vue';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
@@ -269,6 +300,7 @@ export default {
     const { showNotification } = useNotification();
     const activeTab = ref('activities');
     const enrolledClasses = ref([]);
+    const reviewData = ref(null);
     const tabs = [
       { id: 'activities', name: 'Activities' },
       { id: 'history', name: 'Quiz History' },
@@ -306,19 +338,28 @@ export default {
       
       try {
         loading.value = true;
-        console.log('Loading classes for user:', user.value.uid);
         const loadedClasses = await FirebaseService.getClassesByStudent(user.value.uid);
-        console.log('Loaded classes:', loadedClasses);
         
-        classes.value = loadedClasses.map(classItem => ({
-          ...classItem,
-          id: classItem.id,
-          name: classItem.name || 'Unnamed Class',
-          teacherName: classItem.teacherName || 'Unknown Teacher',
-          code: classItem.code || 'N/A',
-          quizzes: classItem.quizzes || []
-        })).sort((a, b) => b.updatedAt?.toDate() - a.updatedAt?.toDate());
+        // Get enrollment status for each class
+        const classesWithStatus = await Promise.all(loadedClasses.map(async classItem => {
+          if (!classItem.id) {
+            return null;
+          }
+          const enrollmentStatus = await FirebaseService.getEnrollmentStatus(user.value.uid, classItem.id);
+          return {
+            ...classItem,
+            id: classItem.id,
+            name: classItem.name || 'Unnamed Class',
+            teacherName: classItem.teacherName || 'Unknown Teacher',
+            code: classItem.code || 'N/A',
+            quizzes: classItem.quizzes || [],
+            enrollmentStatus: enrollmentStatus
+          };
+        }));
 
+        classes.value = classesWithStatus
+          .filter(Boolean)
+          .sort((a, b) => b.updatedAt?.toDate() - a.updatedAt?.toDate());
         // Also update enrolledClasses for components that need it
         enrolledClasses.value = classes.value;
 
@@ -335,7 +376,6 @@ export default {
         }
           
       } catch (error) {
-        console.error('Error loading classes:', error);
         showNotification('Error', 'Failed to load classes', 'error');
       } finally {
         loading.value = false;
@@ -343,16 +383,16 @@ export default {
     };
 
     // Watch for both user and initialization changes
-    watch([() => user.value?.uid, () => initialized.value], ([newUserId, isInitialized]) => {
-      console.log('Auth state changed:', { userId: newUserId, initialized: isInitialized });
-      if (isInitialized && newUserId) {
-        console.log('Loading classes for user:', newUserId);
-        loadClasses();
-      } else if (isInitialized) {
-        console.log('No user, clearing classes');
-        classes.value = [];
-        enrolledClasses.value = [];
-        loading.value = false;
+    watch([() => user.value, () => initialized.value], ([newUser, isInitialized]) => {
+      
+      if (isInitialized) {
+        if (newUser?.uid) {
+          loadClasses();
+        } else {
+          classes.value = [];
+          enrolledClasses.value = [];
+          loading.value = false;
+        }
       }
     }, { immediate: true });
 
@@ -378,8 +418,8 @@ export default {
     const startQuiz = async (classId, quiz) => {
       if (!user.value) return;
 
-      const enrollment = enrolledClasses.value.find(e => e.classId === classId);
-      if (enrollment?.status !== 'accepted') {
+      const enrollment = enrolledClasses.value.find(e => e.id === classId);
+      if (enrollment?.enrollmentStatus !== 'accepted') {
         showNotification('Error', 'Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.', 'error');
         return;
       }
@@ -391,25 +431,37 @@ export default {
           return;
         }
 
-        selectedClass.value = classes.value.find(c => c.id === classId);
+        const classData = classes.value.find(c => c.id === classId);
+        const previousAttempt = getQuizAttempt(classId, quiz.id);
+        const isRetake = !!previousAttempt;
+
+        // Create activity record for quiz start
+        await FirebaseService.createActivity({
+          type: 'quiz_started',
+          classId: classId,
+          className: classData?.name || 'Unknown Class',
+          studentId: user.value.uid,
+          studentName: user.value.displayName || 'Student',
+          teacherId: classData?.teacherId,
+          quizId: quiz.id,
+          quizTitle: quizData.title,
+          timestamp: new Date(),
+          isRetake: isRetake,
+          previousScore: previousAttempt ? previousAttempt.correctAnswers : null,
+          activityDescription: isRetake 
+            ? `Retaking "${quizData.title}" quiz in ${classData?.name || 'Unknown Class'}`
+            : `Starting "${quizData.title}" quiz in ${classData?.name || 'Unknown Class'}`
+        });
+
+        selectedClass.value = classData;
         selectedQuiz.value = {
           id: quiz.id,
           title: quizData.title,
-          //questions: quiz.questionCount,
+          questions: quizData.questions,
           classId: classId
         };
         isQuizModalOpen.value = true;
 
-        // Log quiz start activity
-        await FirebaseService.createActivity({
-          userId: user.value.uid,
-          type: 'quiz_started',
-          quizId: quiz.id,
-          quizTitle: quizData.title,
-          classId: classId,
-          timestamp: new Date(),
-          isRetake: !!getQuizAttempt(classId, quiz.id)
-        });
       } catch (error) {
         console.error('Error starting quiz:', error);
         showNotification('Error', 'Failed to start quiz. Please try again.', 'error');
@@ -444,7 +496,6 @@ export default {
       }
       
       const score = calculateQuizScore();
-      console.log('Quiz submitted with score:', score);
       quizScore.value = score;
       quizCompleted.value = true;
       
@@ -542,7 +593,22 @@ export default {
     };
 
     const getQuizAttempt = (classId, quizId) => {
-      return quizAttempts.value[classId]?.[quizId];
+      if (!quizAttempts.value[classId]?.[quizId]) return null;
+      
+      // Get all attempts for this quiz
+      const attempts = quizAttempts.value[classId][quizId];
+      
+      // If it's already a single attempt, return it
+      if (!Array.isArray(attempts)) return attempts;
+      
+      // Sort attempts by timestamp to get the latest one
+      const sortedAttempts = attempts.sort((a, b) => {
+        const timeA = a.timestamp?.toDate?.() || new Date(0);
+        const timeB = b.timestamp?.toDate?.() || new Date(0);
+        return timeB - timeA;
+      });
+      
+      return sortedAttempts[0];
     };
 
     const calculateProgress = (classItem) => {
@@ -555,14 +621,80 @@ export default {
       return Math.round((completedQuizzes / totalQuizzes) * 100);
     };
 
-    const reviewQuiz = (classId, quiz) => {
-      currentClassId.value = classId;
-      currentQuiz.value = quiz;
-      const attempt = getQuizAttempt(classId, quiz.id);
-      if (attempt) {
-        answers.value = attempt.answers;
+    const reviewQuiz = async (classId, quiz) => {
+      try {
+        loading.value = true;
+        currentClassId.value = classId;
+        
+        // Get the quiz attempt
+        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quiz.id);
+        if (!attempts || attempts.length === 0) {
+          showNotification('Error', 'No quiz attempt found to review', 'error');
+          return;
+        }
+        
+        // Sort attempts by timestamp to get the latest one
+        const sortedAttempts = attempts.sort((a, b) => {
+          const timeA = a.timestamp?.toDate?.() || new Date(0);
+          const timeB = b.timestamp?.toDate?.() || new Date(0);
+          return timeB - timeA;
+        });
+        
+        // Get the most recent attempt
+        const attempt = sortedAttempts[0];
+        
+        // Get quiz details
+        const quizData = await FirebaseService.getQuiz(quiz.id);
+        if (!quizData) {
+          showNotification('Error', 'Quiz not found', 'error');
+          return;
+        }
+        
+        // Get class details
+        const classData = classes.value.find(c => c.id === classId);
+        if (!classData) {
+          showNotification('Error', 'Class not found', 'error');
+          return;
+        }
+
+        // Check if badge already exists
+        const badgeRef = doc(db, 'badges', `${user.value.uid}_${quiz.id}`);
+        const badgeDoc = await getDoc(badgeRef);
+        const hasBadge = badgeDoc.exists();
+        
+        // Set the review data
+        reviewData.value = {
+          quiz: {
+            ...quizData,
+            questions: quizData.questions.map((q, index) => ({
+              ...q,
+              userAnswer: attempt.answers?.[index],
+              isCorrect: attempt.questionResults?.[index]?.isCorrect,
+              selectedOption: attempt.questionResults?.[index]?.selectedOption,
+              correctIndex: q.correctIndex
+            }))
+          },
+          attempt: {
+            score: attempt.score,
+            correctAnswers: attempt.correctAnswers,
+            totalQuestions: attempt.questionCount,
+            timeSpent: attempt.timeSpent,
+            submittedAt: attempt.timestamp?.toDate()
+          },
+          class: {
+            id: classId,
+            name: classData.name
+          },
+          hasBadge
+        };
+        
+        showReviewModal.value = true;
+      } catch (error) {
+        console.error('Error loading quiz review:', error);
+        showNotification('Error', 'Failed to load quiz review', 'error');
+      } finally {
+        loading.value = false;
       }
-      showReviewModal.value = true;
     };
 
     const getExplanation = async (questionIndex) => {
@@ -615,15 +747,109 @@ export default {
       }
     };
 
+    const handleQuizCompleted = async (results) => {
+      closeQuizModal();
+      await loadClasses(); // Refresh the classes list to show updated quiz status
+    };
+
+    const showQuizReview = async (classId, quizId) => {
+      try {
+        loading.value = true;
+        console.log('Loading quiz review for:', { classId, quizId });
+        
+        // Get the quiz attempt
+        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
+        console.log('Quiz attempts:', attempts);
+        
+        if (!attempts || attempts.length === 0) {
+          showNotification('Error', 'No quiz attempt found to review', 'error');
+          return;
+        }
+        
+        // Get the most recent attempt
+        const attempt = attempts[0];
+        console.log('Selected attempt:', attempt);
+        
+        // Get quiz details
+        const quiz = await FirebaseService.getQuiz(quizId);
+        if (!quiz) {
+          showNotification('Error', 'Quiz not found', 'error');
+          return;
+        }
+        
+        // Get class details
+        const classData = classes.value.find(c => c.id === classId);
+        if (!classData) {
+          showNotification('Error', 'Class not found', 'error');
+          return;
+        }
+        
+        // Set the review data
+        reviewData.value = {
+          quiz: {
+            ...quiz,
+            questions: quiz.questions.map((q, index) => ({
+              ...q,
+              userAnswer: attempt.answers?.[index],
+              isCorrect: attempt.questionResults?.[index]?.isCorrect,
+              selectedOption: attempt.questionResults?.[index]?.selectedOption,
+              correctIndex: q.correctIndex
+            }))
+          },
+          attempt: {
+            score: attempt.score,
+            correctAnswers: attempt.correctAnswers,
+            totalQuestions: attempt.questionCount,
+            timeSpent: attempt.timeSpent,
+            submittedAt: attempt.timestamp?.toDate()
+          },
+          class: {
+            id: classId,
+            name: classData.name
+          }
+        };
+        
+        console.log('Review data set:', reviewData.value);
+        showReviewModal.value = true;
+      } catch (error) {
+        console.error('Error loading quiz review:', error);
+        showNotification('Error', 'Failed to load quiz review', 'error');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const claimBadge = async () => {
+      try {
+        if (!reviewData.value) return;
+        
+        const result = await FirebaseService.claimBadge(
+          user.value.uid,
+          reviewData.value.quiz.id,
+          reviewData.value.class.id,
+          reviewData.value.attempt.score
+        );
+        
+        if (result.success) {
+          showNotification('Success', result.message, 'success');
+          // Refresh the classes to update the badge display
+          await loadClasses();
+        } else {
+          showNotification('Info', result.message, 'info');
+        }
+      } catch (error) {
+        console.error('Error claiming badge:', error);
+        showNotification('Error', 'Failed to claim badge', 'error');
+      }
+    };
+
     onMounted(async () => {
-      //console.log('StudentClasses mounted, user:', user.value?.uid);
       if (user.value?.uid && initialized.value) {
         await loadClasses();
       }
       
       // Listen for class joined event
       window.addEventListener('classJoined', async () => {
-        //console.log('Class joined event received');
         await loadClasses();
       });
 
@@ -631,7 +857,6 @@ export default {
       const component = document.querySelector('student-classes');
       if (component) {
         component.addEventListener('refreshClasses', async () => {
-          //console.log('Refresh classes event received');
           await loadClasses();
         });
       }
@@ -677,7 +902,11 @@ export default {
       filteredClasses,
       handleSearch,
       searchQuery,
-      enrolledClasses
+      enrolledClasses,
+      handleQuizCompleted,
+      showQuizReview,
+      reviewData,
+      claimBadge
     };
   }
 };
