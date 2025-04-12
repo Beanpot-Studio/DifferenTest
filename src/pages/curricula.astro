@@ -1,6 +1,15 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import FirebaseService from "../lib/firebaseService";
+import { db } from "../lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import IconService from "../components/IconService.vue";
 
 interface ClassData {
@@ -18,13 +27,46 @@ interface ClassData {
 
 // Get public classes and their quizzes
 const getPublicClasses = async (): Promise<ClassData[]> => {
-  try {
-    const classes = await FirebaseService.getPublicClasses();
-    return classes;
-  } catch (error) {
-    console.error("Error fetching public classes:", error);
-    return [];
-  }
+  const classesQuery = query(
+    collection(db, "classes"),
+    where("isPublic", "==", true),
+    orderBy("createdAt", "desc")
+  );
+  const classesSnapshot = await getDocs(classesQuery);
+
+  const classes = await Promise.all(
+    classesSnapshot.docs.map(async (classDoc) => {
+      const classData = classDoc.data() as ClassData;
+
+      // Get teacher information
+      const teacherDoc = await getDoc(doc(db, "users", classData.teacherId));
+      const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+
+      // Get quiz details
+      const quizzesWithDetails = await Promise.all(
+        (classData.quizzes || []).map(async (quiz) => {
+          const quizDoc = await getDoc(doc(db, "quizzes", quiz.id));
+          if (quizDoc.exists()) {
+            const quizData = quizDoc.data();
+            return {
+              ...quiz,
+              questionCount: quizData.questions?.length || 0,
+            };
+          }
+          return quiz;
+        })
+      );
+
+      return {
+        ...classData,
+        id: classDoc.id,
+        quizzes: quizzesWithDetails,
+        teacherName: teacherData?.name || "Unknown Teacher",
+      };
+    })
+  );
+
+  return classes;
 };
 
 const publicClasses = await getPublicClasses();

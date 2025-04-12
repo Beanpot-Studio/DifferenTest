@@ -66,7 +66,38 @@ class FirebaseService {
       orderBy('createdAt', 'desc')
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Get all quizzes with their class names
+    const quizzes = await Promise.all(
+      snapshot.docs.map(async (doc) => {
+        const quizData = doc.data();
+        
+        // Get the class name by finding the class that contains this quiz
+        let className = 'Unknown Class';
+        const classesQuery = query(
+          collection(db, 'classes'),
+          where('teacherId', '==', teacherId)
+        );
+        const classesSnapshot = await getDocs(classesQuery);
+        
+        for (const classDoc of classesSnapshot.docs) {
+          const classData = classDoc.data();
+          if (classData.quizzes?.some(q => q.id === doc.id)) {
+            className = classData.name;
+            break;
+          }
+        }
+        
+        return {
+          id: doc.id,
+          ...quizData,
+          className,
+          questionCount: quizData.questions?.length || 0
+        };
+      })
+    );
+    
+    return quizzes;
   }
 
   static async getClassesByTeacher(teacherId) {
@@ -118,10 +149,13 @@ class FirebaseService {
                   console.log('Questions array:', questions);
                   const questionCount = questions.length;
                   console.log('Question count for', quiz.title, ':', questionCount);
-                  return {
+                  const quizWithDetails = {
                     ...quiz,
-                    questionCount
+                    questionCount,
+                    className: classData.name
                   };
+                  console.log('Quiz with details:', quizWithDetails);
+                  return quizWithDetails;
                 }
                 return quiz;
               })

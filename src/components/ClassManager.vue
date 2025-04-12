@@ -326,14 +326,6 @@ export default {
         const quiz = availableQuizzes.value.find(q => q.id === selectedQuiz.value);
         if (!quiz) return;
 
-        // Check if quiz is already in the class
-        const classItem = classes.value.find(c => c.id === classId);
-        if (classItem?.quizzes?.some(q => q.id === quiz.id)) {
-          showNotification('Info', 'This quiz is already in the class', 'info');
-          selectedQuiz.value = '';
-          return;
-        }
-
         await FirebaseService.addQuizToClass(classId, {
           id: quiz.id,
           title: quiz.title

@@ -14,12 +14,13 @@
         <div v-for="quiz in quizzes" :key="quiz.id" class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
           <div>
             <div class="flex items-center space-x-2">
-              <span v-if="quiz.isPublic" class="text-yellow-500" title="Public Class">
+              <!--all quizzes are de facto private-->
+              <!--<span v-if="quiz.isPublic" class="text-yellow-500" title="Public Class">
                 <IconService name="star" size="4" />
               </span>
               <span v-else class="text-gray-600" title="Private Class">
                 <IconService name="lock" size="4" />
-              </span>
+              </span>-->
               <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
               
             </div>
@@ -276,34 +277,6 @@ export default {
       saveQuiz();
     };
 
-    const addQuizToClass = async (classId, quizId) => {
-      try {
-        loading.value = true;
-        await FirebaseService.addQuizToClass(classId, quizId);
-        showNotification('Success', 'Quiz added to class successfully', 'success');
-        await fetchQuizzes();
-      } catch (error) {
-        console.error('Error adding quiz to class:', error);
-        showNotification('Error', 'Failed to add quiz to class', 'error');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const removeQuizFromClass = async (classId, quizId) => {
-      try {
-        loading.value = true;
-        await FirebaseService.removeQuizFromClass(classId, quizId);
-        showNotification('Success', 'Quiz removed from class successfully', 'success');
-        await fetchQuizzes();
-      } catch (error) {
-        console.error('Error removing quiz from class:', error);
-        showNotification('Error', 'Failed to remove quiz from class', 'error');
-      } finally {
-        loading.value = false;
-      }
-    };
-
     onMounted(() => {
       fetchQuizzes();
     });
@@ -326,9 +299,7 @@ export default {
       viewLessonPlan,
       closeLessonPlanModal,
       addOption,
-      removeOption,
-      addQuizToClass,
-      removeQuizFromClass
+      removeOption
     };
   }
 };

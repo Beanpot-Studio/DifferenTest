@@ -7,14 +7,14 @@
     
       <div class="flex items-center space-x-4">
         <nav class="hidden md:flex space-x-6">
-          
+          <a href="/curricula" class="hover:text-primary-200 transition text-white">Open Curricula</a>
+
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
             <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
             <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition text-white">Student Portal</a>
           </template>
           <!-- Curriculum Link (visible to all) -->
-          <a href="/curriculum" class="hover:text-primary-200 transition text-white">Curriculum</a>
         </nav>
 
         

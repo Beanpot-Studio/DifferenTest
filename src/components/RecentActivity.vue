@@ -122,7 +122,7 @@ export default {
       loading.value = true;
       error.value = null;
       try {
-        activities.value = await FirebaseService.getActivitiesByUser(user.value.uid, 5);
+        activities.value = await FirebaseService.getUserActivities(user.value.uid, 5);
       } catch (err) {
         console.error('Error loading recent activity:', err);
         error.value = 'Failed to load recent activity. Please try again.';
