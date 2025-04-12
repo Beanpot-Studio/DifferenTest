@@ -1,10 +1,8 @@
 ---
 import MainLayout from "../../layouts/MainLayout.astro";
 import RoleBasedContent from "../../components/RoleBasedContent.vue";
-import StudentClasses from "../../components/StudentClasses.vue";
+import StudentDashboard from "../../components/StudentDashboard.vue";
 import ClassBrowser from "../../components/ClassBrowser.vue";
-import RecentActivity from "../../components/RecentActivity.vue";
-import BaseAnimation from "../../components/BaseAnimation.vue";
 import IconService from "../../components/IconService.vue";
 ---
 
@@ -34,74 +32,8 @@ import IconService from "../../components/IconService.vue";
           <!-- Class Browser Modal -->
           <ClassBrowser client:load />
 
-          <!-- Learning Progress Overview -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <div class="flex items-center">
-                <div class="p-3 bg-primary-100 rounded-lg">
-                  <IconService name="mortar-board" size="8" color="text-primary-600" />
-                </div>
-                <div class="ml-4">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    Active Classes
-                  </h3>
-                  <p
-                    class="text-3xl font-bold text-primary-600"
-                    id="activeClassesCount"
-                  >
-                    0
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <div class="flex items-center">
-                <div class="p-3 bg-green-100 rounded-lg">
-                  <IconService
-                    name="home-clipboard"
-                    size="8"
-                    color="text-green-600"
-                  />
-                </div>
-                <div class="ml-4">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    Completed Quizzes
-                  </h3>
-                  <p
-                    class="text-3xl font-bold text-green-600"
-                    id="completedQuizzesCount"
-                  >
-                    0
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <div class="flex items-center">
-                <div class="p-3 bg-yellow-100 rounded-lg">
-                  <IconService name="star" size="8" color="text-yellow-600" />
-                </div>
-                <div class="ml-4">
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    Average Score
-                  </h3>
-                  <p
-                    class="text-3xl font-bold text-yellow-600"
-                    id="averageScore"
-                  >
-                    0%
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Classes and Quizzes -->
-          <div class="bg-white rounded-xl shadow-sm p-6">
-            <StudentClasses client:load />
-          </div>
+          <!-- Student Dashboard -->
+          <StudentDashboard client:load />
         </div>
       </RoleBasedContent>
     </div>

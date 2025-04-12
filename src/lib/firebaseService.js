@@ -335,18 +335,16 @@ class FirebaseService {
           collection(db, 'quizAttempts'),
           where('userId', '==', userId),
           where('quizId', '==', quizId),
-          orderBy('timestamp', 'desc')
         );
       } else {
         q = query(
           collection(db, 'quizAttempts'),
           where('userId', '==', userId),
-          orderBy('timestamp', 'desc')
         );
       }
 
       const snapshot = await getDocs(q);
-      // Return the attempts directly since they're already sorted by Firestore
+
       return snapshot.docs.map(doc => ({ 
         id: doc.id, 
         ...doc.data()

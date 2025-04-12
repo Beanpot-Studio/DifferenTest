@@ -85,18 +85,15 @@
                     <div class="flex space-x-2">
                       <button
                         v-if="getQuizAttempt(classItem.id, quiz.id)"
-                        @click="reviewQuiz(classItem.id, quiz)"
-                        class="text-primary-600 hover:text-primary-800 text-sm font-medium"
+                        @click="reviewQuiz(classItem.id, quiz.id)"
+                        class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200"
                       >
-                        Review
+                        Review Quiz
                       </button>
                       <button
-                        @click="startQuiz(classItem.id, quiz)"
-                        class="px-3 py-1 text-md font-medium rounded-md"
-                        :class="{
-                          'bg-primary-700 text-white hover:bg-primary-500': !getQuizAttempt(classItem.id, quiz.id),
-                          'bg-orange-700 text-white hover:bg-orange-500': getQuizAttempt(classItem.id, quiz.id)
-                        }"
+                        v-else-if="!getQuizAttempt(classItem.id, quiz.id) || getQuizAttempt(classItem.id, quiz.id).score < 100"
+                        @click="takeQuiz(classItem.id, quiz.id)"
+                        class="text-sm font-medium text-primary-600 hover:text-primary-500"
                       >
                         {{ getQuizAttempt(classItem.id, quiz.id) ? 'Retake Quiz' : 'Take Quiz' }}
                       </button>
@@ -269,8 +266,6 @@ import BaseModal from './BaseModal.vue';
 import BadgeDisplay from './BadgeDisplay.vue';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
@@ -621,13 +616,13 @@ export default {
       return Math.round((completedQuizzes / totalQuizzes) * 100);
     };
 
-    const reviewQuiz = async (classId, quiz) => {
+    const reviewQuiz = async (classId, quizId) => {
       try {
         loading.value = true;
         currentClassId.value = classId;
         
         // Get the quiz attempt
-        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quiz.id);
+        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
         if (!attempts || attempts.length === 0) {
           showNotification('Error', 'No quiz attempt found to review', 'error');
           return;
@@ -644,7 +639,7 @@ export default {
         const attempt = sortedAttempts[0];
         
         // Get quiz details
-        const quizData = await FirebaseService.getQuiz(quiz.id);
+        const quizData = await FirebaseService.getQuiz(quizId);
         if (!quizData) {
           showNotification('Error', 'Quiz not found', 'error');
           return;
@@ -658,7 +653,7 @@ export default {
         }
 
         // Check if badge already exists
-        const badgeRef = doc(db, 'badges', `${user.value.uid}_${quiz.id}`);
+        const badgeRef = doc(db, 'badges', `${user.value.uid}_${quizId}`);
         const badgeDoc = await getDoc(badgeRef);
         const hasBadge = badgeDoc.exists();
         
