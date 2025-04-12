@@ -1,27 +1,85 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
-import BaseAnimation from "../components/BaseAnimation.vue";
+import FirebaseService from "../lib/firebaseService";
+import IconService from "../components/IconService.vue";
+
+interface ClassData {
+  id: string;
+  name: string;
+  teacherId: string;
+  createdAt: any;
+  quizzes: Array<{
+    id: string;
+    title: string;
+    questionCount?: number;
+  }>;
+  teacherName: string;
+}
+
+// Get public classes and their quizzes
+const getPublicClasses = async (): Promise<ClassData[]> => {
+  try {
+    const classes = await FirebaseService.getPublicClasses();
+    return classes;
+  } catch (error) {
+    console.error("Error fetching public classes:", error);
+    return [];
+  }
+};
+
+const publicClasses = await getPublicClasses();
 ---
 
-<MainLayout title="Page Not Found">
-  <div class="flex flex-col items-center justify-center px-4">
-    <div class="text-center space-y-6">
-      <div class="w-full flex justify-center">
-        <BaseAnimation type="lost" size="500" :loop="true" client:load/>
-      </div>
-      <h1 class="text-6xl font-bold text-gray-900">404</h1>
-      <h2 class="text-2xl font-semibold text-gray-700">Page Not Found</h2>
-      <p class="text-gray-500 max-w-md">
-        The page you're looking for doesn't exist or has been moved.
-      </p>
-      <div class="flex space-x-4 justify-center">
-        <a
-          href="/"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          Go Home
-        </a>
-      </div>
+<MainLayout title="Public Curricula">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Public Curricula</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {
+        publicClasses.map((classItem) => (
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <IconService name="book" color="blue" size="4" />
+              <h2 class="text-xl font-semibold">{classItem.name}</h2>
+            </div>
+
+            <p class="text-gray-600 mb-4">By {classItem.teacherName}</p>
+
+            {classItem.quizzes?.length > 0 ? (
+              <div class="space-y-3">
+                <h3 class="font-medium text-gray-700">Available Quizzes:</h3>
+                <ul class="space-y-2">
+                  {classItem.quizzes.map((quiz) => (
+                    <li class="flex items-center justify-between bg-gray-50 p-3 rounded">
+                      <span class="text-gray-800">{quiz.title}</span>
+                      <span class="text-sm text-gray-500">
+                        {quiz.questionCount} questions
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p class="text-gray-500 italic">No quizzes available yet</p>
+            )}
+
+            <div class="mt-4 pt-4 border-t">
+              <p class="text-sm text-gray-500">
+                Created:{" "}
+                {new Date(classItem.createdAt?.toDate()).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        ))
+      }
     </div>
+
+    {
+      publicClasses.length === 0 && (
+        <div class="text-center py-12">
+          <p class="text-gray-500">No public curricula available yet.</p>
+        </div>
+      )
+    }
   </div>
 </MainLayout>

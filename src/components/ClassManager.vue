@@ -16,7 +16,7 @@
             placeholder="Enter class name"
           />
         </div>
-        <div class="mb-4">
+        <div class="mb-4 rounded bg-gray-50 p-4">
           <label class="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -48,7 +48,10 @@
         <div v-for="classItem in classes" :key="classItem.id" class="border rounded-lg p-4">
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
+              <div class="flex items-center gap-2">
+                <IconService v-if="!classItem.isPublic" name="lock" color="gray" size="4" tooltip="This class is private, open only to enrolled students" />
+                <h3 class="text-lg font-semibold mt-2">{{ classItem.name }}</h3>
+              </div>
               <p class="text-sm text-gray-500">
                 Created: {{ formatDate(classItem.createdAt) }}
               </p>
@@ -322,6 +325,14 @@ export default {
       try {
         const quiz = availableQuizzes.value.find(q => q.id === selectedQuiz.value);
         if (!quiz) return;
+
+        // Check if quiz is already in the class
+        const classItem = classes.value.find(c => c.id === classId);
+        if (classItem?.quizzes?.some(q => q.id === quiz.id)) {
+          showNotification('Info', 'This quiz is already in the class', 'info');
+          selectedQuiz.value = '';
+          return;
+        }
 
         await FirebaseService.addQuizToClass(classId, {
           id: quiz.id,

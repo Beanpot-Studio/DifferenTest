@@ -192,15 +192,20 @@ class FirebaseService {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  static async createQuiz(data) {
-    const { userId, ...quizData } = data; // Remove userId from data
-    const quizRef = await addDoc(collection(db, 'quizzes'), {
-      ...quizData,
-      teacherId: userId, // Set teacherId from userId
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-    return quizRef.id;
+  static async createQuiz(quizData) {
+    try {
+      const quizRef = await addDoc(collection(db, 'quizzes'), {
+        ...quizData,
+        teacherId: quizData.teacherId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      return quizRef.id;
+    } catch (error) {
+      console.error('Error creating quiz:', error);
+      throw error;
+    }
   }
 
   static async updateQuiz(quizId, data) {
@@ -547,6 +552,54 @@ class FirebaseService {
       return true;
     } catch (error) {
       console.error('Error removing quiz from class:', error);
+      throw error;
+    }
+  }
+
+  static async getPublicClasses() {
+    try {
+      const classesQuery = query(
+        collection(db, 'classes'),
+        where('isPublic', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+      const classesSnapshot = await getDocs(classesQuery);
+      
+      const classes = await Promise.all(
+        classesSnapshot.docs.map(async (classDoc) => {
+          const classData = classDoc.data();
+          
+          // Get teacher information
+          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+          const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+          
+          // Get quiz details
+          const quizzesWithDetails = await Promise.all(
+            (classData.quizzes || []).map(async (quiz) => {
+              const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
+              if (quizDoc.exists()) {
+                const quizData = quizDoc.data();
+                return {
+                  ...quiz,
+                  questionCount: quizData.questions?.length || 0
+                };
+              }
+              return quiz;
+            })
+          );
+          
+          return {
+            id: classDoc.id,
+            ...classData,
+            quizzes: quizzesWithDetails,
+            teacherName: teacherData?.name || 'Unknown Teacher'
+          };
+        })
+      );
+      
+      return classes;
+    } catch (error) {
+      console.error('Error getting public classes:', error);
       throw error;
     }
   }

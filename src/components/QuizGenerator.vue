@@ -28,28 +28,7 @@
       </p>
     </div>
 
-    <!-- Public Enrollment -->
-    <div class="mb-6 p-4 border rounded-lg bg-gray-50">
-      <div class="flex items-center justify-between">
-        <div>
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              v-model="isPublic"
-              class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"
-            />
-            <span class="text-sm font-medium text-gray-700">Make this quiz public</span>
-          </label>
-          <p class="mt-1 text-sm text-gray-500">When enabled, any student can access this quiz without needing to register and be accepted.</p>
-        </div>
-        <div v-if="isPublic" class="flex items-center space-x-2">
-          <span class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
-            Public Quiz
-          </span>
-        </div>
-      </div>
-    </div>
-
+  
     <!-- Number of Questions -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">
