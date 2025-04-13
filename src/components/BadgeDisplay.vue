@@ -39,8 +39,12 @@
             </div>
             
             <div v-if="badge.blockchainVerification" class="mt-2 flex items-center space-x-1">
-              <IconService name="verified" size="4" color="text-gray-400" />
-              <span class="text-xs text-gray-500">Verified on {{ badge.blockchainVerification.network }}</span>
+              <IconService name="verified" size="4" color="text-green-600" />
+              <span class="text-xs text-green-600">Verified on {{ badge.blockchainVerification.network }}</span>
+            </div>
+            <div v-else class="mt-2 flex items-center space-x-1">
+              <IconService name="warning" size="4" color="text-yellow-600" />
+              <span class="text-xs text-yellow-600">Not verified on blockchain</span>
             </div>
           </div>
         </div>

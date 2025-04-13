@@ -18,6 +18,7 @@ import {
 import { db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
+import BlockchainService from './blockchainService';
 
 class FirebaseService {
   // User Operations
@@ -1212,6 +1213,17 @@ class FirebaseService {
     }
   }
 
+  static async checkBadgeExists(userId, quizId) {
+    try {
+      const badgeRef = doc(db, 'badges', `${userId}_${quizId}`);
+      const badgeDoc = await getDoc(badgeRef);
+      return badgeDoc.exists();
+    } catch (error) {
+      console.error('Error checking badge existence:', error);
+      return false;
+    }
+  }
+
   static async claimBadge(userId, quizId, classId, score) {
     try {
       if (!userId || !quizId || !classId || score !== 100) {
@@ -1250,37 +1262,70 @@ class FirebaseService {
         description: `Achieved a perfect score on the ${quizData.title} quiz`,
         type: 'quiz_perfect_score',
         icon: '🏆',
-        color: 'gold'
+        color: 'gold',
+        timestamp: new Date().toISOString(),
+        quizId,
+        classId,
+        image: 'https://your-nft-image-url.com/perfect-score.png' // Add your NFT image URL
       };
 
-      // Create badge
-      await setDoc(badgeRef, {
-        userId,
-        quizId,
-        quizTitle: quizData.title,
-        classId,
-        timestamp: serverTimestamp(),
-        metadata: badgeMetadata
-      });
+      // Mint NFT badge on blockchain
+      try {
+        const blockchainResult = await BlockchainService.mintBadge(
+          `${userId}_${quizId}`,
+          badgeMetadata
+        );
 
-      // Create activity record
-      await addDoc(collection(db, 'activities'), {
-        userId,
-        type: 'badge_claimed',
-        badgeId: badgeRef.id,
-        quizId,
-        quizTitle: quizData.title,
-        classId,
-        timestamp: serverTimestamp(),
-        activityDescription: `🏆 Claimed "${badgeMetadata.title}" badge for perfect score on ${quizData.title}!`
-      });
+        if (blockchainResult.success) {
+          // Create badge in Firestore with NFT details
+          await setDoc(badgeRef, {
+            userId,
+            quizId,
+            quizTitle: quizData.title,
+            classId,
+            timestamp: serverTimestamp(),
+            metadata: badgeMetadata,
+            nftDetails: {
+              tokenId: blockchainResult.tokenId,
+              network: 'Ethereum',
+              contractAddress: BADGE_CONTRACT_ADDRESS,
+              transactionHash: blockchainResult.transactionHash
+            }
+          });
 
-      return {
-        success: true,
-        message: `Achievement Unlocked! You've earned the "${badgeMetadata.title}" badge!`,
-        status: 'success',
-        badgeId: badgeRef.id
-      };
+          // Create activity record
+          await addDoc(collection(db, 'activities'), {
+            userId,
+            type: 'badge_claimed',
+            badgeId: badgeRef.id,
+            quizId,
+            quizTitle: quizData.title,
+            classId,
+            timestamp: serverTimestamp(),
+            activityDescription: `🏆 Claimed "${badgeMetadata.title}" NFT badge for perfect score on ${quizData.title}!`
+          });
+
+          return {
+            success: true,
+            message: `Achievement Unlocked! You've earned the "${badgeMetadata.title}" NFT badge!`,
+            status: 'success',
+            badgeId: badgeRef.id,
+            nftDetails: {
+              tokenId: blockchainResult.tokenId,
+              transactionHash: blockchainResult.transactionHash
+            }
+          };
+        } else {
+          throw new Error(blockchainResult.message || 'Failed to mint NFT badge');
+        }
+      } catch (blockchainError) {
+        console.error('Error minting NFT badge:', blockchainError);
+        return {
+          success: false,
+          message: 'Failed to mint NFT badge',
+          status: 'error'
+        };
+      }
     } catch (error) {
       console.error('Error claiming badge:', error);
       return {

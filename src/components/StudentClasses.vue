@@ -86,20 +86,29 @@
                       <button
                         v-if="getQuizAttempt(classItem.id, quiz.id)"
                         @click="reviewQuiz(classItem.id, quiz.id)"
-                        class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200"
+                        class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
                       >
-                        Review Quiz
+                        <span>Review Quiz</span>
+                        <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
                       </button>
                       <button
-                        v-else-if="!getQuizAttempt(classItem.id, quiz.id) || getQuizAttempt(classItem.id, quiz.id).score < 100"
-                        @click="takeQuiz(classItem.id, quiz.id)"
+                        v-if="getQuizAttempt(classItem.id, quiz.id) && getQuizAttempt(classItem.id, quiz.id).score < 100"
+                        @click="startQuiz(classItem.id, quiz)"
+                        class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
+                      >
+                        Retake Quiz
+                      </button>
+                      <button
+                        v-else-if="!getQuizAttempt(classItem.id, quiz.id)"
+                        @click="startQuiz(classItem.id, quiz)"
                         class="text-sm font-medium text-primary-600 hover:text-primary-500"
                       >
-                        {{ getQuizAttempt(classItem.id, quiz.id) ? 'Retake Quiz' : 'Take Quiz' }}
+                        Take Quiz
                       </button>
                     </div>
                   </div>
                 </div>
+  
               </div>
             </div>
           </div>
@@ -199,17 +208,14 @@
             <button
               v-if="reviewData.attempt.score === 100 && !reviewData.hasBadge"
               @click="claimBadge"
-              class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center space-x-2"
+              :disabled="isMintingBadge"
+              class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>🏆</span>
-              <span>Claim Badge</span>
+              <span v-if="isMintingBadge" class="animate-spin">⏳</span>
+              <span v-else>🏆</span>
+              <span>{{ isMintingBadge ? 'Minting Badge...' : 'Claim Badge' }}</span>
             </button>
-            <button v-else-if="reviewData.attempt.score !== 100"
-              @click="retakeQuiz"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Retake Quiz
-            </button>
+           
            
           </div>
         </div>
@@ -366,7 +372,10 @@ export default {
             if (!quizAttempts.value[attempt.classId]) {
               quizAttempts.value[attempt.classId] = {};
             }
-            quizAttempts.value[attempt.classId][attempt.quizId] = attempt;
+            if (!quizAttempts.value[attempt.classId][attempt.quizId]) {
+              quizAttempts.value[attempt.classId][attempt.quizId] = [];
+            }
+            quizAttempts.value[attempt.classId][attempt.quizId].push(attempt);
           });
         }
           
@@ -653,9 +662,7 @@ export default {
         }
 
         // Check if badge already exists
-        const badgeRef = doc(db, 'badges', `${user.value.uid}_${quizId}`);
-        const badgeDoc = await getDoc(badgeRef);
-        const hasBadge = badgeDoc.exists();
+        const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, quizId);
         
         // Set the review data
         reviewData.value = {
@@ -693,12 +700,13 @@ export default {
     };
 
     const getExplanation = async (questionIndex) => {
-      if (!currentQuiz.value) return;
+      if (!reviewData.value?.quiz) return;
       try {
-        const question = currentQuiz.value.questions[questionIndex];
+        const question = reviewData.value.quiz.questions[questionIndex];
+        const userAnswer = reviewData.value.quiz.questions[questionIndex].userAnswer;
         const prompt = `Explain in simple, concise language why "${question.options[question.correctIndex].text}" is the correct answer 
         to the question: "${question.text}". Only address how the correct answer is different from the student's chosen answer:
-         "${question.options[answers.value[questionIndex]].text}". Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
+         "${question.options[userAnswer].text}". Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
         
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite"});
         const result = await model.generateContent(prompt);
@@ -744,6 +752,18 @@ export default {
 
     const handleQuizCompleted = async (results) => {
       closeQuizModal();
+      // Refresh quiz attempts
+      const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
+      quizAttempts.value = {};
+      attempts.forEach(attempt => {
+        if (!quizAttempts.value[attempt.classId]) {
+          quizAttempts.value[attempt.classId] = {};
+        }
+        if (!quizAttempts.value[attempt.classId][attempt.quizId]) {
+          quizAttempts.value[attempt.classId][attempt.quizId] = [];
+        }
+        quizAttempts.value[attempt.classId][attempt.quizId].push(attempt);
+      });
       await loadClasses(); // Refresh the classes list to show updated quiz status
     };
 
@@ -818,6 +838,23 @@ export default {
       try {
         if (!reviewData.value) return;
         
+        // Check if MetaMask is installed
+        if (typeof window.ethereum === 'undefined') {
+          showNotification('Info', 'Please install MetaMask to claim badges. You can still complete quizzes without badges.', 'info');
+          return;
+        }
+
+        // Check if badge already exists in Firebase
+        const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, reviewData.value.quiz.id);
+        if (hasBadge) {
+          showNotification('Info', 'You already have this badge!', 'info');
+          return;
+        }
+
+        // Show initial loading state
+        showNotification('Info', 'Preparing to mint your badge...', 'info');
+        
+        // Claim the badge using FirebaseService.claimBadge
         const result = await FirebaseService.claimBadge(
           user.value.uid,
           reviewData.value.quiz.id,
@@ -826,17 +863,42 @@ export default {
         );
         
         if (result.success) {
-          showNotification('Success', result.message, 'success');
+          // Show success message with transaction details
+          showNotification('Success', `Badge minted successfully! Transaction: ${result.transactionHash}`, 'success');
+          
+          // Create a more detailed activity record
+          await FirebaseService.createActivity({
+            userId: user.value.uid,
+            type: 'badge_minted',
+            classId: reviewData.value.class.id,
+            className: reviewData.value.class.name,
+            quizId: reviewData.value.quiz.id,
+            quizTitle: reviewData.value.quiz.title,
+            timestamp: new Date(),
+            activityDescription: `🎉 Minted NFT badge for perfect score on "${reviewData.value.quiz.title}"!`,
+            transactionHash: result.transactionHash,
+            blockchainNetwork: 'Ethereum'
+          });
+
           // Refresh the classes to update the badge display
           await loadClasses();
         } else {
-          showNotification('Info', result.message, 'info');
+          showNotification('Error', result.message || 'Failed to mint badge', 'error');
         }
       } catch (error) {
         console.error('Error claiming badge:', error);
-        showNotification('Error', 'Failed to claim badge', 'error');
+        if (error.message.includes('MetaMask')) {
+          showNotification('Info', 'Please install MetaMask to claim badges. You can still complete quizzes without badges.', 'info');
+        } else if (error.message.includes('User denied')) {
+          showNotification('Info', 'Badge minting was cancelled. You can try again later.', 'info');
+        } else {
+          showNotification('Error', 'Failed to mint badge. Please try again.', 'error');
+        }
       }
     };
+
+    // Add loading state for badge minting
+    const isMintingBadge = ref(false);
 
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
@@ -901,7 +963,8 @@ export default {
       handleQuizCompleted,
       showQuizReview,
       reviewData,
-      claimBadge
+      claimBadge,
+      isMintingBadge
     };
   }
 };
