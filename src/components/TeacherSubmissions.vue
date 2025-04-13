@@ -205,7 +205,8 @@ export default {
 
     const loadClasses = async () => {
       try {
-        classes.value = await FirebaseService.getTeacherClasses(user.value.uid);
+        const { classes: loadedClasses } = await FirebaseService.getTeacherClasses(user.value.uid);
+        classes.value = loadedClasses;
       } catch (error) {
         console.error('Error loading classes:', error);
       }

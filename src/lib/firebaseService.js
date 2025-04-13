@@ -712,10 +712,6 @@ class FirebaseService {
         const attempt = snapDoc.data();
         attempt.id = snapDoc.id;
 
-        // Debug log the timestamp
-        console.log('Raw timestamp:', attempt.timestamp);
-
-        // Ensure timestamp is properly formatted
         if (attempt.timestamp) {
           attempt.timestamp = attempt.timestamp.toDate ? attempt.timestamp.toDate() : new Date(attempt.timestamp);
         }

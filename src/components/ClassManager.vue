@@ -49,15 +49,14 @@
           <div class="flex justify-between items-start">
             <div>
               <div class="flex items-center gap-2">
-                <IconService v-if="!classItem.isPublic" name="lock" color="gray" size="4" tooltip="This class is private, open only to enrolled students" />
+                <IconService v-if="!classItem.isPublic" name="lock" color="text-red-600" size="4" tooltip="This class is private, open only to enrolled students" />
+                <IconService v-if="classItem.isPublic" name="open-lock" color="text-green-600" size="4" tooltip="This class is public, open to all students" />
                 <h3 class="text-lg font-semibold mt-2">{{ classItem.name }}</h3>
               </div>
               <p class="text-sm text-gray-500">
                 Created: {{ formatDate(classItem.createdAt) }}
               </p>
-              <p class="text-sm text-gray-500">
-                Students: {{ classItem.students?.length || 0 }}
-              </p>
+              
             </div>
             <div class="flex space-x-2">
               <button

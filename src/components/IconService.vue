@@ -14,6 +14,7 @@ export default {
       validator: (value) => [
         'star',
         'lock',
+        'open-lock',
         'edit',
         'delete',
         'close',
@@ -92,6 +93,21 @@ export default {
               h('path', {
                 'fill-rule': 'evenodd',
                 d: 'M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z',
+                'clip-rule': 'evenodd'
+              })
+            ])
+          }
+        },
+        'open-lock': {
+          render() {
+            return h('svg', {
+              xmlns: 'http://www.w3.org/2000/svg',
+              viewBox: '0 0 20 20',
+              fill: 'currentColor'
+            }, [
+              h('path', {
+                'fill-rule': 'evenodd',
+                d: 'M14.5 1A4.5 4.5 0 0010 5.5V9H3a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-1.5V5.5a3 3 0 116 0v2.75a.75.75 0 001.5 0V5.5A4.5 4.5 0 0014.5 1z',
                 'clip-rule': 'evenodd'
               })
             ])
