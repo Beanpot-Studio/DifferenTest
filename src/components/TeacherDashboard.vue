@@ -3,16 +3,37 @@
     <!-- Quick Stats Section -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold text-secondary-900">Total Classes</h3>
-        <p class="text-3xl font-bold text-primary-600">{{ stats.totalClasses }}</p>
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+            <IconService name="class" :size="6" class="text-primary-600" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-secondary-900">Total Classes</h3>
+            <p class="text-3xl font-bold text-primary-600">{{ stats.totalClasses }}</p>
+          </div>
+        </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold text-secondary-900">Active Quizzes</h3>
-        <p class="text-3xl font-bold text-primary-600">{{ stats.totalQuizzes }}</p>
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <IconService name="quiz" :size="6" class="text-green-600" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-secondary-900">Active Quizzes</h3>
+            <p class="text-3xl font-bold text-green-600">{{ stats.totalQuizzes }}</p>
+          </div>
+        </div>
       </div>
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold text-secondary-900">Quiz Submissions</h3>
-        <p class="text-3xl font-bold text-primary-600">{{ stats.totalSubmissions }}</p>
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+            <IconService name="edit" :size="6" class="text-yellow-600" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-secondary-900">Quiz Submissions</h3>
+            <p class="text-3xl font-bold text-yellow-600">{{ stats.totalSubmissions }}</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -87,6 +108,7 @@ import ClassManager from './ClassManager.vue';
 import TeacherSubmissions from './TeacherSubmissions.vue';
 import TeacherReports from './TeacherReports.vue';
 import FirebaseService from '../lib/firebaseService';
+import IconService from './IconService.vue';
 
 export default {
   name: 'TeacherDashboard',
@@ -95,7 +117,8 @@ export default {
     QuizManager,
     ClassManager,
     TeacherSubmissions,
-    TeacherReports
+    TeacherReports,
+    IconService
   },
   setup() {
     const { user } = useAuth();

@@ -26,19 +26,17 @@
       <div v-for="badge in badges" :key="badge.badgeId" class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
         <div class="flex items-start space-x-4">
           <div class="flex-shrink-0">
-            <div class="p-3 rounded-full" :class="`bg-${badge.metadata?.color || 'yellow'}-100`">
+            <div class="p-3 rounded-full bg-yellow-200">
               <span class="text-2xl">{{ badge.metadata?.icon || '🏆' }}</span>
             </div>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-start">
+            <div class="flex justify-between items-start pt-3">
               <h3 class="text-lg font-semibold text-gray-900">{{ badge.metadata?.title || 'Achievement' }}</h3>
               <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-gray-800">
                 {{ formatDate(badge.timestamp) }}
               </span>
             </div>
-            <p class="text-sm text-gray-500">{{ badge.metadata?.description || 'No description available' }}</p>
-            <p class="text-sm text-gray-500 mt-1">Quiz: {{ badge.quizTitle }}</p>
             
             <div v-if="badge.blockchainVerification" class="mt-2 flex items-center space-x-1">
               <IconService name="verified" size="4" color="text-gray-400" />

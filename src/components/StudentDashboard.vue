@@ -2,31 +2,35 @@
   <div class="space-y-6">
     <!-- Learning Progress Overview -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex items-center">
-          
-          <div class="ml-4">
-            <h3 class="text-lg font-semibold text-gray-900">Active Classes</h3>
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+            <IconService name="class" :size="6" class="text-primary-600" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-secondary-900">Active Classes</h3>
             <p class="text-3xl font-bold text-primary-600">{{ activeClassesCount }}</p>
           </div>
         </div>
       </div>
-
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex items-center">
-          
-          <div class="ml-4">
-            <h3 class="text-lg font-semibold text-gray-900">Completed Quizzes</h3>
-            <p class="text-3xl font-bold text-green-600">{{ completedQuizzesCount }}</p>
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <IconService name="quiz" :size="6" class="text-green-600" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-secondary-900">Completed Quizzes</h3>
+            <p class="text-3xl font-bold text-primary-600">{{ completedQuizzesCount }}</p>
           </div>
         </div>
       </div>
-
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex items-center">
-         
-          <div class="ml-4">
-            <h3 class="text-lg font-semibold text-gray-900">Average Score</h3>
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center space-x-4">
+          <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+            <IconService name="score" :size="6" class="text-yellow-600" />
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-secondary-900">Average Score</h3>
             <p class="text-3xl font-bold text-yellow-600">{{ averageScore }}%</p>
           </div>
         </div>
