@@ -1,0 +1,53 @@
+---
+import Layout from "../../layouts/MainLayout.astro";
+import CurriculumViewer from "../../components/CurriculumViewer.vue";
+import FirebaseService from "../../lib/firebaseService";
+
+export async function getStaticPaths() {
+  // Get all public classes
+  const publicClasses = await FirebaseService.getPublicClasses();
+
+  // Return paths for each class
+  return publicClasses.map((classData) => ({
+    params: { id: classData.id },
+    props: { classData },
+  }));
+}
+
+const { id } = Astro.params;
+const { classData } = Astro.props;
+
+if (!classData) {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout title={classData.name}>
+  <main class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h1 class="text-3xl font-bold text-gray-900 mb-4">{classData.name}</h1>
+      <p class="text-gray-600 mb-6">{classData.description}</p>
+
+      <div class="flex items-center text-sm text-gray-500 mb-8">
+        <span class="mr-4">Author: {classData.teacherName}</span>
+      </div>
+
+      <!-- Lesson Plan Content -->
+      {
+        classData.lessonPlan && (
+          <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">
+              Lesson Plan
+            </h2>
+            <CurriculumViewer
+              client:load
+              markdownContent={classData.lessonPlan}
+            />
+          </div>
+        )
+      }
+
+     
+    </div>
+  </main>
+</Layout>

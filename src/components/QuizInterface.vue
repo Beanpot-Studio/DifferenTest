@@ -9,8 +9,10 @@
     </div>
 
     <div v-else-if="!user" class="text-center py-8">
-      <IconService name="lock" size="8" />
-      <h3 class="text-lg font-semibold text-gray-900">Please Log In</h3>
+      <div class="flex items-center justify-center space-x-2 mb-2">
+        <IconService name="lock" size="6" />
+        <h3 class="text-lg font-semibold text-gray-900">Please Log In</h3>
+      </div>
       <p class="text-gray-500">You need to be logged in to take this quiz.</p>
     </div>
     

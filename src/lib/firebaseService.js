@@ -814,6 +814,10 @@ class FirebaseService {
     }
   }
 
+  /**
+   * Get all public classes
+   * @returns {Promise<ClassData[]>} Array of public classes
+   */
   static async getPublicClasses() {
     try {
       const classesQuery = query(
@@ -838,19 +842,29 @@ class FirebaseService {
               if (quizDoc.exists()) {
                 const quizData = quizDoc.data();
                 return {
-                  ...quiz,
-                  questionCount: quizData.questions?.length || 0
+                  id: quiz.id,
+                  title: quizData.title,
+                  description: quizData.description,
+                  questionCount: quizData.questions?.length || 0,
+                  lessonPlan: quizData.lessonPlan || ''
                 };
               }
-              return quiz;
+              return {
+                id: quiz.id,
+                questionCount: 0,
+                lessonPlan: ''
+              };
             })
           );
           
           return {
             id: classDoc.id,
-            ...classData,
+            name: classData.name,
+            description: classData.description || '',
             quizzes: quizzesWithDetails,
-            teacherName: teacherData?.name || 'Unknown Teacher'
+            teacherName: teacherData?.name || 'Unknown Teacher',
+            code: classData.code,
+            lessonPlan: quizzesWithDetails[0]?.lessonPlan || '' // Get lesson plan from first quiz
           };
         })
       );
@@ -1365,6 +1379,83 @@ class FirebaseService {
         .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
     } catch (error) {
       console.error('Error getting class quizzes:', error);
+      throw error;
+    }
+  }
+
+  async getLessonPlan(lessonPlanId) {
+    try {
+      const lessonPlanRef = doc(db, 'lessonPlans', lessonPlanId);
+      const lessonPlanSnap = await getDoc(lessonPlanRef);
+      
+      if (!lessonPlanSnap.exists()) {
+        return null;
+      }
+
+      const lessonPlan = lessonPlanSnap.data();
+      lessonPlan.id = lessonPlanSnap.id;
+
+      // Fetch associated quizzes
+      if (lessonPlan.quizIds && lessonPlan.quizIds.length > 0) {
+        const quizzes = await Promise.all(
+          lessonPlan.quizIds.map(async (quizId) => {
+            const quizRef = doc(db, 'quizzes', quizId);
+            const quizSnap = await getDoc(quizRef);
+            if (quizSnap.exists()) {
+              const quiz = quizSnap.data();
+              quiz.id = quizSnap.id;
+              return quiz;
+            }
+            return null;
+          })
+        );
+        lessonPlan.quizzes = quizzes.filter(quiz => quiz !== null);
+      }
+
+      return lessonPlan;
+    } catch (error) {
+      console.error('Error fetching lesson plan:', error);
+      throw error;
+    }
+  }
+
+  static async getAllLessonPlans() {
+    try {
+      const lessonPlansQuery = query(
+        collection(db, 'lessonPlans'),
+        orderBy('createdAt', 'desc')
+      );
+      const lessonPlansSnapshot = await getDocs(lessonPlansQuery);
+      
+      const lessonPlans = await Promise.all(
+        lessonPlansSnapshot.docs.map(async (doc) => {
+          const lessonPlan = doc.data();
+          lessonPlan.id = doc.id;
+
+          // Fetch associated quizzes
+          if (lessonPlan.quizIds && lessonPlan.quizIds.length > 0) {
+            const quizzes = await Promise.all(
+              lessonPlan.quizIds.map(async (quizId) => {
+                const quizRef = doc(db, 'quizzes', quizId);
+                const quizSnap = await getDoc(quizRef);
+                if (quizSnap.exists()) {
+                  const quiz = quizSnap.data();
+                  quiz.id = quizSnap.id;
+                  return quiz;
+                }
+                return null;
+              })
+            );
+            lessonPlan.quizzes = quizzes.filter(quiz => quiz !== null);
+          }
+
+          return lessonPlan;
+        })
+      );
+      
+      return lessonPlans;
+    } catch (error) {
+      console.error('Error getting lesson plans:', error);
       throw error;
     }
   }
