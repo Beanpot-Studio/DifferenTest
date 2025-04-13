@@ -1290,6 +1290,39 @@ class FirebaseService {
       };
     }
   }
+
+  static async getClassQuizzes(classId) {
+    try {
+      // Get the class document to access its quizzes array
+      const classDoc = await getDoc(doc(db, 'classes', classId));
+      if (!classDoc.exists()) {
+        return [];
+      }
+
+      const classData = classDoc.data();
+      const quizzes = classData.quizzes || [];
+
+      if (quizzes.length === 0) {
+        return [];
+      }
+
+      // Get all quizzes in parallel
+      const quizPromises = quizzes.map(quiz => getDoc(doc(db, 'quizzes', quiz.id)));
+      const quizSnapshots = await Promise.all(quizPromises);
+
+      // Map the quiz data
+      return quizSnapshots
+        .filter(snap => snap.exists())
+        .map(snap => ({
+          id: snap.id,
+          ...snap.data()
+        }))
+        .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
+    } catch (error) {
+      console.error('Error getting class quizzes:', error);
+      throw error;
+    }
+  }
 }
 
 export default FirebaseService; 

@@ -70,6 +70,9 @@
       <div v-else-if="activeTab === 'submissions'">
         <TeacherSubmissions />
       </div>
+      <div v-else-if="activeTab === 'reports'">
+        <TeacherReports />
+      </div>
     </div>
   </div>
 </template>
@@ -82,6 +85,7 @@ import QuizGenerator from './QuizGenerator.vue';
 import QuizManager from './QuizManager.vue';
 import ClassManager from './ClassManager.vue';
 import TeacherSubmissions from './TeacherSubmissions.vue';
+import TeacherReports from './TeacherReports.vue';
 import FirebaseService from '../lib/firebaseService';
 
 export default {
@@ -90,7 +94,8 @@ export default {
     QuizGenerator,
     QuizManager,
     ClassManager,
-    TeacherSubmissions
+    TeacherSubmissions,
+    TeacherReports
   },
   setup() {
     const { user } = useAuth();
@@ -107,7 +112,8 @@ export default {
     const tabs = [
       { id: 'classes', name: 'Classes' },
       { id: 'quizzes', name: 'Quizzes' },
-      { id: 'submissions', name: 'Submissions' }
+      { id: 'submissions', name: 'Submissions' },
+      { id: 'reports', name: 'Reports' }
     ];
 
     const loadStats = async () => {
