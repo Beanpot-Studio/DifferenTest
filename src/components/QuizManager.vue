@@ -142,19 +142,51 @@
       <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-xl font-bold">Lesson Plan: {{ currentLessonPlan?.title }}</h3>
-          <button @click="closeLessonPlanModal" class="text-gray-500 hover:text-gray-700">
-            <IconService name="x" size="6" />
-          </button>
+          <div class="flex items-center space-x-2">
+            <button
+              v-if="!isEditing"
+              @click="isEditing = true"
+              class="text-primary-600 hover:text-primary-700"
+              title="Edit lesson plan"
+            >
+              <IconService name="edit" size="6" />
+            </button>
+            <button @click="closeLessonPlanModal" class="text-gray-500 hover:text-gray-700">
+              <IconService name="x" size="6" />
+            </button>
+          </div>
         </div>
 
         <div class="mb-6">
-          <div class="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-4 rounded-lg">
+          <div v-if="!isEditing" class="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-4 rounded-lg">
             {{ currentLessonPlan?.content }}
+          </div>
+          <div v-else>
+            <textarea
+              v-model="editedLessonPlan"
+              class="w-full h-[60vh] p-4 border rounded-lg font-mono text-sm"
+              placeholder="Edit your lesson plan content here..."
+            ></textarea>
           </div>
         </div>
 
         <div class="flex justify-end space-x-4 mt-6">
           <button
+            v-if="isEditing"
+            @click="isEditing = false"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            v-if="isEditing"
+            @click="saveLessonPlan"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Save Changes
+          </button>
+          <button
+            v-if="!isEditing"
             @click="closeLessonPlanModal"
             class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
@@ -199,6 +231,8 @@ export default {
     const error = ref(null);
     const success = ref(null);
     const loading = ref(false);
+    const isEditing = ref(false);
+    const editedLessonPlan = ref('');
 
     const fetchQuizzes = async () => {
       if (!user.value) return;
@@ -257,8 +291,11 @@ export default {
       }
       currentLessonPlan.value = {
         title: quiz.title,
-        content: quiz.lessonPlan
+        content: quiz.lessonPlan,
+        id: quiz.id
       };
+      editedLessonPlan.value = quiz.lessonPlan;
+      isEditing.value = false;
       showLessonPlanModal.value = true;
     };
 
@@ -275,6 +312,23 @@ export default {
     const removeOption = (questionIndex, optionIndex) => {
       currentQuiz.value.questions[questionIndex].options.splice(optionIndex, 1);
       saveQuiz();
+    };
+
+    const saveLessonPlan = async () => {
+      if (!currentLessonPlan.value) return;
+
+      try {
+        await FirebaseService.updateQuiz(currentLessonPlan.value.id, {
+          lessonPlan: editedLessonPlan.value,
+          updatedAt: new Date()
+        });
+        currentLessonPlan.value.content = editedLessonPlan.value;
+        isEditing.value = false;
+        showNotification('Success', 'Lesson plan updated successfully', 'success');
+      } catch (error) {
+        console.error('Error saving lesson plan:', error);
+        showNotification('Error', 'Error saving lesson plan', 'error');
+      }
     };
 
     onMounted(() => {
@@ -299,7 +353,10 @@ export default {
       viewLessonPlan,
       closeLessonPlanModal,
       addOption,
-      removeOption
+      removeOption,
+      isEditing,
+      editedLessonPlan,
+      saveLessonPlan
     };
   }
 };

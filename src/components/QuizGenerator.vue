@@ -147,6 +147,39 @@
         </button>
       </div>
     </div>
+
+    <!-- Lesson Plan Editor Modal -->
+    <div v-if="showLessonPlanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Edit Lesson Plan</h3>
+          <button @click="showLessonPlanModal = false" class="text-gray-500 hover:text-gray-700">
+            <IconService name="close" size="6" />
+          </button>
+        </div>
+        <div class="mb-4">
+          <textarea
+            v-model="editedLessonPlan"
+            class="w-full h-[60vh] p-4 border rounded-lg font-mono text-sm"
+            placeholder="Edit your lesson plan content here..."
+          ></textarea>
+        </div>
+        <div class="flex justify-end space-x-4">
+          <button
+            @click="showLessonPlanModal = false"
+            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+          <button
+            @click="saveLessonPlan"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Save & Generate Quiz
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -181,6 +214,8 @@ export default {
     const selectedClass = ref('');
     const questions = ref([]);
     const isLoading = ref(false);
+    const showLessonPlanModal = ref(false);
+    const editedLessonPlan = ref('');
 
     // Get API key from environment variable
     const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
@@ -247,7 +282,8 @@ export default {
         }
         
         fileContent.value = text;
-        await generateQuiz(text);
+        editedLessonPlan.value = text;
+        showLessonPlanModal.value = true;
       } catch (error) {
         console.error('Error processing file:', error);
         showNotification('Error', 'Error processing file. Please try again.', 'error');
@@ -344,6 +380,12 @@ export default {
       }
     };
 
+    const saveLessonPlan = () => {
+      fileContent.value = editedLessonPlan.value;
+      showLessonPlanModal.value = false;
+      generateQuiz(fileContent.value);
+    };
+
     return {
       fileInput,
       fileName,
@@ -359,7 +401,10 @@ export default {
       addOption,
       removeOption,
       generateNewQuiz,
-      saveQuiz
+      saveQuiz,
+      showLessonPlanModal,
+      editedLessonPlan,
+      saveLessonPlan
     };
   }
 };
