@@ -343,6 +343,7 @@ export default {
         const quizData = {
           ...quiz.value,
           userId: user.value.uid,
+          teacherId: user.value.uid,
           classId: selectedClassId.value,
           isPublic: isPublic.value,
           createdAt: new Date(),

@@ -92,9 +92,7 @@
                     >
                       {{ quiz.title }}
                     </button>
-                    <p class="text-sm text-gray-500 mt-1">
-                      Total Submissions: {{ classItem.totalSubmissions || 0 }}
-                    </p>
+                    
                   </div>
                   <div class="flex space-x-2">
                     <button

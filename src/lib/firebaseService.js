@@ -278,12 +278,59 @@ class FirebaseService {
 
   static async createQuiz(quizData) {
     try {
+      // Validate required fields
+      if (!quizData.teacherId) {
+        throw new Error('Teacher ID is required to create a quiz');
+      }
+
+      if (!quizData.classId) {
+        throw new Error('Class ID is required to create a quiz');
+      }
+
+      if (!quizData.title) {
+        throw new Error('Quiz title is required');
+      }
+
+      if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+        throw new Error('Quiz must have at least one question');
+      }
+
+      // Ensure all questions have required fields
+      quizData.questions.forEach((question, index) => {
+        if (!question.text) {
+          throw new Error(`Question ${index + 1} must have text`);
+        }
+        if (!question.options || !Array.isArray(question.options) || question.options.length === 0) {
+          throw new Error(`Question ${index + 1} must have at least one option`);
+        }
+        if (typeof question.correctIndex !== 'number') {
+          throw new Error(`Question ${index + 1} must have a correct answer index`);
+        }
+      });
+
       const quizRef = await addDoc(collection(db, 'quizzes'), {
         ...quizData,
-        teacherId: quizData.teacherId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
+
+      // Add the quiz to the class's quizzes array
+      const classRef = doc(db, 'classes', quizData.classId);
+      const classDoc = await getDoc(classRef);
+      
+      if (classDoc.exists()) {
+        const classData = classDoc.data();
+        const quizzes = classData.quizzes || [];
+        quizzes.push({
+          id: quizRef.id,
+          title: quizData.title
+        });
+        
+        await updateDoc(classRef, {
+          quizzes,
+          updatedAt: serverTimestamp()
+        });
+      }
 
       return quizRef.id;
     } catch (error) {

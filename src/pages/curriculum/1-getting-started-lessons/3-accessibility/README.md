@@ -3,9 +3,6 @@
 ![All About Accessibility](../../../sketchnotes/webdev101-a11y.png)
 > Sketchnote by [Tomomi Imura](https://twitter.com/girlie_mac)
 
-## Pre-Lecture Quiz
-[Pre-lecture quiz](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/5)
-
 > The power of the Web is in its universality. Access by everyone regardless of disability is an essential aspect.
 >
 > \- Sir Timothy Berners-Lee, W3C Director and inventor of the World Wide Web
@@ -215,6 +212,3 @@ Take this HTML and rewrite it to be as accessible as possible, given the strateg
   </body>
 </html>
 ```
-
-## Post-Lecture Quiz
-[Post-lecture quiz](https://happy-mud-02d95f10f.azurestaticapps.net/quiz/6)
