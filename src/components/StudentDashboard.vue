@@ -19,7 +19,7 @@
             <IconService name="quiz" :size="6" class="text-green-600" />
           </div>
           <div>
-            <h3 class="text-lg font-semibold text-secondary-900">Completed Quizzes</h3>
+            <h3 class="text-lg font-semibold text-secondary-900">Attempted Quizzes</h3>
             <p class="text-3xl font-bold text-primary-600">{{ completedQuizzesCount }}</p>
           </div>
         </div>

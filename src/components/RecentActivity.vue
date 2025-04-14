@@ -101,7 +101,7 @@
                 <h3 class="text-lg font-semibold">{{ activity.typeText }}: {{ activity.quizTitle }}</h3>
                 <p class="text-sm text-gray-500">Class: {{ activity.className }}</p>
                 <p class="text-sm text-gray-500">Teacher: {{ activity.teacherName || 'Unknown Teacher' }}</p>
-                <p v-if="activity.score" class="text-sm text-gray-500">Score: {{ activity.score }}%</p>
+                <p v-if="typeof activity.score === 'number'" class="text-sm text-gray-500">Score: {{ activity.score }}%</p>
                 <p v-if="activity.improvement" class="text-sm text-green-600">Improved by {{ activity.improvement }}%</p>
               </div>
             </div>
