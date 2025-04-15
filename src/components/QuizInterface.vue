@@ -15,6 +15,14 @@
       </div>
       <p class="text-gray-500">You need to be logged in to take this quiz.</p>
     </div>
+
+    <div v-else-if="role !== 'student'" class="text-center py-8">
+      <div class="flex items-center justify-center space-x-2 mb-2">
+        <IconService name="lock" size="6" />
+        <h3 class="text-lg font-semibold text-gray-900">Access Restricted</h3>
+      </div>
+      <p class="text-gray-500">This quiz is only available to students.</p>
+    </div>
     
     <div v-else-if="quiz">
       <div class="flex justify-between items-center mb-4">
@@ -161,7 +169,7 @@ export default {
     }
   },
   setup(props) {
-    const { user } = useAuth();
+    const { user, role } = useAuth();
     const { showNotification } = useNotification();
     const quiz = ref(null);
     const loading = ref(true);
@@ -361,7 +369,8 @@ export default {
       toggleQuestion,
       getExplanation,
       showConfetti,
-      user
+      user,
+      role
     };
   }
 };

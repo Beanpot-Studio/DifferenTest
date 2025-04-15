@@ -3,6 +3,7 @@ import Layout from "../../../../layouts/MainLayout.astro";
 import CurriculumViewer from "../../../../components/CurriculumViewer.vue";
 import QuizInterface from "../../../../components/QuizInterface.vue";
 import FirebaseService from "../../../../lib/firebaseService";
+import { useAuth } from "../../../../stores/auth";
 
 export async function getStaticPaths() {
   // Get all public classes to generate paths
@@ -33,6 +34,10 @@ const { classData, quiz } = Astro.props;
 if (!classData || !quiz) {
   return Astro.redirect("/404");
 }
+
+// Initialize auth state
+const { initialize } = useAuth();
+await initialize();
 ---
 
 <Layout title={`${quiz.title} - ${classData.name}`}>
@@ -43,17 +48,10 @@ if (!classData || !quiz) {
           ← Back to curricula
         </a>
       </div>
-
-      <h1 class="text-3xl font-bold text-gray-900 mb-4">{quiz.title}</h1>
-      <p class="text-gray-600 mb-6">{quiz.description}</p>
-
       <!-- Lesson Plan Content -->
       {
         quiz.lessonPlan && (
           <div class="mt-8">
-            <h2 class="text-2xl font-semibold text-gray-900 mb-6">
-              Lesson Plan
-            </h2>
             <CurriculumViewer client:load markdownContent={quiz.lessonPlan} />
           </div>
         )
