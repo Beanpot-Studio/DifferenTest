@@ -32,7 +32,7 @@
           <BaseAnimation type="lock" :size="200" />
         </div>
         <p class="mt-1 text-secondary-500">
-          Your current role ({{ userRole }}) does not have permission to view this content
+          Your current role does not have permission to view this content
         </p>
       </div>
     </div>

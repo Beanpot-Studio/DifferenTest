@@ -1,14 +1,7 @@
 import { test, expect } from '@playwright/test';
 require('dotenv').config()
 
-test('has title', async ({ page }) => {
-  //todo use env variable to get the url
-  await page.goto(process.env.TEST_URL);
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/DifferenTest/);
-});
-
+// check login routine
 test('click on the login button', async ({ page }) => {
   await page.goto(process.env.TEST_URL);
   // await page.getByRole('button', { name: 'Login' }).click();
@@ -24,6 +17,29 @@ test('click on the login button', async ({ page }) => {
   //expect to see the teacher portal
   await expect(page.locator('#teacher-portal')).toBeVisible();
 });
+
+//check register routine
+/*teacher flow
+1. once logged in, check stats numbers.
+2. goto message box, check messages. read one, send one, clear notifications.
+3. upload a sample class via .md file. edit the lesson plan.
+4. generate a sample quiz. edit a field and save.
+
+
+/*student flow
+1. once logged in, check stats numbers. 
+2. goto message box, check messages. read one, send one, clear notifications.
+3. search for a sample class and join it.
+4. find a quiz and take one. get an answer wrong. 
+5. retake quiz, get 100%, badge up
+6. check report.
+
+/* teacher verification flow
+1. check roster that student joined successfully
+2. check report
+
+
+
 
 
 

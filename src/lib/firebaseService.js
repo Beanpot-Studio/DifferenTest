@@ -1092,23 +1092,16 @@ class FirebaseService {
    */
   static async getUserBadges(userId) {
     try {
-      if (!userId) {
-        throw new Error('User ID is required to fetch badges');
-      }
-
-      const badgesQuery = query(
-        collection(db, 'badges'),
-        where('userId', '==', userId),
-        orderBy('timestamp', 'desc')
-      );
-
-      const querySnapshot = await getDocs(badgesQuery);
+      const badgesRef = collection(db, 'badges');
+      const q = query(badgesRef, where('metadata.userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
       return querySnapshot.docs.map(doc => ({
-        badgeId: doc.id,
+        id: doc.id,
         ...doc.data()
       }));
     } catch (error) {
-      console.error('Error getting user badges:', error);
+      console.error('Error fetching user badges:', error);
       throw error;
     }
   }
@@ -1503,6 +1496,94 @@ class FirebaseService {
       return lessonPlans;
     } catch (error) {
       console.error('Error getting lesson plans:', error);
+      throw error;
+    }
+  }
+
+  static async createBadge(badgeData) {
+    try {
+      // Validate required fields
+      if (!badgeData.userId) {
+        throw new Error('User ID is required to create a badge');
+      }
+
+      if (!badgeData.quizId) {
+        throw new Error('Quiz ID is required to create a badge');
+      }
+
+      if (!badgeData.classId) {
+        throw new Error('Class ID is required to create a badge');
+      }
+
+      // Create Open Badge compliant data
+      const badge = {
+        "@context": "https://w3id.org/openbadges/v2",
+        "type": "BadgeClass",
+        "id": `https://badges.beanpotstudio.com/badges/${Date.now()}`,
+        "name": badgeData.name || "Quiz Master Badge",
+        "description": badgeData.description || "Awarded for completing a quiz with perfect score",
+        "image": badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png",
+        "criteria": {
+          "narrative": "Completed a quiz with a perfect score"
+        },
+        "issuer": {
+          "type": "Profile",
+          "id": `https://badges.beanpotstudio.com/issuers/${badgeData.teacherId}`,
+          "name": badgeData.teacherName || "Quiz Master",
+          "url": "https://badges.beanpotstudio.com",
+          "email": badgeData.teacherEmail || "badgeguru@beanpotstudio.com"
+        },
+        "recipient": {
+          "type": "email",
+          "hashed": false,
+          "identity": badgeData.userEmail
+        },
+        "issuedOn": new Date().toISOString(),
+        "evidence": {
+          "id": `https://badges.beanpotstudio.com/quizzes/${badgeData.quizId}`,
+          "narrative": `Completed quiz "${badgeData.quizTitle}" with a perfect score`
+        },
+        // Store additional metadata in Firebase
+        metadata: {
+          userId: badgeData.userId,
+          quizId: badgeData.quizId,
+          classId: badgeData.classId,
+          teacherId: badgeData.teacherId,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }
+      };
+
+      const badgeRef = await addDoc(collection(db, 'badges'), badge);
+      return badgeRef.id;
+    } catch (error) {
+      console.error('Error creating badge:', error);
+      throw error;
+    }
+  }
+
+  static async verifyBadge(badgeId) {
+    try {
+      const badgeRef = doc(db, 'badges', badgeId);
+      const badgeDoc = await getDoc(badgeRef);
+      
+      if (!badgeDoc.exists()) {
+        throw new Error('Badge not found');
+      }
+
+      const badge = badgeDoc.data();
+      
+      // Verify the badge data against Open Badges specification
+      if (!badge['@context'] || !badge.type || !badge.id || !badge.issuer) {
+        throw new Error('Invalid badge format');
+      }
+
+      return {
+        valid: true,
+        badge: badge
+      };
+    } catch (error) {
+      console.error('Error verifying badge:', error);
       throw error;
     }
   }

@@ -31,7 +31,7 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="quiz in curriculum.quizzes" :key="quiz.id">
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                  <a :href="curriculum.link" class="text-blue-600 hover:text-blue-800">
+                  <a :href="`${basePath}/${curriculum.id}/quiz/${quiz.id}`" class="text-blue-600 hover:text-blue-800">
                     {{ quiz.title }}
                   </a>
                 </td>
@@ -42,7 +42,7 @@
                   </div>
                   <div v-else-if="!isStudent" class="flex items-center">
                     <IconService name="lock" size="6" class="mr-2" />
-                    <span class="text-gray-900">Available to students only - please login as a student</span>
+                    <span class="text-gray-900">Please login as a student to take quiz</span>
                   </div>
                   <div v-else class="flex items-center space-x-2">
                     <template v-if="!quizAttempts[quiz.id]">
@@ -132,6 +132,10 @@ const props = defineProps({
   curriculum: {
     type: Object,
     required: true
+  },
+  basePath: {
+    type: String,
+    default: '/curriculum'
   }
 });
 
@@ -210,13 +214,43 @@ watch(() => user.value, async (newUser) => {
 }, { immediate: true });
 
 const claimBadge = async (quiz) => {
+  if (!user.value) return;
+
   try {
-    await FirebaseService.claimBadge(quiz.id, 100);
+    const badgeData = {
+      userId: user.value.uid,
+      userEmail: user.value.email,
+      quizId: quiz.id,
+      quizTitle: quiz.title,
+      classId: props.curriculum.id,
+      teacherId: quiz.teacherId,
+      teacherName: quiz.teacherName,
+      teacherEmail: quiz.teacherEmail,
+      name: `${quiz.title} Master`,
+      description: `Awarded for completing ${quiz.title} with a perfect score`,
+      image: quiz.badgeImage || 'https://badges.beanpotstudio.com/badges/default-badge.png'
+    };
+
+    await FirebaseService.createBadge(badgeData);
     showNotification('Success', 'Badge claimed successfully!', 'success');
     await loadBadgeStatus();
   } catch (error) {
     console.error('Error claiming badge:', error);
-    showNotification('Error', 'Failed to claim badge', 'error');
+    showNotification('Error', 'Failed to claim badge. Please try again.', 'error');
+  }
+};
+
+const verifyBadge = async (badgeId) => {
+  try {
+    const result = await FirebaseService.verifyBadge(badgeId);
+    if (result.valid) {
+      showNotification('Success', 'Badge verified successfully!', 'success');
+    } else {
+      showNotification('Error', 'Invalid badge', 'error');
+    }
+  } catch (error) {
+    console.error('Error verifying badge:', error);
+    showNotification('Error', 'Failed to verify badge', 'error');
   }
 };
 

@@ -13,22 +13,26 @@ const publicClasses = await FirebaseService.getPublicClasses();
     <div class="grid grid-cols-1 gap-6">
       {
         publicClasses.map((classData) => (
-          <CurriculumCard
-            client:load
-            curriculum={{
-              id: classData.id,
-              title: classData.name,
-              teacherName: classData.teacherName,
-              code: classData.code,
-              quizzes: classData.quizzes.map((quiz) => ({
-                id: quiz.id,
-                title: quiz.title || `Quiz ${quiz.id}`,
-                lessonPlan: quiz.lessonPlan || "",
-                link: `/quizzes/${quiz.id}`,
-              })),
-              link: `/classes/${classData.id}`,
-            }}
-          />
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <CurriculumCard
+              client:load
+              curriculum={{
+                id: classData.id,
+                title: classData.name,
+                teacherName: classData.teacherName,
+                code: classData.code,
+                quizzes: classData.quizzes.map((quiz) => ({
+                  id: quiz.id,
+                  title: quiz.title,
+                  description: quiz.description,
+                  lessonPlan: quiz.lessonPlan,
+                  teacherId: classData.teacherId,
+                  link: `/classes/${classData.id}/quiz/${quiz.id}`,
+                })),
+              }}
+              basePath="/classes"
+            />
+          </div>
         ))
       }
     </div>
