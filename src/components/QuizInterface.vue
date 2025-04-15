@@ -141,7 +141,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import BaseAnimation from './BaseAnimation.vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
@@ -182,6 +182,16 @@ export default {
     const explanations = ref({});
     const expandedQuestions = ref({});
     const showConfetti = ref(false);
+
+    // Add watch for role changes
+    watch(role, (newRole) => {
+      console.log('Role changed:', newRole);
+    }, { immediate: true });
+
+    // Add watch for user changes
+    watch(user, (newUser) => {
+      console.log('User changed:', newUser);
+    }, { immediate: true });
 
     const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 

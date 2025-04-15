@@ -1501,6 +1501,7 @@ class FirebaseService {
   }
 
   static async createBadge(badgeData) {
+    console.log('badgeData', badgeData);
     try {
       // Validate required fields
       if (!badgeData.userId) {
@@ -1548,7 +1549,7 @@ class FirebaseService {
           userId: badgeData.userId,
           quizId: badgeData.quizId,
           classId: badgeData.classId,
-          teacherId: badgeData.teacherId,
+          //teacherId: badgeData.teacherId,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }

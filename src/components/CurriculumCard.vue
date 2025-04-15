@@ -40,6 +40,7 @@
                     <IconService name="lock" size="6" class="mr-2" />
                     <span class="text-gray-900">Please log in</span>
                   </div>
+                  
                   <div v-else-if="!isStudent" class="flex items-center">
                     <IconService name="lock" size="6" class="mr-2" />
                     <span class="text-gray-900">Please login as a student to take quiz</span>
@@ -223,12 +224,21 @@ const claimBadge = async (quiz) => {
       quizId: quiz.id,
       quizTitle: quiz.title,
       classId: props.curriculum.id,
-      teacherId: quiz.teacherId,
-      teacherName: quiz.teacherName,
-      teacherEmail: quiz.teacherEmail,
+      //teacherId: props.curriculum.teacherId,
       name: `${quiz.title} Master`,
       description: `Awarded for completing ${quiz.title} with a perfect score`,
-      image: quiz.badgeImage || 'https://badges.beanpotstudio.com/badges/default-badge.png'
+      image: quiz.badgeImage || 'https://badges.beanpotstudio.com/badges/default-badge.png',
+      metadata: {
+        title: `Perfect Score: ${quiz.title}`,
+        description: `Achieved a perfect score on the ${quiz.title} quiz`,
+        type: 'quiz_perfect_score',
+        icon: '🏆',
+        color: 'gold',
+        timestamp: new Date().toISOString(),
+        quizId: quiz.id,
+        classId: props.curriculum.id,
+        //teacherId: props.curriculum.teacherId
+      }
     };
 
     await FirebaseService.createBadge(badgeData);

@@ -20,6 +20,7 @@ const publicClasses = await FirebaseService.getPublicClasses();
                 id: classData.id,
                 title: classData.name,
                 teacherName: classData.teacherName,
+                teacherId: classData.teacherId,
                 code: classData.code,
                 quizzes: classData.quizzes.map((quiz) => ({
                   id: quiz.id,
