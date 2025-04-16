@@ -18,7 +18,6 @@ import {
 import { db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
-import BlockchainService from './blockchainService';
 
 class FirebaseService {
   // User Operations
@@ -550,8 +549,10 @@ class FirebaseService {
   }
 
   static async createActivity(data) {
+    // Remove undefined fields from data
+    const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
     const activityRef = await addDoc(collection(db, 'activities'), {
-      ...data,
+      ...cleanData,
       timestamp: serverTimestamp()
     });
     return activityRef.id;
@@ -1093,7 +1094,7 @@ class FirebaseService {
   static async getUserBadges(userId) {
     try {
       const badgesRef = collection(db, 'badges');
-      const q = query(badgesRef, where('metadata.userId', '==', userId));
+      const q = query(badgesRef, where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => ({
@@ -1320,66 +1321,42 @@ class FirebaseService {
         timestamp: new Date().toISOString(),
         quizId,
         classId,
-        image: 'https://your-nft-image-url.com/perfect-score.png' // Add your NFT image URL
+        image: 'https://res.cloudinary.com/front-end-foxes/image/upload/v1744763823/web-dev-badges/sample_yg9hjj.png'
       };
 
-      // Mint NFT badge on blockchain
-      try {
-        const blockchainResult = await BlockchainService.mintBadge(
-          `${userId}_${quizId}`,
-          badgeMetadata
-        );
+      // Create badge in Firestore as Open Badge
+      await setDoc(badgeRef, {
+        userId,
+        quizId,
+        quizTitle: quizData.title,
+        classId,
+        timestamp: serverTimestamp(),
+        metadata: badgeMetadata
+      });
 
-        if (blockchainResult.success) {
-          // Create badge in Firestore with NFT details
-          await setDoc(badgeRef, {
-            userId,
-            quizId,
-            quizTitle: quizData.title,
-            classId,
-            timestamp: serverTimestamp(),
-            metadata: badgeMetadata,
-            nftDetails: {
-              tokenId: blockchainResult.tokenId,
-              network: 'Ethereum',
-              contractAddress: BADGE_CONTRACT_ADDRESS,
-              transactionHash: blockchainResult.transactionHash
-            }
-          });
-
-          // Create activity record
-          await addDoc(collection(db, 'activities'), {
-            userId,
-            type: 'badge_claimed',
-            badgeId: badgeRef.id,
-            quizId,
-            quizTitle: quizData.title,
-            classId,
-            timestamp: serverTimestamp(),
-            activityDescription: `🏆 Claimed "${badgeMetadata.title}" NFT badge for perfect score on ${quizData.title}!`
-          });
-
-          return {
-            success: true,
-            message: `Achievement Unlocked! You've earned the "${badgeMetadata.title}" NFT badge!`,
-            status: 'success',
-            badgeId: badgeRef.id,
-            nftDetails: {
-              tokenId: blockchainResult.tokenId,
-              transactionHash: blockchainResult.transactionHash
-            }
-          };
-        } else {
-          throw new Error(blockchainResult.message || 'Failed to mint NFT badge');
-        }
-      } catch (blockchainError) {
-        console.error('Error minting NFT badge:', blockchainError);
-        return {
-          success: false,
-          message: 'Failed to mint NFT badge',
-          status: 'error'
-        };
+      // Create activity record
+      const activityData = {
+        userId,
+        type: 'badge_claimed',
+        badgeId: badgeRef.id,
+        quizId,
+        quizTitle: quizData.title,
+        classId,
+        timestamp: serverTimestamp(),
+        activityDescription: `🏆 Claimed "${badgeMetadata.title}" badge for perfect score on ${quizData.title}!`
+      };
+      // Only add transactionHash if it is defined (legacy support)
+      if (typeof badgeMetadata.transactionHash !== 'undefined' && badgeMetadata.transactionHash !== null) {
+        activityData.transactionHash = badgeMetadata.transactionHash;
       }
+      await addDoc(collection(db, 'activities'), activityData);
+
+      return {
+        success: true,
+        message: `Achievement Unlocked! You've earned the "${badgeMetadata.title}" badge!`,
+        status: 'success',
+        badgeId: badgeRef.id
+      };
     } catch (error) {
       console.error('Error claiming badge:', error);
       return {
@@ -1516,47 +1493,64 @@ class FirebaseService {
         throw new Error('Class ID is required to create a badge');
       }
 
+      // Use consistent badge ID format
+      const badgeId = `${badgeData.userId}_${badgeData.quizId}`;
+      const badgeUrl = `${window.location.origin}/badges/${badgeId}`;
+
       // Create Open Badge compliant data
       const badge = {
         "@context": "https://w3id.org/openbadges/v2",
         "type": "BadgeClass",
-        "id": `https://badges.beanpotstudio.com/badges/${Date.now()}`,
+        "id": badgeUrl,
         "name": badgeData.name || "Quiz Master Badge",
         "description": badgeData.description || "Awarded for completing a quiz with perfect score",
         "image": badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png",
         "criteria": {
-          "narrative": "Completed a quiz with a perfect score"
+          "narrative": "Completed a quiz with a perfect score",
+          "type": "Criteria",
+          "id": `${badgeUrl}/criteria`
         },
         "issuer": {
           "type": "Profile",
-          "id": `https://badges.beanpotstudio.com/issuers/${badgeData.teacherId}`,
+          "id": `${window.location.origin}/issuers/${badgeData.teacherId}`,
           "name": badgeData.teacherName || "Quiz Master",
-          "url": "https://badges.beanpotstudio.com",
-          "email": badgeData.teacherEmail || "badgeguru@beanpotstudio.com"
+          "url": window.location.origin,
+          "email": badgeData.teacherEmail || "badgeguru@beanpotstudio.com",
+          "description": "Issuer of educational badges for quiz achievements"
         },
         "recipient": {
           "type": "email",
           "hashed": false,
-          "identity": badgeData.userEmail
+          "identity": badgeData.userEmail,
+          "salt": null
         },
         "issuedOn": new Date().toISOString(),
         "evidence": {
-          "id": `https://badges.beanpotstudio.com/quizzes/${badgeData.quizId}`,
-          "narrative": `Completed quiz "${badgeData.quizTitle}" with a perfect score`
+          "id": `${window.location.origin}/quizzes/${badgeData.quizId}`,
+          "narrative": `Completed quiz "${badgeData.quizTitle}" with a perfect score`,
+          "type": "Evidence",
+          "description": "Quiz completion evidence"
+        },
+        "verification": {
+          "type": "HostedBadge",
+          "verificationProperty": "id",
+          "startsWith": window.location.origin
         },
         // Store additional metadata in Firebase
         metadata: {
           userId: badgeData.userId,
           quizId: badgeData.quizId,
           classId: badgeData.classId,
-          //teacherId: badgeData.teacherId,
+          teacherId: badgeData.teacherId,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }
       };
 
-      const badgeRef = await addDoc(collection(db, 'badges'), badge);
-      return badgeRef.id;
+      // Use setDoc instead of addDoc to ensure consistent ID format
+      const badgeRef = doc(db, 'badges', badgeId);
+      await setDoc(badgeRef, badge);
+      return badgeId;
     } catch (error) {
       console.error('Error creating badge:', error);
       throw error;
@@ -1585,6 +1579,37 @@ class FirebaseService {
       };
     } catch (error) {
       console.error('Error verifying badge:', error);
+      throw error;
+    }
+  }
+
+  static async getBadge(badgeId) {
+    try {
+      const badgeRef = doc(db, 'badges', badgeId);
+      const badgeDoc = await getDoc(badgeRef);
+      
+      if (!badgeDoc.exists()) {
+        return null;
+      }
+
+      return badgeDoc.data();
+    } catch (error) {
+      console.error('Error getting badge:', error);
+      throw error;
+    }
+  }
+
+  static async getAllBadges() {
+    try {
+      const badgesRef = collection(db, 'badges');
+      const badgesSnapshot = await getDocs(badgesRef);
+      
+      return badgesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting all badges:', error);
       throw error;
     }
   }

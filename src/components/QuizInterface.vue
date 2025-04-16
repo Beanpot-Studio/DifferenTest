@@ -135,6 +135,32 @@
         >
           Try Again
         </button>
+        <button
+          v-if="badgeClaimed && role === 'student'"
+          @click="openBadgeModal"
+          class="mt-4 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+        >
+          View & Share Badge
+        </button>
+      </div>
+    </div>
+    <div v-if="showBadgeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-md w-full relative">
+        <button @click="closeBadgeModal" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+          <IconService name="close" size="6" />
+        </button>
+        <div v-if="badgeData" class="text-center">
+          <img :src="badgeData.image || badgeData.metadata?.image" alt="Badge" class="mx-auto mb-4 w-24 h-24 rounded-full border-4 border-yellow-400" />
+          <h3 class="text-xl font-bold mb-2">{{ badgeData.metadata?.title }}</h3>
+          <p class="mb-2 text-gray-700">{{ badgeData.metadata?.description }}</p>
+          <p class="mb-4 text-sm text-gray-500">Issued: {{ badgeData.timestamp?.toDate ? badgeData.timestamp.toDate().toLocaleDateString() : '' }}</p>
+          <div class="flex flex-col space-y-2">
+            <button @click="shareOnTwitter" class="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-500">Share on Twitter</button>
+            <button @click="shareOnLinkedIn" class="px-4 py-2 bg-blue-700 text-white rounded hover:bg-blue-800">Share on LinkedIn</button>
+            <button @click="shareOnFacebook" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Share on Facebook</button>
+            <button @click="copyLink" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Copy Link</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -182,6 +208,9 @@ export default {
     const explanations = ref({});
     const expandedQuestions = ref({});
     const showConfetti = ref(false);
+    const badgeClaimed = ref(false);
+    const badgeData = ref(null);
+    const showBadgeModal = ref(false);
 
     // Add watch for role changes
     watch(role, (newRole) => {
@@ -198,6 +227,11 @@ export default {
     const canSubmit = computed(() => {
       return selectedAnswers.value.length === quiz.value?.questions.length &&
         !selectedAnswers.value.includes(undefined);
+    });
+
+    const shareUrl = computed(() => {
+      if (!badgeData.value) return '';
+      return `${window.location.origin}/badges/${user.value?.uid}_${quiz.value?.id}`;
     });
 
     const loadQuiz = async () => {
@@ -298,8 +332,20 @@ export default {
           
           await FirebaseService.submitQuizAttempt(attemptData);
           
-          if (score.value === 100) {
-            await FirebaseService.claimBadge(quiz.value.id, score.value);
+          // Only allow students to claim badge, and only if 100% score
+          if (role.value === 'student' && score.value === 100) {
+            const result = await FirebaseService.claimBadge(user.value.uid, quiz.value.id, props.classId, score.value);
+            if (result.success) {
+              showNotification('Success', result.message, 'success');
+              badgeClaimed.value = true;
+              await openBadgeModal();
+            } else if (result.message && result.message.includes('already claimed')) {
+              showNotification('Info', 'You have already claimed this badge!', 'info');
+              badgeClaimed.value = true;
+              await openBadgeModal();
+            } else {
+              showNotification('Error', result.message || 'Failed to claim badge', 'error');
+            }
           } else {
             // Add quiz completion activity only for non-perfect scores
             await FirebaseService.createActivity({
@@ -360,6 +406,44 @@ export default {
       }
     };
 
+    const openBadgeModal = async () => {
+      if (!user.value || !quiz.value) return;
+      const badgeId = `${user.value.uid}_${quiz.value.id}`;
+      const badge = await FirebaseService.getBadgeById(badgeId);
+      badgeData.value = badge;
+      showBadgeModal.value = true;
+    };
+
+    const closeBadgeModal = () => {
+      showBadgeModal.value = false;
+    };
+
+    const shareOnTwitter = () => {
+      const text = encodeURIComponent(`I just earned the '${badgeData.value?.metadata?.title}' badge! 🎉 Check it out: ${shareUrl.value}`);
+      window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+    };
+
+    const shareOnLinkedIn = () => {
+      const url = encodeURIComponent(shareUrl.value);
+      const title = encodeURIComponent(badgeData.value?.metadata?.title || 'Achievement Badge');
+      const summary = encodeURIComponent(badgeData.value?.metadata?.description || 'I earned a badge!');
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`, '_blank');
+    };
+
+    const shareOnFacebook = () => {
+      const url = encodeURIComponent(shareUrl.value);
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    };
+
+    const copyLink = async () => {
+      try {
+        await navigator.clipboard.writeText(shareUrl.value);
+        showNotification('Success', 'Link copied to clipboard!', 'success');
+      } catch {
+        showNotification('Error', 'Failed to copy link', 'error');
+      }
+    };
+
     onMounted(loadQuiz);
 
     return {
@@ -380,7 +464,17 @@ export default {
       getExplanation,
       showConfetti,
       user,
-      role
+      role,
+      badgeClaimed,
+      badgeData,
+      showBadgeModal,
+      openBadgeModal,
+      closeBadgeModal,
+      shareOnTwitter,
+      shareOnLinkedIn,
+      shareOnFacebook,
+      copyLink,
+      shareUrl
     };
   }
 };

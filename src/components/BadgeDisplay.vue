@@ -23,12 +23,10 @@
 
     <!-- Badges grid -->
     <div v-else class="grid w-full">
-      <div v-for="badge in badges" :key="badge.badgeId" class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+      <div v-for="badge in badges" :key="badge.id" class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
         <div class="flex items-start space-x-4">
           <div class="flex-shrink-0">
-            <div class="p-3 rounded-full bg-yellow-200">
-              <span class="text-2xl">{{ badge.metadata?.icon || '🏆' }}</span>
-            </div>
+              <img :src="badge.image || badge.metadata?.image" alt="Badge" class="w-24 h-24" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start pt-3">
@@ -37,15 +35,21 @@
                 {{ formatDate(badge.timestamp) }}
               </span>
             </div>
-            
-            <div v-if="badge.blockchainVerification" class="mt-2 flex items-center space-x-1">
-              <IconService name="verified" size="4" color="text-green-600" />
-              <span class="text-xs text-green-600">Verified on {{ badge.blockchainVerification.network }}</span>
+            <p class="text-gray-700 mb-2">{{ badge.metadata?.description }}</p>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <button @click="shareOnTwitter(badge)" class="px-2 py-1 bg-blue-400 text-white rounded hover:bg-blue-500 text-xs">Share on Twitter</button>
+              <button @click="shareOnLinkedIn(badge)" class="px-2 py-1 bg-blue-700 text-white rounded hover:bg-blue-800 text-xs">Share on LinkedIn</button>
+              <button @click="shareOnFacebook(badge)" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Share on Facebook</button>
+              <button @click="copyLink(badge)" class="px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-xs">Copy Link</button>
             </div>
-            <div v-else class="mt-2 flex items-center space-x-1">
-              <IconService name="warning" size="4" color="text-yellow-600" />
-              <span class="text-xs text-yellow-600">Not verified on blockchain</span>
-            </div>
+            <a
+                :href="`/badges/${badge.id}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-2 block text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Verify Badge
+              </a>
           </div>
         </div>
       </div>
@@ -98,13 +102,48 @@ export default {
       });
     };
 
+    // Social sharing methods
+    const getShareUrl = (badge) => {
+      // Use badge.image if it's a valid public URL, otherwise fallback to /badges/{badge.id}
+      if (badge.image && /^https?:\/\//.test(badge.image)) {
+        return badge.image;
+      }
+      return `${window.location.origin}/badges/${badge.id}`;
+    };
+    const shareOnTwitter = (badge) => {
+      const text = encodeURIComponent(`I just earned the '${badge.metadata?.title}' badge! 🎉 Check it out: ${getShareUrl(badge)}`);
+      window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+    };
+    const shareOnLinkedIn = (badge) => {
+      const url = encodeURIComponent(getShareUrl(badge));
+      const title = encodeURIComponent(badge.metadata?.title || 'Achievement Badge');
+      const summary = encodeURIComponent(badge.metadata?.description || 'I earned a badge!');
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`, '_blank');
+    };
+    const shareOnFacebook = (badge) => {
+      const url = encodeURIComponent(getShareUrl(badge));
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    };
+    const copyLink = async (badge) => {
+      try {
+        await navigator.clipboard.writeText(getShareUrl(badge));
+        alert('Link copied to clipboard!');
+      } catch {
+        alert('Failed to copy link');
+      }
+    };
+
     onMounted(loadBadges);
 
     return {
       badges,
       loading,
       error,
-      formatDate
+      formatDate,
+      shareOnTwitter,
+      shareOnLinkedIn,
+      shareOnFacebook,
+      copyLink
     };
   }
 };

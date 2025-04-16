@@ -91,6 +91,15 @@
                         <span>Review Quiz</span>
                         <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
                       </button>
+                      <a
+                        v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
+                        :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                      >
+                        <span>Verify Badge</span>
+                      </a>
                       <button
                         v-if="getQuizAttempt(classItem.id, quiz.id) && getQuizAttempt(classItem.id, quiz.id).score < 100"
                         @click="startQuiz(classItem.id, quiz)"
@@ -213,7 +222,7 @@
             >
               <span v-if="isMintingBadge" class="animate-spin">⏳</span>
               <span v-else>🏆</span>
-              <span>{{ isMintingBadge ? 'Minting Badge...' : 'Claim Badge' }}</span>
+              <span>{{ isMintingBadge ? 'Claiming Badge...' : 'Claim Badge' }}</span>
             </button>
            
            
@@ -834,25 +843,23 @@ export default {
       }
     };
 
+    const isMintingBadge = ref(false);
+
     const claimBadge = async () => {
       try {
         if (!reviewData.value) return;
-        
-        // Check if MetaMask is installed
-        if (typeof window.ethereum === 'undefined') {
-          showNotification('Info', 'Please install MetaMask to claim badges. You can still complete quizzes without badges.', 'info');
-          return;
-        }
+        isMintingBadge.value = true;
 
         // Check if badge already exists in Firebase
         const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, reviewData.value.quiz.id);
         if (hasBadge) {
           showNotification('Info', 'You already have this badge!', 'info');
+          isMintingBadge.value = false;
           return;
         }
 
         // Show initial loading state
-        showNotification('Info', 'Preparing to mint your badge...', 'info');
+        showNotification('Info', 'Issuing your badge...', 'info');
         
         // Claim the badge using FirebaseService.claimBadge
         const result = await FirebaseService.claimBadge(
@@ -863,42 +870,20 @@ export default {
         );
         
         if (result.success) {
-          // Show success message with transaction details
-          showNotification('Success', `Badge minted successfully! Transaction: ${result.transactionHash}`, 'success');
-          
-          // Create a more detailed activity record
-          await FirebaseService.createActivity({
-            userId: user.value.uid,
-            type: 'badge_minted',
-            classId: reviewData.value.class.id,
-            className: reviewData.value.class.name,
-            quizId: reviewData.value.quiz.id,
-            quizTitle: reviewData.value.quiz.title,
-            timestamp: new Date(),
-            activityDescription: `🎉 Minted NFT badge for perfect score on "${reviewData.value.quiz.title}"!`,
-            transactionHash: result.transactionHash,
-            blockchainNetwork: 'Ethereum'
-          });
-
-          // Refresh the classes to update the badge display
-          await loadClasses();
+          showNotification('Success', 'Badge claimed successfully!', 'success');
+          await loadClasses(); // Refresh classes, activities, achievements
+          activeTab.value = 'achievements'; // Switch to achievements tab
+          showReviewModal.value = false; // Close the modal
         } else {
-          showNotification('Error', result.message || 'Failed to mint badge', 'error');
+          showNotification('Error', result.message || 'Failed to claim badge', 'error');
         }
       } catch (error) {
         console.error('Error claiming badge:', error);
-        if (error.message.includes('MetaMask')) {
-          showNotification('Info', 'Please install MetaMask to claim badges. You can still complete quizzes without badges.', 'info');
-        } else if (error.message.includes('User denied')) {
-          showNotification('Info', 'Badge minting was cancelled. You can try again later.', 'info');
-        } else {
-          showNotification('Error', 'Failed to mint badge. Please try again.', 'error');
-        }
+        showNotification('Error', 'Failed to claim badge. Please try again.', 'error');
+      } finally {
+        isMintingBadge.value = false;
       }
     };
-
-    // Add loading state for badge minting
-    const isMintingBadge = ref(false);
 
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {

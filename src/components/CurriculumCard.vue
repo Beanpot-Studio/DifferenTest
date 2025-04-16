@@ -218,13 +218,23 @@ const claimBadge = async (quiz) => {
   if (!user.value) return;
 
   try {
+    // Check if badge already exists in Firebase
+    const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, quiz.id);
+    if (hasBadge) {
+      showNotification('Info', 'You already have this badge!', 'info');
+      return;
+    }
+
+    // Show initial loading state
+    showNotification('Info', 'Issuing your badge...', 'info');
+
+    // Generate Open Badge JSON
     const badgeData = {
       userId: user.value.uid,
       userEmail: user.value.email,
       quizId: quiz.id,
       quizTitle: quiz.title,
       classId: props.curriculum.id,
-      //teacherId: props.curriculum.teacherId,
       name: `${quiz.title} Master`,
       description: `Awarded for completing ${quiz.title} with a perfect score`,
       image: quiz.badgeImage || 'https://badges.beanpotstudio.com/badges/default-badge.png',
@@ -236,17 +246,17 @@ const claimBadge = async (quiz) => {
         color: 'gold',
         timestamp: new Date().toISOString(),
         quizId: quiz.id,
-        classId: props.curriculum.id,
-        //teacherId: props.curriculum.teacherId
+        classId: props.curriculum.id
       }
     };
 
+    // Store badge in Firebase
     await FirebaseService.createBadge(badgeData);
-    showNotification('Success', 'Badge claimed successfully!', 'success');
+    showNotification('Success', 'Badge issued successfully!', 'success');
     await loadBadgeStatus();
   } catch (error) {
     console.error('Error claiming badge:', error);
-    showNotification('Error', 'Failed to claim badge. Please try again.', 'error');
+    showNotification('Error', 'Failed to issue badge. Please try again.', 'error');
   }
 };
 
