@@ -216,10 +216,16 @@ export default {
     const createClass = async () => {
       if (!user.value) return;
       
+      // Validate class name
+      if (!newClass.value.name.trim()) {
+        showError('Please enter a class name');
+        return;
+      }
+      
       try {
         loading.value = true;
         const classData = {
-          name: newClass.value.name,
+          name: newClass.value.name.trim(),
           description: newClass.value.description,
           code: newClass.value.code,
           isPublic: newClass.value.isPublic,
