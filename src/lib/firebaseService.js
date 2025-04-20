@@ -1548,7 +1548,6 @@ class FirebaseService {
           "id": `did:web:${window.location.hostname}:users:${badgeData.userId}`,
           "type": "AchievementSubject",
           "achievement": {
-            "id": `${badgeUrl}/achievement`,
             "type": "Achievement",
             "name": badgeData.name,
             "description": badgeData.description || "Awarded for completing a quiz with perfect score",
@@ -1574,6 +1573,8 @@ class FirebaseService {
           updatedAt: serverTimestamp(),
           quizTitle: badgeData.quizTitle || 'Unknown Quiz',
           className: badgeData.className || 'Unknown Class',
+          studentName: badgeData.studentName || 'Student',
+          teacherName: badgeData.teacherName || 'Teacher',
           score: badgeData.score || 100,
           completionDate: new Date().toISOString(),
           badgeImage: badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png",
@@ -1581,7 +1582,8 @@ class FirebaseService {
           badgeDescription: badgeData.description || "Awarded for completing a quiz with perfect score",
           verificationUrl: `${window.location.origin}/badges/${badgeId}`,
           issuerUrl: `${window.location.origin}/issuers/${badgeData.teacherId}`,
-          evidenceUrl: `${window.location.origin}/quizzes/${badgeData.quizId}`
+          evidenceUrl: `${window.location.origin}/quizzes/${badgeData.quizId}`,
+          recipientName: badgeData.studentName || 'Student'
         }
       };
 
