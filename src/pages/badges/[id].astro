@@ -4,88 +4,116 @@ import FirebaseService from "../../lib/firebaseService";
 
 export async function getStaticPaths() {
   try {
-    // Get all badges using FirebaseService
+    // Get all badges from Firebase
     const badges = await FirebaseService.getAllBadges();
 
-    // Return paths for each badge using the document ID
+    // Return paths for each badge
     return badges.map((badge) => ({
       params: { id: badge.id },
       props: { badge },
     }));
   } catch (error) {
-    console.error("Error generating static paths:", error);
+    console.error("Error generating badge paths:", error);
+    // Return empty array if there's an error
     return [];
   }
 }
 
+// Get the badge data for the current page
 const { id } = Astro.params;
 const badge = await FirebaseService.getBadge(id);
+
+if (!badge) {
+  return Astro.redirect("/404");
+}
+
+// Format the timestamp
+const formatDate = (timestamp) => {
+  if (!timestamp) return "Not available";
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
 ---
 
-<Layout title="Verify Badge">
-  <main class="container mx-auto px-4 py-8">
-    {
-      badge ? (
-        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-          <h1 class="text-2xl font-bold mb-4">Badge Verification</h1>
-
-          <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-2">{badge.name}</h2>
-            <p class="text-gray-600 mb-4">{badge.description}</p>
-
-            {badge.image && (
+<Layout title={`Badge: ${badge.name}`}>
+  
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="p-6">
+          <div class="flex items-center space-x-4">
+            <div class="flex-shrink-0">
               <img
-                src={badge.image}
-                alt={badge.name}
-                class="w-32 h-32 object-contain mx-auto mb-4"
+                src={badge.metadata.badgeImage}
+                alt={badge.metadata.badgeName}
+                class="w-24 h-24"
               />
-            )}
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <h3 class="font-semibold mb-2">Issuer</h3>
-              <p class="text-gray-600">{badge.issuer.name}</p>
-              <p class="text-gray-600">{badge.issuer.email}</p>
             </div>
-
-            <div>
-              <h3 class="font-semibold mb-2">Recipient</h3>
-              <p class="text-gray-600">{badge.recipient.identity}</p>
-            </div>
-
-            <div>
-              <h3 class="font-semibold mb-2">Issued On</h3>
-              <p class="text-gray-600">
-                {new Date(badge.issuedOn).toLocaleDateString()}
-              </p>
-            </div>
-
-            <div>
-              <h3 class="font-semibold mb-2">Evidence</h3>
-              <p class="text-gray-600">{badge.evidence.narrative}</p>
+            <div class="flex-1">
+              <h1 class="text-2xl font-bold text-gray-900">{badge.metadata.badgeName}</h1>
+              <p class="mt-1 text-gray-600">{badge.metadata.badgeDescription}</p>
+              <div class="mt-4">
+                <span
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800"
+                >
+                  Verified Badge
+                </span>
+              </div>
             </div>
           </div>
 
-          <div class="text-center">
-            <a
-              href={`/api/badges/${id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-            >
-              Verify Badge
-            </a>
+          <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900">Badge Details</h2>
+            <dl class="mt-4 grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Issued To</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  {badge.recipient?.name || badge.userEmail}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Issued By</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  {badge.issuer?.name || "Differentest"}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Issued On</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  {formatDate(badge.metadata.completionDate)}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Badge ID</dt>
+                <dd class="mt-1 text-sm text-gray-900 overflow-wrap-anywhere">{badge.id}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="mt-8">
+            <h2 class="text-lg font-medium text-gray-900">Share This Badge</h2>
+            <div class="mt-4 flex space-x-4">
+              <a
+                href={`https://twitter.com/intent/tweet?text=I earned the ${badge.name} badge on Differentest!&url=${Astro.url.href}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Share on Twitter
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${Astro.url.href}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Share on LinkedIn
+              </a>
+            </div>
           </div>
         </div>
-      ) : (
-        <div class="text-center">
-          <h1 class="text-2xl font-bold mb-4">Badge Not Found</h1>
-          <p class="text-gray-600">
-            The badge you are looking for does not exist or has been removed.
-          </p>
-        </div>
-      )
-    }
-  </main>
+      </div>
+   
 </Layout>

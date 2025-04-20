@@ -17,14 +17,41 @@ export async function GET({ params }) {
       );
     }
     
-    // Verify the badge data against Open Badges specification
-    const requiredFields = ['@context', 'type', 'id', 'issuer', 'recipient', 'issuedOn', 'evidence'];
+    // Verify the badge data against Open Badges 3.0 specification
+    const requiredFields = [
+      '@context',
+      'type',
+      'id',
+      'issuer',
+      'issuanceDate',
+      'credentialSubject'
+    ];
+    
     const missingFields = requiredFields.filter(field => !badge[field]);
     
     if (missingFields.length > 0) {
       return new Response(
         JSON.stringify({
           error: `Missing required fields: ${missingFields.join(', ')}`,
+          valid: false
+        }),
+        { status: 400 }
+      );
+    }
+
+    // Verify the context includes required contexts
+    const requiredContexts = [
+      'https://www.w3.org/ns/did/v1',
+      'https://www.w3.org/ns/credentials/v2',
+      'https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json'
+    ];
+    
+    const missingContexts = requiredContexts.filter(context => !badge['@context'].includes(context));
+    
+    if (missingContexts.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: `Missing required contexts: ${missingContexts.join(', ')}`,
           valid: false
         }),
         { status: 400 }
@@ -43,12 +70,25 @@ export async function GET({ params }) {
       );
     }
 
-    // Verify the issuer URL matches the expected pattern
-    const expectedIssuerUrl = `${process.env.NEXT_PUBLIC_APP_URL}/issuers/${badge.metadata.teacherId}`;
-    if (badge.issuer.id !== expectedIssuerUrl) {
+    // Verify the issuer has a valid verification method
+    if (!badge.issuer.verificationMethod || !Array.isArray(badge.issuer.verificationMethod) || badge.issuer.verificationMethod.length === 0) {
       return new Response(
         JSON.stringify({
-          error: 'Invalid issuer URL',
+          error: 'Invalid issuer verification method',
+          valid: false
+        }),
+        { status: 400 }
+      );
+    }
+
+    // Verify the credential subject has required fields
+    const requiredSubjectFields = ['id', 'type', 'achievement', 'evidence'];
+    const missingSubjectFields = requiredSubjectFields.filter(field => !badge.credentialSubject[field]);
+    
+    if (missingSubjectFields.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: `Missing required credential subject fields: ${missingSubjectFields.join(', ')}`,
           valid: false
         }),
         { status: 400 }
@@ -61,13 +101,10 @@ export async function GET({ params }) {
         valid: true,
         badge: {
           id: badge.id,
-          name: badge.name,
-          description: badge.description,
-          image: badge.image,
+          type: badge.type,
           issuer: badge.issuer,
-          recipient: badge.recipient,
-          issuedOn: badge.issuedOn,
-          evidence: badge.evidence,
+          issuanceDate: badge.issuanceDate,
+          credentialSubject: badge.credentialSubject,
           metadata: badge.metadata
         }
       }),

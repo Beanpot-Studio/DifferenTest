@@ -13,9 +13,6 @@
     <!-- No badges state -->
     <div v-else-if="badges.length === 0" class="text-center py-8">
       <div class="flex justify-center mb-4">
-        <div class="p-4 rounded-full bg-gray-100">
-          <IconService name="star" size="8" color="text-gray-400" />
-        </div>
       </div>
       <h3 class="text-lg font-semibold text-gray-900">No Badges Yet</h3>
       <p class="text-gray-500">Complete quizzes with perfect scores to earn badges!</p>
@@ -26,16 +23,16 @@
       <div v-for="badge in badges" :key="badge.id" class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
         <div class="flex items-start space-x-4">
           <div class="flex-shrink-0">
-              <img :src="badge.image || badge.metadata?.image" alt="Badge" class="w-24 h-24" />
+              <img :src="badge.metadata.badgeImage" alt="Badge" class="w-24 h-24" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start pt-3">
               <h3 class="text-lg font-semibold text-gray-900">{{ badge.metadata?.title || 'Achievement' }}</h3>
               <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-gray-800">
-                {{ formatDate(badge.timestamp) }}
+                {{ formatDate(badge.issuanceDate) }}
               </span>
             </div>
-            <p class="text-gray-700 mb-2">{{ badge.metadata?.description }}</p>
+            <p class="text-gray-700 mb-2">{{ badge.metadata?.badgeDescription }}</p>
             <div class="flex flex-wrap gap-2 mt-2">
               <button @click="shareOnTwitter(badge)" class="px-2 py-1 bg-blue-400 text-white rounded hover:bg-blue-500 text-xs">Share on Twitter</button>
               <button @click="shareOnLinkedIn(badge)" class="px-2 py-1 bg-blue-700 text-white rounded hover:bg-blue-800 text-xs">Share on LinkedIn</button>

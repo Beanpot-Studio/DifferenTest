@@ -1094,7 +1094,7 @@ class FirebaseService {
   static async getUserBadges(userId) {
     try {
       const badgesRef = collection(db, 'badges');
-      const q = query(badgesRef, where('userId', '==', userId));
+      const q = query(badgesRef, where('metadata.userId', '==', userId));
       const querySnapshot = await getDocs(q);
       
       return querySnapshot.docs.map(doc => ({
@@ -1301,7 +1301,7 @@ class FirebaseService {
         };
       }
 
-      // Get quiz details for badge metadata
+      // Get quiz details
       const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
       if (!quizDoc.exists()) {
         return {
@@ -1310,52 +1310,73 @@ class FirebaseService {
           status: 'error'
         };
       }
-
       const quizData = quizDoc.data();
-      const badgeMetadata = {
-        title: `Perfect Score: ${quizData.title}`,
-        description: `Achieved a perfect score on the ${quizData.title} quiz`,
-        type: 'quiz_perfect_score',
-        icon: '🏆',
-        color: 'gold',
-        timestamp: new Date().toISOString(),
-        quizId,
-        classId,
-        image: 'https://res.cloudinary.com/front-end-foxes/image/upload/v1744763823/web-dev-badges/sample_yg9hjj.png'
+
+      // Get class details
+      const classDoc = await getDoc(doc(db, 'classes', classId));
+      if (!classDoc.exists()) {
+        return {
+          success: false,
+          message: 'Class not found',
+          status: 'error'
+        };
+      }
+      const classData = classDoc.data();
+
+      // Get user details
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        return {
+          success: false,
+          message: 'User not found',
+          status: 'error'
+        };
+      }
+      const userData = userDoc.data();
+
+      // Get teacher details
+      const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+      const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+
+      // Prepare badge data with all required fields
+      const badgeData = {
+        userId: userId,
+        userEmail: userData.email,
+        quizId: quizId,
+        quizTitle: quizData.title,
+        classId: classId,
+        className: classData.name,
+        teacherId: classData.teacherId,
+        teacherName: teacherData?.name || 'Teacher',
+        teacherEmail: teacherData?.email || 'teacher@example.com',
+        studentName: userData.name || 'Student',
+        name: `${quizData.title} Master`,
+        description: `Awarded for completing ${quizData.title} with a perfect score`,
+        image: 'https://badges.beanpotstudio.com/badges/default-badge.png',
+        score: score
       };
 
-      // Create badge in Firestore as Open Badge
-      await setDoc(badgeRef, {
-        userId,
-        quizId,
-        quizTitle: quizData.title,
-        classId,
-        timestamp: serverTimestamp(),
-        metadata: badgeMetadata
-      });
+      // Create the badge
+      const badgeId = await this.createBadge(badgeData);
 
       // Create activity record
       const activityData = {
         userId,
         type: 'badge_claimed',
-        badgeId: badgeRef.id,
+        badgeId: badgeId,
         quizId,
         quizTitle: quizData.title,
         classId,
         timestamp: serverTimestamp(),
-        activityDescription: `🏆 Claimed "${badgeMetadata.title}" badge for perfect score on ${quizData.title}!`
+        activityDescription: `🏆 Claimed "${badgeData.name}" badge for perfect score on ${quizData.title}!`
       };
-      // Only add transactionHash if it is defined (legacy support)
-      if (typeof badgeMetadata.transactionHash !== 'undefined' && badgeMetadata.transactionHash !== null) {
-        activityData.transactionHash = badgeMetadata.transactionHash;
-      }
       await addDoc(collection(db, 'activities'), activityData);
 
       return {
         success: true,
-        message: `Achievement Unlocked! You've earned the "${badgeMetadata.title}" badge!`,
+        message: `Achievement Unlocked! You've earned the "${badgeData.name}" badge!`,
         status: 'success',
-        badgeId: badgeRef.id
+        badgeId: badgeId
       };
     } catch (error) {
       console.error('Error claiming badge:', error);
@@ -1478,7 +1499,6 @@ class FirebaseService {
   }
 
   static async createBadge(badgeData) {
-    console.log('badgeData', badgeData);
     try {
       // Validate required fields
       if (!badgeData.userId) {
@@ -1493,48 +1513,56 @@ class FirebaseService {
         throw new Error('Class ID is required to create a badge');
       }
 
-      // Use consistent badge ID format
-      const badgeId = `${badgeData.userId}_${badgeData.quizId}`;
-      const badgeUrl = `${window.location.origin}/badges/${badgeId}`;
+      // Generate a secure badge ID using a combination of timestamp, user ID, quiz ID, and random string
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 8);
+      const badgeId = `${timestamp}_${randomString}_${badgeData.userId}_${badgeData.quizId}`;
+      const issuerId = `did:web:${window.location.hostname}:issuers:${badgeData.teacherId}`;
 
-      // Create Open Badge compliant data
+      // Create Open Badge 3.0 compliant data
       const badge = {
-        "@context": "https://w3id.org/openbadges/v2",
-        "type": "BadgeClass",
-        "id": badgeUrl,
-        "name": badgeData.name || "Quiz Master Badge",
-        "description": badgeData.description || "Awarded for completing a quiz with perfect score",
-        "image": badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png",
-        "criteria": {
-          "narrative": "Completed a quiz with a perfect score",
-          "type": "Criteria",
-          "id": `${badgeUrl}/criteria`
-        },
+        "@context": [
+          "https://www.w3.org/ns/did/v1",
+          "https://www.w3.org/ns/credentials/v2",
+          "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"
+        ],
+        "id": badgeId,
+        "type": ["VerifiableCredential", "OpenBadgeCredential"],
         "issuer": {
+          "id": issuerId,
           "type": "Profile",
-          "id": `${window.location.origin}/issuers/${badgeData.teacherId}`,
           "name": badgeData.teacherName || "Quiz Master",
           "url": window.location.origin,
           "email": badgeData.teacherEmail || "badgeguru@beanpotstudio.com",
-          "description": "Issuer of educational badges for quiz achievements"
+          "description": "Issuer of educational badges for quiz achievements",
+          "verificationMethod": [{
+            "id": `${issuerId}#key-0`,
+            "type": "DataIntegrityProof",
+            "cryptosuite": "eddsa-rdf-2022",
+            "controller": `${window.location.origin}/issuers/${badgeData.teacherId}`,
+            "publicKeyMultibase": "z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP" // This should be your actual public key
+          }]
         },
-        "recipient": {
-          "type": "email",
-          "hashed": false,
-          "identity": badgeData.userEmail,
-          "salt": null
-        },
-        "issuedOn": new Date().toISOString(),
-        "evidence": {
-          "id": `${window.location.origin}/quizzes/${badgeData.quizId}`,
-          "narrative": `Completed quiz "${badgeData.quizTitle}" with a perfect score`,
-          "type": "Evidence",
-          "description": "Quiz completion evidence"
-        },
-        "verification": {
-          "type": "HostedBadge",
-          "verificationProperty": "id",
-          "startsWith": window.location.origin
+        "issuanceDate": new Date().toISOString(),
+        "credentialSubject": {
+          "id": `did:web:${window.location.hostname}:users:${badgeData.userId}`,
+          "type": "AchievementSubject",
+          "achievement": {
+            "id": `${badgeUrl}/achievement`,
+            "type": "Achievement",
+            "name": badgeData.name,
+            "description": badgeData.description || "Awarded for completing a quiz with perfect score",
+            "criteria": {
+              "narrative": "Completed a quiz with a perfect score"
+            },
+            //todo fix this
+            "image": badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png"
+          },
+          "evidence": {
+            "id": `${window.location.origin}/student`,
+            "type": "Evidence",
+            "narrative": `Completed quiz "${badgeData.quizTitle}" with a perfect score`
+          }
         },
         // Store additional metadata in Firebase
         metadata: {
@@ -1543,7 +1571,17 @@ class FirebaseService {
           classId: badgeData.classId,
           teacherId: badgeData.teacherId,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
+          quizTitle: badgeData.quizTitle || 'Unknown Quiz',
+          className: badgeData.className || 'Unknown Class',
+          score: badgeData.score || 100,
+          completionDate: new Date().toISOString(),
+          badgeImage: badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png",
+          badgeName: badgeData.name || "Quiz Master Badge",
+          badgeDescription: badgeData.description || "Awarded for completing a quiz with perfect score",
+          verificationUrl: `${window.location.origin}/badges/${badgeId}`,
+          issuerUrl: `${window.location.origin}/issuers/${badgeData.teacherId}`,
+          evidenceUrl: `${window.location.origin}/quizzes/${badgeData.quizId}`
         }
       };
 
@@ -1584,6 +1622,7 @@ class FirebaseService {
   }
 
   static async getBadge(badgeId) {
+    console.log('Getting badge:', badgeId);
     try {
       const badgeRef = doc(db, 'badges', badgeId);
       const badgeDoc = await getDoc(badgeRef);
@@ -1605,7 +1644,7 @@ class FirebaseService {
       const badgesSnapshot = await getDocs(badgesRef);
       
       return badgesSnapshot.docs.map(doc => ({
-        id: doc.id,
+        id: doc.badgeId,
         ...doc.data()
       }));
     } catch (error) {

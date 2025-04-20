@@ -63,12 +63,12 @@
                       </button>
                     </template>
                     <template v-else-if="!badgeStatus[quiz.id]">
-                      <button 
-                        @click="claimBadge(quiz)"
-                        class="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      <a 
+                        href="/student"
+                        class="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 flex items-center space-x-2"
                       >
                         🏆 Claim Badge
-                      </button>
+                      </a>
                     </template>
                     <template v-else>
                       <div class="flex items-center">
