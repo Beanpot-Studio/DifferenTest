@@ -1,4 +1,4 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 import vue from '@astrojs/vue';
 
@@ -32,6 +32,12 @@ export default defineConfig({
     envDir: '.',
     define: {
       'import.meta.env.PUBLIC_GEMINI_API_KEY': JSON.stringify(process.env.PUBLIC_GEMINI_API_KEY),
+    }
+  },
+  env: {
+    schema: {
+      CLOUDINARY_CLOUD_NAME: envField.string({ context: "client", access: "public" }),
+      CLOUDINARY_UPLOAD_PRESET: envField.string({ context: "client", access: "public" }),
     }
   }
 });

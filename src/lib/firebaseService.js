@@ -19,6 +19,7 @@ import { db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 
 // Get API key from environment variable
 const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
@@ -364,12 +365,27 @@ class FirebaseService {
         }
       });
 
-      const quizRef = await addDoc(collection(db, 'quizzes'), {
-        ...quizData,
+      // Create a clean quiz object without any undefined fields
+      const cleanQuizData = {
+        title: quizData.title,
+        teacherId: quizData.teacherId,
+        userId: quizData.userId,
+        classId: quizData.classId,
+        isPublic: quizData.isPublic || false,
+        questions: quizData.questions,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+        updatedAt: serverTimestamp(),
+        lessonPlan: quizData.lessonPlan || ''
+      };
 
+      // Only add badgeImage if it's defined
+      if (quizData.badgeImage) {
+        cleanQuizData.badgeImage = quizData.badgeImage;
+      }
+
+      console.log('Creating quiz with clean data:', cleanQuizData);
+
+      const quizRef = await addDoc(collection(db, 'quizzes'), cleanQuizData);
       return quizRef.id;
     } catch (error) {
       console.error('Error creating quiz:', error);
@@ -956,6 +972,17 @@ class FirebaseService {
         throw new Error('Class ID is required to create a badge');
       }
 
+      // Handle badge image upload if provided
+      let badgeImageUrl = badgeData.image;
+      if (badgeData.imageFile) {
+        try {
+          badgeImageUrl = await uploadToCloudinary(badgeData.imageFile);
+        } catch (error) {
+          console.error('Error uploading badge image:', error);
+          throw new Error('Failed to upload badge image');
+        }
+      }
+
       // Generate a secure badge ID using a combination of timestamp, user ID, quiz ID, and random string
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(2, 8);
@@ -997,8 +1024,7 @@ class FirebaseService {
             "criteria": {
               "narrative": "Completed a quiz with a perfect score"
             },
-            //todo fix this
-            "image": badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png"
+            "image": badgeImageUrl
           },
           "evidence": {
             "id": `${window.location.origin}/student`,
@@ -1020,7 +1046,7 @@ class FirebaseService {
           teacherName: badgeData.teacherName || 'Teacher',
           score: badgeData.score || 100,
           completionDate: new Date().toISOString(),
-          badgeImage: badgeData.image || "https://badges.beanpotstudio.com/badges/default-badge.png",
+          badgeImage: badgeImageUrl,
           badgeName: badgeData.name || "Quiz Master Badge",
           badgeDescription: badgeData.description || "Awarded for completing a quiz with perfect score",
           verificationUrl: `${window.location.origin}/badges/${badgeId}`,
@@ -1083,12 +1109,12 @@ class FirebaseService {
     }
   }
 
-  static async generateQuiz(content) {
+  static async generateQuiz(content, numQuestions = 5) {
     try {
       // Generate quiz using Gemini API
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
       
-      const prompt = `Generate a 5-question multiple choice quiz based on this lesson plan. 
+      const prompt = `Generate a ${numQuestions}-question multiple choice quiz based on this lesson plan. 
       Format the response as a JSON object with this structure:
       {
         "title": "quiz title",
@@ -1106,6 +1132,7 @@ class FirebaseService {
         ]
       }
       
+      Make sure to generate exactly ${numQuestions} questions.
       Lesson plan:
       ${content}`;
 
@@ -1115,6 +1142,11 @@ class FirebaseService {
       
       text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const quizData = JSON.parse(text);
+      
+      // Validate that we got the requested number of questions
+      if (quizData.questions.length !== numQuestions) {
+        throw new Error(`Generated ${quizData.questions.length} questions instead of requested ${numQuestions}`);
+      }
       
       return quizData;
     } catch (error) {
@@ -1596,6 +1628,93 @@ class FirebaseService {
       }));
     } catch (error) {
       console.error('Error fetching user badges:', error);
+      throw error;
+    }
+  }
+
+  async createLessonPlan(lessonPlanData) {
+    try {
+      const lessonPlanRef = await addDoc(collection(db, 'lessonPlans'), lessonPlanData);
+      return { id: lessonPlanRef.id, ...lessonPlanData };
+    } catch (error) {
+      console.error('Error creating lesson plan:', error);
+      throw error;
+    }
+  }
+
+  async updateLessonPlan(lessonPlanId, lessonPlanData) {
+    try {
+      const lessonPlanRef = doc(db, 'lessonPlans', lessonPlanId);
+      await updateDoc(lessonPlanRef, lessonPlanData);
+      return { id: lessonPlanId, ...lessonPlanData };
+    } catch (error) {
+      console.error('Error updating lesson plan:', error);
+      throw error;
+    }
+  }
+
+  async deleteLessonPlan(lessonPlanId) {
+    try {
+      const lessonPlanRef = doc(db, 'lessonPlans', lessonPlanId);
+      await deleteDoc(lessonPlanRef);
+    } catch (error) {
+      console.error('Error deleting lesson plan:', error);
+      throw error;
+    }
+  }
+
+  async getAllLessonPlans(teacherId) {
+    try {
+      const lessonPlansRef = collection(db, 'lessonPlans');
+      const q = query(lessonPlansRef, where('teacherId', '==', teacherId));
+      const snapshot = await getDocs(q);
+      
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error fetching lesson plans:', error);
+      throw error;
+    }
+  }
+
+  static async addQuizToClass(classId, quizData) {
+    try {
+      if (!classId || !quizData || !quizData.id) {
+        throw new Error('Class ID and quiz data with ID are required');
+      }
+
+      const classRef = doc(db, 'classes', classId);
+      const classDoc = await getDoc(classRef);
+
+      if (!classDoc.exists()) {
+        throw new Error('Class not found');
+      }
+
+      const classData = classDoc.data();
+      const quizzes = classData.quizzes || [];
+
+      // Check if quiz already exists in class
+      if (quizzes.some(q => q.id === quizData.id)) {
+        throw new Error('Quiz already exists in this class');
+      }
+
+      // Add the new quiz to the quizzes array
+      quizzes.push({
+        id: quizData.id,
+        title: quizData.title
+      });
+
+      // Update the class document with the new quizzes array
+      await updateDoc(classRef, {
+        quizzes: quizzes,
+        updatedAt: serverTimestamp()
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error adding quiz to class:', error);
       throw error;
     }
   }

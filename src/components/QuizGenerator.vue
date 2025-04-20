@@ -55,6 +55,30 @@
       />
     </div>
 
+    <!-- Badge Image Upload -->
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Badge Image (Optional)
+      </label>
+      <div class="flex items-center">
+        <input
+          type="file"
+          ref="badgeImageInput"
+          accept="image/*"
+          class="hidden"
+          @change="handleBadgeImageUpload"
+        />
+        <button
+          @click="$refs.badgeImageInput.click()"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        >
+          Choose Badge Image
+        </button>
+        <span v-if="badgeImageName" class="text-sm text-gray-600 ml-2">{{ badgeImageName }}</span>
+      </div>
+      <p class="mt-1 text-sm text-gray-500">Upload a custom badge image for this quiz (recommended size: 512x512px)</p>
+    </div>
+
     <!-- Upload Section -->
     <div class="mb-6">
       <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -190,6 +214,7 @@ import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
+import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 
 export default {
   name: 'QuizGenerator',
@@ -220,6 +245,9 @@ export default {
     const isLoading = ref(false);
     const showLessonPlanModal = ref(false);
     const editedLessonPlan = ref('');
+    const badgeImageInput = ref(null);
+    const badgeImageName = ref('');
+    const badgeImageFile = ref(null);
 
     
     const loadClasses = async () => {
@@ -311,6 +339,19 @@ export default {
       }
     };
 
+    const handleBadgeImageUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        console.log('Badge image selected:', {
+          name: file.name,
+          type: file.type,
+          size: file.size
+        });
+        badgeImageFile.value = file;
+        badgeImageName.value = file.name;
+      }
+    };
+
     const saveQuiz = async () => {
       if (!quiz.value || !user.value || !selectedClassId.value) {
         showError('Please select a class');
@@ -319,7 +360,31 @@ export default {
 
       loading.value = true;
       try {
-        // Create the quiz first
+        // Handle badge image upload first if provided
+        let badgeImageUrl = null;
+        if (badgeImageFile.value) {
+          try {
+            console.log('Starting badge image upload process...');
+            console.log('Badge image file:', {
+              name: badgeImageFile.value.name,
+              type: badgeImageFile.value.type,
+              size: badgeImageFile.value.size
+            });
+
+            badgeImageUrl = await uploadToCloudinary(badgeImageFile.value);
+            console.log('Badge image upload response:', badgeImageUrl);
+            
+            if (!badgeImageUrl) {
+              console.error('No badge image URL returned from upload');
+              throw new Error('Failed to get badge image URL');
+            }
+          } catch (error) {
+            console.error('Error in badge image upload process:', error);
+            showError('Failed to upload badge image. The quiz was saved without a badge.');
+          }
+        }
+
+        // Create the quiz with the badge image URL if available
         const quizData = {
           ...quiz.value,
           title: quizTitle.value || quiz.value.title,
@@ -332,23 +397,30 @@ export default {
           lessonPlan: fileContent.value
         };
 
-        console.log('Saving quiz with data:', quizData);
+        if (badgeImageUrl) {
+          quizData.badgeImage = badgeImageUrl;
+        }
+
+        console.log('Creating quiz with data:', quizData);
 
         const quizId = await FirebaseService.createQuiz(quizData);
         console.log('Quiz created with ID:', quizId);
         
-        // Add the quiz to the class's quizzes array
-        if (quizId) {
-          await FirebaseService.addQuizToClass(selectedClassId.value, {
-            id: quizId,
-            title: quizData.title
-          });
-          console.log('Quiz saved:', quizData);
-          showSuccess(`Quiz "${quizData.title}" saved successfully!`);
-          
-          // Emit event to update stats
-          emit('quiz-updated');
+        if (!quizId) {
+          throw new Error('Failed to create quiz');
         }
+
+        // Add the quiz to the class's quizzes array
+        await FirebaseService.addQuizToClass(selectedClassId.value, {
+          id: quizId,
+          title: quizData.title
+        });
+        console.log('Quiz added to class');
+
+        showSuccess(`Quiz "${quizData.title}" saved successfully!`);
+        
+        // Emit event to update stats
+        emit('quiz-updated');
         
         // Reset form after successful save
         quiz.value = null;
@@ -357,6 +429,8 @@ export default {
         quizTitle.value = '';
         selectedClassId.value = '';
         isPublic.value = false;
+        badgeImageFile.value = null;
+        badgeImageName.value = '';
       } catch (error) {
         console.error('Error saving quiz:', error);
         showError(`Error saving quiz: ${error.message}`);
@@ -410,7 +484,10 @@ export default {
       saveQuiz,
       showLessonPlanModal,
       editedLessonPlan,
-      saveLessonPlan
+      saveLessonPlan,
+      badgeImageInput,
+      badgeImageName,
+      handleBadgeImageUpload
     };
   }
 };
