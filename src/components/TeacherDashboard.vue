@@ -106,7 +106,7 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
 import QuizGenerator from './QuizGenerator.vue';
@@ -189,6 +189,13 @@ export default {
       if (user.value) {
         loadStats();
       }
+      // Add event listener for stats refresh
+      window.addEventListener('refreshStats', loadStats);
+    });
+
+    onUnmounted(() => {
+      // Clean up event listener
+      window.removeEventListener('refreshStats', loadStats);
     });
 
     watch(user, (newUser) => {

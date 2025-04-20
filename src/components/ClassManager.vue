@@ -244,6 +244,8 @@ export default {
         showCreateClassModal.value = false;
         showSuccess('Class created successfully');
         await fetchClasses();
+        // Emit event to refresh stats
+        window.dispatchEvent(new CustomEvent('refreshStats'));
       } catch (error) {
         showError('Failed to create class');
       } finally {
@@ -310,6 +312,8 @@ export default {
         await FirebaseService.deleteClass(classId);
         classes.value = classes.value.filter(c => c.id !== classId);
         showSuccess('Class deleted successfully');
+        // Emit event to refresh stats
+        window.dispatchEvent(new CustomEvent('refreshStats'));
       } catch (error) {
         console.error('Error deleting class:', error);
         showError('Error deleting class. Please try again.');
