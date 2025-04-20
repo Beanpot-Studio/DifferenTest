@@ -307,7 +307,7 @@ export default {
     const explanations = ref({});
     const quizStartTime = ref(0);
     const error = ref(null);
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const activeTab = ref('activities');
     const enrolledClasses = ref([]);
     const reviewData = ref(null);
@@ -389,7 +389,7 @@ export default {
         }
           
       } catch (error) {
-        showNotification('Error', 'Failed to load classes', 'error');
+        showError('Failed to load classes');
       } finally {
         loading.value = false;
       }
@@ -421,10 +421,10 @@ export default {
         // Dispatch event to update dashboard
         window.dispatchEvent(new CustomEvent('classLeft'));
 
-        showNotification('Success', 'Successfully left the class', 'success');
+        showSuccess('Successfully left the class');
       } catch (error) {
         console.error('Error leaving class:', error);
-        showNotification('Error', 'Failed to leave the class. Please try again.', 'error');
+        showError('Failed to leave the class. Please try again.');
       }
     };
 
@@ -433,14 +433,14 @@ export default {
 
       const enrollment = enrolledClasses.value.find(e => e.id === classId);
       if (enrollment?.enrollmentStatus !== 'accepted') {
-        showNotification('Error', 'Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.', 'error');
+        showError('Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.');
         return;
       }
 
       try {
         const quizData = await FirebaseService.getQuiz(quiz.id);
         if (!quizData) {
-          showNotification('Error', 'Quiz not found.', 'error');
+          showError('Quiz not found.');
           return;
         }
 
@@ -477,7 +477,7 @@ export default {
 
       } catch (error) {
         console.error('Error starting quiz:', error);
-        showNotification('Error', 'Failed to start quiz. Please try again.', 'error');
+        showError('Failed to start quiz. Please try again.');
       }
     };
 
@@ -504,7 +504,7 @@ export default {
       
       const unansweredQuestions = answers.value.filter(answer => answer === null).length;
       if (unansweredQuestions > 0) {
-        showNotification('Error', `Please answer all questions before submitting. You have ${unansweredQuestions} unanswered questions.`, 'error');
+        showError(`Please answer all questions before submitting. You have ${unansweredQuestions} unanswered questions.`);
         return;
       }
       
@@ -601,7 +601,7 @@ export default {
         await loadClasses();
       } catch (error) {
         console.error('Error saving quiz results:', error);
-        showNotification('Error', 'There was an error saving your quiz results. Please try again.', 'error');
+        showError('There was an error saving your quiz results. Please try again.');
       }
     };
 
@@ -642,7 +642,7 @@ export default {
         // Get the quiz attempt
         const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
         if (!attempts || attempts.length === 0) {
-          showNotification('Error', 'No quiz attempt found to review', 'error');
+          showError('No quiz attempt found to review');
           return;
         }
         
@@ -659,14 +659,14 @@ export default {
         // Get quiz details
         const quizData = await FirebaseService.getQuiz(quizId);
         if (!quizData) {
-          showNotification('Error', 'Quiz not found', 'error');
+          showError('Quiz not found');
           return;
         }
         
         // Get class details
         const classData = classes.value.find(c => c.id === classId);
         if (!classData) {
-          showNotification('Error', 'Class not found', 'error');
+          showError('Class not found');
           return;
         }
 
@@ -702,7 +702,7 @@ export default {
         showReviewModal.value = true;
       } catch (error) {
         console.error('Error loading quiz review:', error);
-        showNotification('Error', 'Failed to load quiz review', 'error');
+        showError('Failed to load quiz review');
       } finally {
         loading.value = false;
       }
@@ -786,7 +786,7 @@ export default {
         console.log('Quiz attempts:', attempts);
         
         if (!attempts || attempts.length === 0) {
-          showNotification('Error', 'No quiz attempt found to review', 'error');
+          showError('No quiz attempt found to review');
           return;
         }
         
@@ -797,14 +797,14 @@ export default {
         // Get quiz details
         const quiz = await FirebaseService.getQuiz(quizId);
         if (!quiz) {
-          showNotification('Error', 'Quiz not found', 'error');
+          showError('Quiz not found');
           return;
         }
         
         // Get class details
         const classData = classes.value.find(c => c.id === classId);
         if (!classData) {
-          showNotification('Error', 'Class not found', 'error');
+          showError('Class not found');
           return;
         }
         
@@ -837,7 +837,7 @@ export default {
         showReviewModal.value = true;
       } catch (error) {
         console.error('Error loading quiz review:', error);
-        showNotification('Error', 'Failed to load quiz review', 'error');
+        showError('Failed to load quiz review');
       } finally {
         loading.value = false;
       }
@@ -853,13 +853,13 @@ export default {
         // Check if badge already exists in Firebase
         const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, reviewData.value.quiz.id);
         if (hasBadge) {
-          showNotification('Info', 'You already have this badge!', 'info');
+          showError('You already have this badge!');
           isMintingBadge.value = false;
           return;
         }
 
         // Show initial loading state
-        showNotification('Info', 'Issuing your badge...', 'info');
+        showSuccess('Issuing your badge...');
         
         // Claim the badge using FirebaseService.claimBadge
         const result = await FirebaseService.claimBadge(
@@ -870,16 +870,16 @@ export default {
         );
         
         if (result.success) {
-          showNotification('Success', 'Badge claimed successfully!', 'success');
+          showSuccess('Badge claimed successfully!');
           await loadClasses(); // Refresh classes, activities, achievements
           activeTab.value = 'achievements'; // Switch to achievements tab
           showReviewModal.value = false; // Close the modal
         } else {
-          showNotification('Error', result.message || 'Failed to claim badge', 'error');
+          showError(result.message || 'Failed to claim badge');
         }
       } catch (error) {
         console.error('Error claiming badge:', error);
-        showNotification('Error', 'Failed to claim badge. Please try again.', 'error');
+        showError('Failed to claim badge. Please try again.');
       } finally {
         isMintingBadge.value = false;
       }
@@ -938,7 +938,8 @@ export default {
       retakeQuiz,
       closeQuizModal,
       closeReviewModal,
-      showNotification,
+      showSuccess,
+      showError,
       activeTab,
       tabs,
       filteredClasses,

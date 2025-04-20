@@ -186,7 +186,6 @@
 <script>
 import { ref, onMounted, watch } from 'vue';
 import { useAuth } from '../stores/auth';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
 import IconService from './IconService.vue';
@@ -197,9 +196,16 @@ export default {
   components: {
     BaseAnimation, IconService
   },
-  setup() {
+  props: {
+    classId: {
+      type: String,
+      required: true
+    }
+  },
+  emits: ['generated'],
+  setup(props, { emit }) {
     const { user } = useAuth();
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const fileInput = ref(null);
     const fileName = ref('');
     const loading = ref(false);
@@ -211,22 +217,11 @@ export default {
     const classes = ref([]);
     const isPublic = ref(false);
     const isClassPublic = ref(false);
-    const selectedClass = ref('');
-    const questions = ref([]);
     const isLoading = ref(false);
     const showLessonPlanModal = ref(false);
     const editedLessonPlan = ref('');
 
-    // Get API key from environment variable
-    const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
     
-    if (!apiKey) {
-      console.error('Gemini API key not found in environment variables');
-      return;
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-
     const loadClasses = async () => {
       if (!user.value) return;
       
@@ -237,7 +232,7 @@ export default {
         console.log('Loaded classes:', teacherClasses);
       } catch (error) {
         console.error('Error loading classes:', error);
-        showNotification('Error', 'Failed to load classes', 'error');
+        showError('Failed to load classes');
       } finally {
         isLoading.value = false;
       }
@@ -266,7 +261,7 @@ export default {
         let text;
         if (file.type === 'application/pdf') {
           // Handle PDF files (you'll need to implement PDF parsing)
-          showNotification('Error', 'PDF parsing not yet implemented', 'error');
+          showError('PDF parsing not yet implemented');
           return;
         } else {
           // Handle text and markdown files
@@ -286,64 +281,50 @@ export default {
         showLessonPlanModal.value = true;
       } catch (error) {
         console.error('Error processing file:', error);
-        showNotification('Error', 'Error processing file. Please try again.', 'error');
+        showError('Error processing file. Please try again.');
       } finally {
         loading.value = false;
       }
     };
 
     const generateQuiz = async (content) => {
+      loading.value = true;
       try {
-        //generate 5 questions from the lesson plan using Gemini lite
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
-        
-        const prompt = `Generate a ${numQuestions.value}-question multiple choice quiz based on this lesson plan. 
-        Format the response as a JSON object with this structure:
-        {
-          "title": "quiz title",
-          "questions": [
-            {
-              "text": "question text",
-              "options": [
-                {"text": "option text"},
-                {"text": "option text"},
-                {"text": "option text"},
-                {"text": "option text"}
-              ],
-              "correctIndex": 0
-            }
-          ]
-        }
-        
-        Lesson plan:
-        ${content}`;
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text();
-        
-        text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        quiz.value = JSON.parse(text);
-        quiz.value.title = quizTitle.value || quiz.value.title;
-        
-        showNotification('Success', 'Quiz generated successfully!');
+        const quizData = await FirebaseService.generateQuiz(content);
+        // Set the quiz data with the teacher ID
+        quiz.value = {
+          ...quizData,
+          teacherId: user.value.uid,
+          userId: user.value.uid,
+          classId: selectedClassId.value,
+          isPublic: isPublic.value,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          lessonPlan: fileContent.value
+        };
+        showSuccess('Quiz generated successfully!');
       } catch (error) {
         console.error('Error generating quiz:', error);
-        showNotification('Error', 'Error generating quiz. Please try again.', 'error');
+        showError('Failed to generate quiz. Please try again.');
+      } finally {
+        loading.value = false;
       }
     };
 
     const saveQuiz = async () => {
       if (!quiz.value || !user.value || !selectedClassId.value) {
-        showNotification('Error', 'Please select a class', 'error');
+        showError('Please select a class');
         return;
       }
 
+      loading.value = true;
       try {
+        // Create the quiz first
         const quizData = {
           ...quiz.value,
-          userId: user.value.uid,
+          title: quizTitle.value || quiz.value.title,
           teacherId: user.value.uid,
+          userId: user.value.uid,
           classId: selectedClassId.value,
           isPublic: isPublic.value,
           createdAt: new Date(),
@@ -351,8 +332,23 @@ export default {
           lessonPlan: fileContent.value
         };
 
-        await FirebaseService.createQuiz(quizData);
-        showNotification('Success', `Quiz "${quiz.value.title}" saved successfully!`, 'success');
+        console.log('Saving quiz with data:', quizData);
+
+        const quizId = await FirebaseService.createQuiz(quizData);
+        console.log('Quiz created with ID:', quizId);
+        
+        // Add the quiz to the class's quizzes array
+        if (quizId) {
+          await FirebaseService.addQuizToClass(selectedClassId.value, {
+            id: quizId,
+            title: quizData.title
+          });
+          console.log('Quiz saved:', quizData);
+          showSuccess(`Quiz "${quizData.title}" saved successfully!`);
+          
+          // Emit event to update stats
+          emit('quiz-updated');
+        }
         
         // Reset form after successful save
         quiz.value = null;
@@ -363,7 +359,9 @@ export default {
         isPublic.value = false;
       } catch (error) {
         console.error('Error saving quiz:', error);
-        showNotification('Error', `Error saving quiz "${quiz.value.title}". Please try again.`, 'error');
+        showError(`Error saving quiz: ${error.message}`);
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -381,10 +379,17 @@ export default {
       }
     };
 
-    const saveLessonPlan = () => {
-      fileContent.value = editedLessonPlan.value;
+    const saveLessonPlan = async () => {
+      loading.value = true;
       showLessonPlanModal.value = false;
-      generateQuiz(fileContent.value);
+      try {
+        await generateQuiz(fileContent.value);
+      } catch (error) {
+        console.error('Error saving lesson plan:', error);
+        showError('Failed to save lesson plan. Please try again.');
+      } finally {
+        loading.value = false;
+      }
     };
 
     return {

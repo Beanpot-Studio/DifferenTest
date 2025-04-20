@@ -1,5 +1,12 @@
 <template>
   <div class="space-y-6">
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 flex flex-col items-center">
+        <BaseAnimation type="loading" :loop="true" />
+      </div>
+    </div>
+
     <!-- Quick Stats Section -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-white rounded-lg shadow-md p-6">
@@ -86,7 +93,7 @@
             Back to Quizzes
           </button>
         </div>
-        <QuizGenerator :classId="selectedClassId" />
+        <QuizGenerator :classId="selectedClassId" @generated="handleQuizGenerated" @quiz-updated="loadStats" />
       </div>
       <div v-else-if="activeTab === 'submissions'">
         <TeacherSubmissions />
@@ -109,6 +116,7 @@ import TeacherSubmissions from './TeacherSubmissions.vue';
 import TeacherReports from './TeacherReports.vue';
 import FirebaseService from '../lib/firebaseService';
 import IconService from './IconService.vue';
+import BaseAnimation from './BaseAnimation.vue';
 
 export default {
   name: 'TeacherDashboard',
@@ -118,11 +126,12 @@ export default {
     ClassManager,
     TeacherSubmissions,
     TeacherReports,
-    IconService
+    IconService,
+    BaseAnimation
   },
   setup() {
     const { user } = useAuth();
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const activeTab = ref('classes');
     const selectedClassId = ref(null);
     const stats = ref({
@@ -130,7 +139,7 @@ export default {
       totalQuizzes: 0,
       totalSubmissions: 0
     });
-    const isLoading = ref(true);
+    const isLoading = ref(false);
 
     const tabs = [
       { id: 'classes', name: 'Classes' },
@@ -148,7 +157,7 @@ export default {
         stats.value = dashboardStats;
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
-        showNotification('Error', 'Failed to load dashboard statistics', 'error');
+        showError('Failed to load dashboard statistics');
       } finally {
         isLoading.value = false;
       }
@@ -157,6 +166,23 @@ export default {
     const handleQuizSelect = (quizId) => {
       activeTab.value = 'quizzes';
       selectedClassId.value = quizId;
+    };
+
+    const handleQuizGenerated = async (quizData) => {
+      isLoading.value = true;
+      try {
+        await FirebaseService.createQuiz(quizData);
+        showSuccess(`Quiz "${quizData.title}" saved successfully!`);
+        // Reset form after successful save
+        activeTab.value = 'quizzes';
+        //reload stats
+        loadStats();
+      } catch (error) {
+        console.error('Error saving quiz:', error);
+        showError(`Error saving quiz "${quizData.title}". Please try again.`);
+      } finally {
+        isLoading.value = false;
+      }
     };
 
     onMounted(() => {
@@ -177,6 +203,7 @@ export default {
       stats,
       isLoading,
       handleQuizSelect,
+      handleQuizGenerated,
       tabs
     };
   }

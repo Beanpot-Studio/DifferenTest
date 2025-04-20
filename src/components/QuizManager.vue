@@ -223,7 +223,7 @@ export default {
     const quizzes = ref([]);
     const showEditModal = ref(false);
     const currentQuiz = ref(null);
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const showLessonPlanModal = ref(false);
     const currentLessonPlan = ref(null);
     const lessonPlanText = ref('');
@@ -241,7 +241,7 @@ export default {
         quizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
       } catch (error) {
         console.error('Error fetching quizzes:', error);
-        showNotification('Error', 'Error fetching quizzes', 'error');
+        showError('Error fetching quizzes');
       }
     };
 
@@ -264,10 +264,10 @@ export default {
           ...currentQuiz.value,
           updatedAt: new Date()
         });
-        showNotification('Success', 'Quiz updated successfully', 'success');
+        showSuccess('Quiz updated successfully');
       } catch (error) {
         console.error('Error saving quiz:', error);
-        showNotification('Error', 'Error saving quiz', 'error');
+        showError('Error saving quiz');
       }
     };
 
@@ -276,17 +276,17 @@ export default {
 
       try {
         await FirebaseService.deleteQuiz(quizId);
-        showNotification('Success', 'Quiz deleted successfully', 'success');
+        showSuccess('Quiz deleted successfully');
         fetchQuizzes(); // Refresh the list
       } catch (error) {
         console.error('Error deleting quiz:', error);
-        showNotification('Error', 'Error deleting quiz', 'error');
+        showError('Error deleting quiz');
       }
     };
 
     const viewLessonPlan = (quiz) => {
       if (!quiz.lessonPlan) {
-        showNotification('Info', 'No lesson plan available for this quiz', 'info');
+        showError('No lesson plan available for this quiz');
         return;
       }
       currentLessonPlan.value = {
@@ -324,10 +324,10 @@ export default {
         });
         currentLessonPlan.value.content = editedLessonPlan.value;
         isEditing.value = false;
-        showNotification('Success', 'Lesson plan updated successfully', 'success');
+        showSuccess('Lesson plan updated successfully');
       } catch (error) {
         console.error('Error saving lesson plan:', error);
-        showNotification('Error', 'Error saving lesson plan', 'error');
+        showError('Error saving lesson plan');
       }
     };
 

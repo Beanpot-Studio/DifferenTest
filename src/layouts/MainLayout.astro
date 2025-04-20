@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
+import NotificationContainer from "../components/NotificationContainer.vue";
 import "../styles/global.css";
 
 interface Props {
@@ -36,6 +37,7 @@ const { title } = Astro.props;
     <Header client:load />
 
     <main class="flex-grow pt-12 relative z-10">
+      <NotificationContainer client:load />
       <div class="container p-10">
         <slot />
       </div>

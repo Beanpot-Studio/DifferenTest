@@ -8,44 +8,43 @@
     leave-to-class="opacity-0"
   >
     <div
-      v-if="show"
-      class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
+      class="w-full p-4"
       :class="{
-        'bg-green-50': type === 'success',
-        'bg-red-50': type === 'error',
-        'bg-blue-50': type === 'info',
-        'bg-yellow-50': type === 'warning'
+        'bg-green-100': type === 'success',
+        'bg-red-100': type === 'error',
+        'bg-blue-100': type === 'info',
+        'bg-yellow-100': type === 'warning'
       }"
     >
-      <div class="p-4">
-        <div class="flex items-start">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <div class="flex items-center">
           <div class="flex-shrink-0">
             <IconService
               v-if="type === 'success'"
               name="check"
               size="6"
-              color="text-green-400"
+              color="text-green-600"
             />
             <IconService
               v-else-if="type === 'error'"
               name="x"
               size="6"
-              color="text-red-400"
+              color="text-red-600"
             />
             <IconService
               v-else-if="type === 'info'"
               name="info"
               size="6"
-              color="text-blue-400"
+              color="text-blue-600"
             />
             <IconService
               v-else-if="type === 'warning'"
               name="warning"
               size="6"
-              color="text-yellow-400"
+              color="text-yellow-600"
             />
           </div>
-          <div class="ml-3 w-0 flex-1 pt-0.5">
+          <div class="ml-3">
             <p class="text-sm font-medium" :class="{
               'text-green-800': type === 'success',
               'text-red-800': type === 'error',
@@ -63,16 +62,20 @@
               {{ message }}
             </p>
           </div>
-          <div class="ml-4 flex-shrink-0 flex">
-            <button
-              @click="$emit('close')"
-              class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <span class="sr-only">Close</span>
-              <IconService name="x" size="6" />
-            </button>
-          </div>
         </div>
+        <button
+          @click="$emit('close')"
+          class="ml-3 flex-shrink-0"
+          :class="{
+            'text-green-600 hover:text-green-800': type === 'success',
+            'text-red-600 hover:text-red-800': type === 'error',
+            'text-blue-600 hover:text-blue-800': type === 'info',
+            'text-yellow-600 hover:text-yellow-800': type === 'warning'
+          }"
+        >
+          <span class="sr-only">Close</span>
+          <IconService name="x" size="6" />
+        </button>
       </div>
     </div>
   </Transition>
@@ -102,11 +105,15 @@ export default {
     duration: {
       type: Number,
       default: 5000
-    },
-    show: {
-      type: Boolean,
-      default: true
     }
+  },
+  mounted() {
+    console.log('Notification mounted with props:', {
+      title: this.title,
+      message: this.message,
+      type: this.type,
+      duration: this.duration
+    });
   }
 };
 </script> 

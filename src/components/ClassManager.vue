@@ -209,7 +209,7 @@ export default {
     });
     const editingClass = ref(null);
     const selectedQuiz = ref('');
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const loading = ref(false);
     const showCreateClassModal = ref(true);
 
@@ -242,10 +242,10 @@ export default {
         };
         
         showCreateClassModal.value = false;
-        showNotification('Success', 'Class created successfully', 'success');
+        showSuccess('Class created successfully');
         await fetchClasses();
       } catch (error) {
-        showNotification('Error', 'Failed to create class', 'error');
+        showError('Failed to create class');
       } finally {
         loading.value = false;
       }
@@ -262,7 +262,7 @@ export default {
         }));
       } catch (error) {
         console.error('Error fetching classes:', error);
-        showNotification('Error', 'Error fetching classes. Please try again.', 'error');
+        showError('Error fetching classes. Please try again.');
       }
     };
 
@@ -273,7 +273,7 @@ export default {
         availableQuizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
       } catch (error) {
         console.error('Error fetching quizzes:', error);
-        showNotification('Error', 'Error fetching quizzes. Please try again.', 'error');
+        showError('Error fetching quizzes. Please try again.');
       }
     };
 
@@ -296,10 +296,10 @@ export default {
         }
         
         editingClass.value = null;
-        showNotification('Success', 'Class updated successfully', 'success');
+        showSuccess('Class updated successfully');
       } catch (error) {
         console.error('Error saving class:', error);
-        showNotification('Error', 'Error saving class. Please try again.', 'error');
+        showError('Error saving class. Please try again.');
       }
     };
 
@@ -309,10 +309,10 @@ export default {
       try {
         await FirebaseService.deleteClass(classId);
         classes.value = classes.value.filter(c => c.id !== classId);
-        showNotification('Success', 'Class deleted successfully', 'success');
+        showSuccess('Class deleted successfully');
       } catch (error) {
         console.error('Error deleting class:', error);
-        showNotification('Error', 'Error deleting class. Please try again.', 'error');
+        showError('Error deleting class. Please try again.');
       }
     };
 
@@ -337,10 +337,10 @@ export default {
         }
 
         selectedQuiz.value = '';
-        showNotification('Success', 'Quiz added to class successfully', 'success');
+        showSuccess('Quiz added to class successfully');
       } catch (error) {
         console.error('Error adding quiz to class:', error);
-        showNotification('Error', 'Error adding quiz to class. Please try again.', 'error');
+        showError('Error adding quiz to class. Please try again.');
       }
     };
 
@@ -354,16 +354,16 @@ export default {
             q => q.id !== quizId
           );
         }
-        showNotification('Success', 'Quiz removed from class successfully', 'success');
+        showSuccess('Quiz removed from class successfully');
       } catch (error) {
-        showNotification('Error', 'Error removing quiz from class. Please try again.', 'error');
+        showError('Error removing quiz from class. Please try again.');
       }
     };
 
     const copyClassCode = () => {
       if (!editingClass.value?.code) return;
       navigator.clipboard.writeText(editingClass.value.code);
-      showNotification('Success', 'Class code copied to clipboard!', 'success');
+      showSuccess('Class code copied to clipboard!');
     };
 
     const formatDate = (timestamp) => {

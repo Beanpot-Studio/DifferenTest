@@ -196,7 +196,7 @@ export default {
   },
   setup(props) {
     const { user, role } = useAuth();
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const quiz = ref(null);
     const loading = ref(true);
     const error = ref(null);
@@ -276,7 +276,7 @@ export default {
         quizStartTime.value = Date.now();
       } catch (error) {
         console.error('Error loading quiz:', error);
-        error.value = error.message;
+        showError('Failed to load quiz. Please try again.');
       } finally {
         loading.value = false;
       }
@@ -336,15 +336,15 @@ export default {
           if (role.value === 'student' && score.value === 100) {
             const result = await FirebaseService.claimBadge(user.value.uid, quiz.value.id, props.classId, score.value);
             if (result.success) {
-              showNotification('Success', result.message, 'success');
+              showSuccess('Success', result.message, 'success');
               badgeClaimed.value = true;
               await openBadgeModal();
             } else if (result.message && result.message.includes('already claimed')) {
-              showNotification('Info', 'You have already claimed this badge!', 'info');
+              showSuccess('Info', 'You have already claimed this badge!', 'info');
               badgeClaimed.value = true;
               await openBadgeModal();
             } else {
-              showNotification('Error', result.message || 'Failed to claim badge', 'error');
+              showError('Failed to claim badge');
             }
           } else {
             // Add quiz completion activity only for non-perfect scores
@@ -361,11 +361,13 @@ export default {
               timeSpent: Date.now() - quizStartTime.value,
               isEmbedded: props.isEmbedded
             });
-            showNotification('Success', `Quiz completed! Score: ${score.value}%`, 'success');
+            showSuccess('Success', `Quiz completed! Score: ${score.value}%`, 'success');
           }
         } catch (error) {
-          console.error('Error saving quiz results:', error);
-          showNotification('Error', 'Failed to save quiz results', 'error');
+          console.error('Error submitting quiz:', error);
+          showError('Failed to submit quiz. Please try again.');
+        } finally {
+          loading.value = false;
         }
       }
     };
@@ -438,9 +440,9 @@ export default {
     const copyLink = async () => {
       try {
         await navigator.clipboard.writeText(shareUrl.value);
-        showNotification('Success', 'Link copied to clipboard!', 'success');
+        showSuccess('Success', 'Link copied to clipboard!', 'success');
       } catch {
-        showNotification('Error', 'Failed to copy link', 'error');
+        showError('Failed to copy link');
       }
     };
 

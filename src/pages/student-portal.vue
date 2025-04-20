@@ -37,10 +37,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { FirebaseService } from '../lib/firebaseService'
+import { useNotification } from '../composables/useNotification'
 
 const router = useRouter()
 const route = useRoute()
 const pendingBadge = ref(null)
+const { showSuccess, showError } = useNotification()
 
 onMounted(async () => {
   // Check if there's a badge to claim from the URL
@@ -57,20 +59,17 @@ const claimBadge = async (badge) => {
   try {
     const result = await FirebaseService.claimBadge(badge.id)
     if (result.success) {
-      showNotification('Badge claimed successfully!', 'success')
+      showSuccess('Badge claimed successfully!')
       pendingBadge.value = null
       // Update the URL to remove the badgeId parameter
       router.replace({ query: {} })
     } else {
-      showNotification(result.error || 'Failed to claim badge', 'error')
+      showError(result.error || 'Failed to claim badge')
     }
   } catch (error) {
-    showNotification('An error occurred while claiming the badge', 'error')
+    showError('An error occurred while claiming the badge')
   }
 }
 
-const showNotification = (message, type = 'info') => {
-  // Implement your notification system here
-  console.log(`${type}: ${message}`)
-}
+
 </script> 

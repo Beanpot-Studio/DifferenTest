@@ -78,6 +78,7 @@
               </div>
             </div>
             <button
+              v-if="!classItem.isEnrolled"
               @click="joinClass(classItem)"
               :disabled="classItem.enrollmentStatus === 'pending' || classItem.enrollmentStatus === 'accepted' || classItem.enrollmentStatus === 'rejected'"
               :class="{
@@ -187,7 +188,7 @@ export default {
     const showMessage = ref(false);
     const message = ref('');
     const messageType = ref('success');
-    const { showNotification } = useNotification();
+    const { showSuccess, showError } = useNotification();
     const selectedClass = ref(null);
     const enrollmentStatus = ref(null);
     const enrolling = ref(false);
@@ -207,14 +208,7 @@ export default {
       });
     });
 
-    // Show message function
-    const showMessagePopup = (text, type = 'success') => {
-      showNotification(
-        type === 'success' ? 'Success' : 'Error',
-        text,
-        type
-      );
-    };
+    
 
     // Load all available classes
     const loadClasses = async () => {
@@ -234,7 +228,7 @@ export default {
       } catch (err) {
         console.error('Error loading classes:', err);
         error.value = 'Failed to load classes. Please try again.';
-        showMessagePopup('Failed to load classes. Please try again.', 'error');
+        showError('Failed to load classes. Please try again.');
       } finally {
         loading.value = false;
       }
@@ -255,10 +249,9 @@ export default {
         );
 
         // Show success message
-        showNotification('Success', 'Enrollment request sent successfully', 'success');
+        showSuccess('Enrollment request sent successfully');
       } catch (error) {
-        console.error('Error joining class:', error);
-        showNotification('Error', 'Failed to join class. Please try again.', 'error');
+        showError('Failed to join class. Please try again.');
       }
     };
 
@@ -307,10 +300,10 @@ export default {
         enrolling.value = true;
         await FirebaseService.enrollInClass(classId, user.value.uid);
         enrollmentStatus.value = 'pending';
-        showNotification('Success', 'Enrollment request sent successfully', 'success');
+        showSuccess('Enrollment request sent successfully');
       } catch (error) {
         console.error('Error enrolling in class:', error);
-        showNotification('Error', 'Failed to enroll in class', 'error');
+        showError('Failed to enroll in class');
       } finally {
         enrolling.value = false;
       }
@@ -349,7 +342,6 @@ export default {
       showMessage,
       message,
       messageType,
-      showMessagePopup,
       selectedClass,
       enrollmentStatus,
       enrolling,

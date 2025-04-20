@@ -122,7 +122,7 @@ import FirebaseService from '../lib/firebaseService';
 import { useNotification } from '../composables/useNotification';
 
 const { user } = useAuth();
-const { showNotification } = useNotification();
+const { showSuccess, showError, showInfo } = useNotification();
 const showModal = ref(false);
 const selectedQuiz = ref(null);
 const quizAttempts = ref({});
@@ -221,12 +221,12 @@ const claimBadge = async (quiz) => {
     // Check if badge already exists in Firebase
     const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, quiz.id);
     if (hasBadge) {
-      showNotification('Info', 'You already have this badge!', 'info');
+      showInfo('You already have this badge!');
       return;
     }
 
     // Show initial loading state
-    showNotification('Info', 'Issuing your badge...', 'info');
+    showInfo('Issuing your badge...');
 
     // Generate Open Badge JSON
     const badgeData = {
@@ -252,11 +252,11 @@ const claimBadge = async (quiz) => {
 
     // Store badge in Firebase
     await FirebaseService.createBadge(badgeData);
-    showNotification('Success', 'Badge issued successfully!', 'success');
+    showSuccess('Badge issued successfully!');
     await loadBadgeStatus();
   } catch (error) {
     console.error('Error claiming badge:', error);
-    showNotification('Error', 'Failed to issue badge. Please try again.', 'error');
+    showError('Failed to issue badge. Please try again.');
   }
 };
 
@@ -264,13 +264,13 @@ const verifyBadge = async (badgeId) => {
   try {
     const result = await FirebaseService.verifyBadge(badgeId);
     if (result.valid) {
-      showNotification('Success', 'Badge verified successfully!', 'success');
+      showSuccess('Badge verified successfully!');
     } else {
-      showNotification('Error', 'Invalid badge', 'error');
+      showError('Invalid badge');
     }
   } catch (error) {
     console.error('Error verifying badge:', error);
-    showNotification('Error', 'Failed to verify badge', 'error');
+    showError('Failed to verify badge');
   }
 };
 

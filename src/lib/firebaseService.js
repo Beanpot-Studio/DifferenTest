@@ -18,6 +18,14 @@ import {
 import { db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Get API key from environment variable
+const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
+if (!apiKey) {
+  console.error('Gemini API key not found in environment variables');
+}
+const genAI = new GoogleGenerativeAI(apiKey);
 
 class FirebaseService {
   // User Operations
@@ -255,8 +263,57 @@ class FirebaseService {
   }
 
   static async updateClass(classId, data) {
-    const classRef = doc(db, 'classes', classId);
-    await updateDoc(classRef, { ...data, updatedAt: serverTimestamp() });
+    try {
+      const classRef = doc(db, 'classes', classId);
+      await updateDoc(classRef, { 
+        ...data, 
+        updatedAt: serverTimestamp() 
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating class:', error);
+      throw error;
+    }
+  }
+
+  static async deleteClass(classId) {
+    try {
+      // Delete the class document
+      await deleteDoc(doc(db, 'classes', classId));
+      
+      // Delete associated enrollments
+      const enrollmentsQuery = query(
+        collection(db, 'enrollments'),
+        where('classId', '==', classId)
+      );
+      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+      
+      const deleteEnrollmentPromises = enrollmentsSnapshot.docs.map(doc => 
+        deleteDoc(doc.ref)
+      );
+      
+      // Delete associated activities
+      const activitiesQuery = query(
+        collection(db, 'activities'),
+        where('classId', '==', classId)
+      );
+      const activitiesSnapshot = await getDocs(activitiesQuery);
+      
+      const deleteActivityPromises = activitiesSnapshot.docs.map(doc => 
+        deleteDoc(doc.ref)
+      );
+      
+      // Wait for all deletions to complete
+      await Promise.all([
+        ...deleteEnrollmentPromises,
+        ...deleteActivityPromises
+      ]);
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting class:', error);
+      throw error;
+    }
   }
 
   // Quiz Operations
@@ -312,24 +369,6 @@ class FirebaseService {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-
-      // Add the quiz to the class's quizzes array
-      const classRef = doc(db, 'classes', quizData.classId);
-      const classDoc = await getDoc(classRef);
-      
-      if (classDoc.exists()) {
-        const classData = classDoc.data();
-        const quizzes = classData.quizzes || [];
-        quizzes.push({
-          id: quizRef.id,
-          title: quizData.title
-        });
-        
-        await updateDoc(classRef, {
-          quizzes,
-          updatedAt: serverTimestamp()
-        });
-      }
 
       return quizRef.id;
     } catch (error) {
@@ -806,615 +845,19 @@ class FirebaseService {
     }
   }
 
-  static async addQuizToClass(classId, quizId) {
+  static async getClassQuizzes(classId) {
     try {
-      const classRef = doc(db, 'classes', classId);
-      const classDoc = await getDoc(classRef);
-      
-      if (!classDoc.exists()) {
-        throw new Error('Class not found');
-      }
-      
-      const classData = classDoc.data();
-      const quizzes = classData.quizzes || [];
-      
-      // Add quiz ID to quizzes array if not already present
-      if (!quizzes.includes(quizId)) {
-        quizzes.push(quizId);
-        await updateDoc(classRef, {
-          quizzes,
-          updatedAt: serverTimestamp()
-        });
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error adding quiz to class:', error);
-      throw error;
-    }
-  }
-
-  static async removeQuizFromClass(classId, quizId) {
-    try {
-      const classRef = doc(db, 'classes', classId);
-      const classDoc = await getDoc(classRef);
-      
-      if (!classDoc.exists()) {
-        throw new Error('Class not found');
-      }
-      
-      const classData = classDoc.data();
-      const quizzes = classData.quizzes || [];
-      
-      // Filter out the quiz object with matching id
-      const updatedQuizzes = quizzes.filter(quiz => quiz.id !== quizId);
-      
-      // Update the class document with the new quizzes array
-      await updateDoc(classRef, {
-        quizzes: updatedQuizzes,
-        updatedAt: serverTimestamp()
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error removing quiz from class:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get all public classes
-   * @returns {Promise<ClassData[]>} Array of public classes
-   */
-  static async getPublicClasses() {
-    try {
-      const classesQuery = query(
-        collection(db, 'classes'),
-        where('isPublic', '==', true),
+      const q = query(
+        collection(db, 'quizzes'),
+        where('classId', '==', classId),
         orderBy('createdAt', 'desc')
       );
-      const classesSnapshot = await getDocs(classesQuery);
-      
-      const classes = await Promise.all(
-        classesSnapshot.docs.map(async (classDoc) => {
-          const classData = classDoc.data();
-          
-          // Get teacher information
-          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-          const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-          
-          // Get quiz details
-          const quizzesWithDetails = await Promise.all(
-            (classData.quizzes || []).map(async (quiz) => {
-              const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
-              if (quizDoc.exists()) {
-                const quizData = quizDoc.data();
-                return {
-                  id: quiz.id,
-                  title: quizData.title,
-                  description: quizData.description,
-                  questionCount: quizData.questions?.length || 0,
-                  lessonPlan: quizData.lessonPlan || ''
-                };
-              }
-              return {
-                id: quiz.id,
-                questionCount: 0,
-                lessonPlan: ''
-              };
-            })
-          );
-          
-          return {
-            id: classDoc.id,
-            name: classData.name,
-            description: classData.description || '',
-            quizzes: quizzesWithDetails,
-            teacherName: teacherData?.name || 'Unknown Teacher',
-            code: classData.code,
-            lessonPlan: quizzesWithDetails[0]?.lessonPlan || '' // Get lesson plan from first quiz
-          };
-        })
-      );
-      
-      return classes;
-    } catch (error) {
-      console.error('Error getting public classes:', error);
-      throw error;
-    }
-  }
-
-  static async getUserActivities(userId) {
-    try {
-      if (!userId) {
-        console.error('No user ID provided');
-        return [];
-      }
-
-      // Query for activities where user is either the userId or studentId
-      const q = query(
-        collection(db, 'activities'),
-        where('studentId', '==', userId),
-        orderBy('timestamp', 'desc'),
-        limit(10)
-      );
       
       const snapshot = await getDocs(q);
-      const activities = [];
-      
-      for (const docSnap of snapshot.docs) {
-        const data = docSnap.data();
-        let className = 'Unknown Class';
-        let teacherName = 'Unknown Teacher';
-        
-        // Get class details if classId exists
-        if (data.classId) {
-          try {
-            const classDoc = await getDoc(doc(db, 'classes', data.classId));
-            if (classDoc.exists()) {
-              const classData = classDoc.data();
-              className = classData.name || 'Unknown Class';
-              
-              // Get teacher details
-              if (classData.teacherId) {
-                const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-                if (teacherDoc.exists()) {
-                  teacherName = teacherDoc.data().name || 'Unknown Teacher';
-                }
-              }
-            }
-          } catch (err) {
-            console.error('Error loading class or teacher details:', err);
-          }
-        }
-        
-        // Map activity type to display text
-        let activityTypeText = 'Unknown Activity';
-        switch (data.type) {
-          case 'enrollment_request':
-            activityTypeText = 'Requested to join class';
-            break;
-          case 'enrollment_accepted':
-            activityTypeText = 'Enrollment accepted';
-            break;
-          case 'enrollment_rejected':
-            activityTypeText = 'Enrollment rejected';
-            break;
-          case 'quiz_started':
-            activityTypeText = 'Started quiz';
-            break;
-          case 'quiz_completed':
-            activityTypeText = 'Completed quiz';
-            break;
-          case 'quiz_retake':
-            activityTypeText = 'Retook quiz';
-            break;
-          case 'achievement':
-            activityTypeText = 'Earned achievement';
-            break;
-          case 'progress':
-            activityTypeText = 'Made progress';
-            break;
-          case 'class_joined':
-            activityTypeText = 'Joined class';
-            break;
-          case 'class_left':
-            activityTypeText = 'Left class';
-            break;
-        }
-        
-        activities.push({
-          id: docSnap.id,
-          classId: data.classId,
-          className: className,
-          teacherName: teacherName,
-          timestamp: data.timestamp?.toDate() || new Date(),
-          type: data.type,
-          typeText: activityTypeText,
-          userId: data.userId,
-          studentId: data.studentId,
-          studentName: data.studentName,
-          status: data.status,
-          quizId: data.quizId,
-          quizTitle: data.quizTitle,
-          score: data.score,
-          correctAnswers: data.correctAnswers,
-          totalQuestions: data.totalQuestions,
-          timeSpent: data.timeSpent,
-          improvement: data.improvement,
-          activityDescription: data.activityDescription
-        });
-      }
-      
-      return activities;
-    } catch (error) {
-      console.error('Error getting user activities:', error);
-      throw error;
-    }
-  }
-
-  static async getUserQuizHistory(userId) {
-    try {
-      if (!userId) {
-        throw new Error('User ID is required to fetch quiz history');
-      }
-
-      const q = query(
-        collection(db, 'quizAttempts'),
-        where('userId', '==', userId),
-        orderBy('timestamp', 'desc')
-      );
-      
-      const snapshot = await getDocs(q);
-      const attempts = [];
-      
-      for (const snapDoc of snapshot.docs) {
-        const attemptData = snapDoc.data();
-        
-        // Get quiz details
-        const quizDoc = await getDoc(doc(db, 'quizzes', attemptData.quizId));
-        const quizData = quizDoc.data();
-        
-        // Get class details
-        const classDoc = await getDoc(doc(db, 'classes', attemptData.classId));
-        const classData = classDoc.data();
-        
-        attempts.push({
-          id: snapDoc.id,
-          quizId: attemptData.quizId,
-          quizTitle: quizData?.title || 'Unknown Quiz',
-          classId: attemptData.classId,
-          className: classData?.name || 'Unknown Class',
-          score: attemptData.score,
-          correctAnswers: attemptData.correctAnswers,
-          questionCount: attemptData.questionCount,
-          submittedAt: attemptData.timestamp?.toDate(),
-          timeSpent: attemptData.timeSpent,
-          questionResults: attemptData.questionResults?.map(result => ({
-            questionText: result.questionText,
-            selectedOption: result.selectedOption,
-            isCorrect: result.isCorrect,
-            correctIndex: result.correctIndex
-          })) || []
-        });
-      }
-      
-      return attempts;
-    } catch (error) {
-      console.error('Error getting user history:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get user's badges
-   * @param {string} userId - The user ID to get badges for
-   * @returns {Promise<Array<Object>>} Array of badge objects
-   */
-  static async getUserBadges(userId) {
-    try {
-      const badgesRef = collection(db, 'badges');
-      const q = query(badgesRef, where('metadata.userId', '==', userId));
-      const querySnapshot = await getDocs(q);
-      
-      return querySnapshot.docs.map(doc => ({
+      return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-    } catch (error) {
-      console.error('Error fetching user badges:', error);
-      throw error;
-    }
-  }
-
-  static async getAvailableClasses(userId) {
-    try {
-      if (!userId) {
-        throw new Error('User ID is required to fetch available classes');
-      }
-
-      // Get user's current enrollments
-      const enrollmentsQuery = query(
-        collection(db, 'enrollments'),
-        where('studentId', '==', userId)
-      );
-      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-      const enrolledClassIds = enrollmentsSnapshot.docs.map(enrollmentDoc => enrollmentDoc.data().classId);
-
-      // Get all non-public classes with teacher details
-      const classesQuery = query(
-        collection(db, 'classes'),
-        where('isPublic', '==', false),
-        orderBy('createdAt', 'desc')
-      );
-      const classesSnapshot = await getDocs(classesQuery);
-      
-      const classes = [];
-      
-      for (const classDoc of classesSnapshot.docs) {
-        const classData = classDoc.data();
-        
-        // Get teacher information
-        const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-        const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-        
-        // Get quizzes for this class
-        const quizzesQuery = query(
-          collection(db, 'quizzes'),
-          where('classId', '==', classDoc.id)
-        );
-        const quizzesSnapshot = await getDocs(quizzesQuery);
-        const quizCount = quizzesSnapshot.size;
-        
-        classes.push({
-          id: classDoc.id,
-          name: classData.name,
-          teacherName: teacherData?.name || 'Unknown Teacher',
-          isEnrolled: enrolledClassIds.includes(classDoc.id),
-          code: classData.code || '',
-          description: classData.description || '',
-          quizCount: quizCount
-        });
-      }
-      
-      return {
-        classes,
-        enrolledClasses: enrolledClassIds
-      };
-    } catch (error) {
-      console.error('Error getting available classes:', error);
-      throw error;
-    }
-  }
-
- 
-  static async enrollInClass(classId, studentId) {
-    try {
-      if (!classId || !studentId) {
-        throw new Error('Class ID and Student ID are required');
-      }
-
-      // Check if already enrolled
-      const enrollmentsQuery = query(
-        collection(db, 'enrollments'),
-        where('classId', '==', classId),
-        where('studentId', '==', studentId)
-      );
-      const querySnapshot = await getDocs(enrollmentsQuery);
-      
-      if (!querySnapshot.empty) {
-        return {
-          success: false,
-          message: 'You are already enrolled in this class',
-          status: 'error'
-        };
-      }
-
-      // Get class and student details for activity
-      const [classDoc, studentDoc] = await Promise.all([
-        getDoc(doc(db, 'classes', classId)),
-        getDoc(doc(db, 'users', studentId))
-      ]);
-
-      if (!classDoc.exists() || !studentDoc.exists()) {
-        throw new Error('Class or student not found');
-      }
-
-      const classData = classDoc.data();
-      const studentData = studentDoc.data();
-
-      // Create enrollment
-      const enrollmentData = {
-        classId: classId,
-        studentId: studentId,
-        status: 'pending',
-        enrolledAt: serverTimestamp()
-      };
-
-      const enrollmentRef = await addDoc(collection(db, 'enrollments'), enrollmentData);
-
-      // Create activity record
-      await addDoc(collection(db, 'activities'), {
-        type: 'enrollment_request',
-        classId: classId,
-        className: classData.name,
-        studentId: studentId,
-        studentName: studentData.name,
-        teacherId: classData.teacherId,
-        status: 'pending',
-        timestamp: serverTimestamp()
-      });
-
-      return {
-        success: true,
-        message: 'Enrollment request sent successfully',
-        status: 'pending'
-      };
-    } catch (error) {
-      console.error('Error enrolling in class:', error);
-      return {
-        success: false,
-        message: 'Failed to enroll in class',
-        status: 'error'
-      };
-    }
-  }
-
-  
-  static async getEnrollmentStatus(studentId, classId) {
-    try {
-      if (!studentId || !classId) {
-        console.warn('Missing studentId or classId:', { studentId, classId });
-        return null;
-      }
-
-      const enrollmentsQuery = query(
-        collection(db, 'enrollments'),
-        where('studentId', '==', studentId),
-        where('classId', '==', classId)
-      );
-      
-      const querySnapshot = await getDocs(enrollmentsQuery);
-      
-      if (querySnapshot.empty) {
-        return null;
-      }
-
-      // Return the status of the first matching enrollment
-      return querySnapshot.docs[0].data().status;
-    } catch (error) {
-      console.error('Error getting enrollment status:', error);
-      return null;
-    }
-  }
-
-  static async checkBadgeExists(userId, quizId) {
-    try {
-      const badgeRef = doc(db, 'badges', `${userId}_${quizId}`);
-      const badgeDoc = await getDoc(badgeRef);
-      return badgeDoc.exists();
-    } catch (error) {
-      console.error('Error checking badge existence:', error);
-      return false;
-    }
-  }
-
-  static async claimBadge(userId, quizId, classId, score) {
-    try {
-      if (!userId || !quizId || !classId || score !== 100) {
-        return {
-          success: false,
-          message: 'Invalid parameters for badge claim',
-          status: 'error'
-        };
-      }
-
-      // Check if badge already exists for this quiz
-      const badgeRef = doc(db, 'badges', `${userId}_${quizId}`);
-      const badgeDoc = await getDoc(badgeRef);
-
-      if (badgeDoc.exists()) {
-        return {
-          success: false,
-          message: 'Badge already claimed for this quiz',
-          status: 'error'
-        };
-      }
-
-      // Get quiz details
-      const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
-      if (!quizDoc.exists()) {
-        return {
-          success: false,
-          message: 'Quiz not found',
-          status: 'error'
-        };
-      }
-      const quizData = quizDoc.data();
-
-      // Get class details
-      const classDoc = await getDoc(doc(db, 'classes', classId));
-      if (!classDoc.exists()) {
-        return {
-          success: false,
-          message: 'Class not found',
-          status: 'error'
-        };
-      }
-      const classData = classDoc.data();
-
-      // Get user details
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (!userDoc.exists()) {
-        return {
-          success: false,
-          message: 'User not found',
-          status: 'error'
-        };
-      }
-      const userData = userDoc.data();
-
-      // Get teacher details
-      const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-      const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-
-      // Prepare badge data with all required fields
-      const badgeData = {
-        userId: userId,
-        userEmail: userData.email,
-        quizId: quizId,
-        quizTitle: quizData.title,
-        classId: classId,
-        className: classData.name,
-        teacherId: classData.teacherId,
-        teacherName: teacherData?.name || 'Teacher',
-        teacherEmail: teacherData?.email || 'teacher@example.com',
-        studentName: userData.name || 'Student',
-        name: `${quizData.title} Master`,
-        description: `Awarded for completing ${quizData.title} with a perfect score`,
-        image: 'https://badges.beanpotstudio.com/badges/default-badge.png',
-        score: score
-      };
-
-      // Create the badge
-      const badgeId = await this.createBadge(badgeData);
-
-      // Create activity record
-      const activityData = {
-        userId,
-        type: 'badge_claimed',
-        badgeId: badgeId,
-        quizId,
-        quizTitle: quizData.title,
-        classId,
-        timestamp: serverTimestamp(),
-        activityDescription: `🏆 Claimed "${badgeData.name}" badge for perfect score on ${quizData.title}!`
-      };
-      await addDoc(collection(db, 'activities'), activityData);
-
-      return {
-        success: true,
-        message: `Achievement Unlocked! You've earned the "${badgeData.name}" badge!`,
-        status: 'success',
-        badgeId: badgeId
-      };
-    } catch (error) {
-      console.error('Error claiming badge:', error);
-      return {
-        success: false,
-        message: 'Failed to claim badge',
-        status: 'error'
-      };
-    }
-  }
-
-  static async getClassQuizzes(classId) {
-    try {
-      // Get the class document to access its quizzes array
-      const classDoc = await getDoc(doc(db, 'classes', classId));
-      if (!classDoc.exists()) {
-        return [];
-      }
-
-      const classData = classDoc.data();
-      const quizzes = classData.quizzes || [];
-
-      if (quizzes.length === 0) {
-        return [];
-      }
-
-      // Get all quizzes in parallel
-      const quizPromises = quizzes.map(quiz => getDoc(doc(db, 'quizzes', quiz.id)));
-      const quizSnapshots = await Promise.all(quizPromises);
-
-      // Map the quiz data
-      return quizSnapshots
-        .filter(snap => snap.exists())
-        .map(snap => ({
-          id: snap.id,
-          ...snap.data()
-        }))
-        .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
     } catch (error) {
       console.error('Error getting class quizzes:', error);
       throw error;
@@ -1640,6 +1083,46 @@ class FirebaseService {
     }
   }
 
+  static async generateQuiz(content) {
+    try {
+      // Generate quiz using Gemini API
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+      
+      const prompt = `Generate a 5-question multiple choice quiz based on this lesson plan. 
+      Format the response as a JSON object with this structure:
+      {
+        "title": "quiz title",
+        "questions": [
+          {
+            "text": "question text",
+            "options": [
+              {"text": "option text"},
+              {"text": "option text"},
+              {"text": "option text"},
+              {"text": "option text"}
+            ],
+            "correctIndex": 0
+          }
+        ]
+      }
+      
+      Lesson plan:
+      ${content}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text();
+      
+      text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const quizData = JSON.parse(text);
+      
+      return quizData;
+    } catch (error) {
+      console.error('Error generating quiz:', error);
+      throw error;
+    }
+  }
+
   static async getAllBadges() {
     try {
       const badgesRef = collection(db, 'badges');
@@ -1651,6 +1134,468 @@ class FirebaseService {
       }));
     } catch (error) {
       console.error('Error getting all badges:', error);
+      throw error;
+    }
+  }
+
+  static async getAvailableClasses(userId) {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required to fetch available classes');
+      }
+
+      // Get user's current enrollments
+      const enrollmentsQuery = query(
+        collection(db, 'enrollments'),
+        where('studentId', '==', userId)
+      );
+      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+      const enrolledClassIds = enrollmentsSnapshot.docs.map(enrollmentDoc => enrollmentDoc.data().classId);
+
+      // Get all non-public classes with teacher details
+      const classesQuery = query(
+        collection(db, 'classes'),
+        where('isPublic', '==', false),
+        orderBy('createdAt', 'desc')
+      );
+      const classesSnapshot = await getDocs(classesQuery);
+      
+      const classes = [];
+      
+      for (const classDoc of classesSnapshot.docs) {
+        const classData = classDoc.data();
+        
+        // Get teacher information
+        const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+        const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+        
+        // Get quizzes for this class
+        const quizzesQuery = query(
+          collection(db, 'quizzes'),
+          where('classId', '==', classDoc.id)
+        );
+        const quizzesSnapshot = await getDocs(quizzesQuery);
+        const quizCount = quizzesSnapshot.size;
+        
+        classes.push({
+          id: classDoc.id,
+          name: classData.name,
+          teacherName: teacherData?.name || 'Unknown Teacher',
+          isEnrolled: enrolledClassIds.includes(classDoc.id),
+          code: classData.code || '',
+          description: classData.description || '',
+          quizCount: quizCount
+        });
+      }
+      
+      return {
+        classes,
+        enrolledClasses: enrolledClassIds
+      };
+    } catch (error) {
+      console.error('Error getting available classes:', error);
+      throw error;
+    }
+  }
+
+  static async enrollInClass(classId, studentId) {
+    try {
+      if (!classId || !studentId) {
+        throw new Error('Class ID and Student ID are required');
+      }
+
+      // Check if already enrolled
+      const enrollmentsQuery = query(
+        collection(db, 'enrollments'),
+        where('classId', '==', classId),
+        where('studentId', '==', studentId)
+      );
+      const querySnapshot = await getDocs(enrollmentsQuery);
+      
+      if (!querySnapshot.empty) {
+        return {
+          success: false,
+          message: 'You are already enrolled in this class',
+          status: 'error'
+        };
+      }
+
+      // Get class and student details for activity
+      const [classDoc, studentDoc] = await Promise.all([
+        getDoc(doc(db, 'classes', classId)),
+        getDoc(doc(db, 'users', studentId))
+      ]);
+
+      if (!classDoc.exists() || !studentDoc.exists()) {
+        throw new Error('Class or student not found');
+      }
+
+      const classData = classDoc.data();
+      const studentData = studentDoc.data();
+
+      // Create enrollment
+      const enrollmentData = {
+        classId: classId,
+        studentId: studentId,
+        status: 'pending',
+        enrolledAt: serverTimestamp()
+      };
+
+      const enrollmentRef = await addDoc(collection(db, 'enrollments'), enrollmentData);
+
+      // Create activity record
+      await addDoc(collection(db, 'activities'), {
+        type: 'enrollment_request',
+        classId: classId,
+        className: classData.name,
+        studentId: studentId,
+        studentName: studentData.name,
+        teacherId: classData.teacherId,
+        status: 'pending',
+        timestamp: serverTimestamp()
+      });
+
+      return {
+        success: true,
+        message: 'Enrollment request sent successfully',
+        status: 'pending'
+      };
+    } catch (error) {
+      console.error('Error enrolling in class:', error);
+      return {
+        success: false,
+        message: 'Failed to enroll in class',
+        status: 'error'
+      };
+    }
+  }
+
+  static async getEnrollmentStatus(studentId, classId) {
+    try {
+      if (!studentId || !classId) {
+        console.warn('Missing studentId or classId:', { studentId, classId });
+        return null;
+      }
+
+      const enrollmentsQuery = query(
+        collection(db, 'enrollments'),
+        where('studentId', '==', studentId),
+        where('classId', '==', classId)
+      );
+      
+      const querySnapshot = await getDocs(enrollmentsQuery);
+      
+      if (querySnapshot.empty) {
+        return null;
+      }
+
+      // Return the status of the first matching enrollment
+      return querySnapshot.docs[0].data().status;
+    } catch (error) {
+      console.error('Error getting enrollment status:', error);
+      return null;
+    }
+  }
+
+  static async checkBadgeExists(userId, quizId) {
+    try {
+      const badgeRef = doc(db, 'badges', `${userId}_${quizId}`);
+      const badgeDoc = await getDoc(badgeRef);
+      return badgeDoc.exists();
+    } catch (error) {
+      console.error('Error checking badge existence:', error);
+      return false;
+    }
+  }
+
+  static async claimBadge(userId, quizId, classId, score) {
+    try {
+      if (!userId || !quizId || !classId || score !== 100) {
+        return {
+          success: false,
+          message: 'Invalid parameters for badge claim',
+          status: 'error'
+        };
+      }
+
+      // Check if badge already exists for this quiz
+      const badgeRef = doc(db, 'badges', `${userId}_${quizId}`);
+      const badgeDoc = await getDoc(badgeRef);
+
+      if (badgeDoc.exists()) {
+        return {
+          success: false,
+          message: 'Badge already claimed for this quiz',
+          status: 'error'
+        };
+      }
+
+      // Get quiz details
+      const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
+      if (!quizDoc.exists()) {
+        return {
+          success: false,
+          message: 'Quiz not found',
+          status: 'error'
+        };
+      }
+      const quizData = quizDoc.data();
+
+      // Get class details
+      const classDoc = await getDoc(doc(db, 'classes', classId));
+      if (!classDoc.exists()) {
+        return {
+          success: false,
+          message: 'Class not found',
+          status: 'error'
+        };
+      }
+      const classData = classDoc.data();
+
+      // Get user details
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        return {
+          success: false,
+          message: 'User not found',
+          status: 'error'
+        };
+      }
+      const userData = userDoc.data();
+
+      // Get teacher details
+      const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+      const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+
+      // Prepare badge data with all required fields
+      const badgeData = {
+        userId: userId,
+        userEmail: userData.email,
+        quizId: quizId,
+        quizTitle: quizData.title,
+        classId: classId,
+        className: classData.name,
+        teacherId: classData.teacherId,
+        teacherName: teacherData?.name || 'Teacher',
+        teacherEmail: teacherData?.email || 'teacher@example.com',
+        studentName: userData.name || 'Student',
+        name: `${quizData.title} Master`,
+        description: `Awarded for completing ${quizData.title} with a perfect score`,
+        image: 'https://badges.beanpotstudio.com/badges/default-badge.png',
+        score: score
+      };
+
+      // Create the badge
+      const badgeId = await this.createBadge(badgeData);
+
+      // Create activity record
+      const activityData = {
+        userId,
+        type: 'badge_claimed',
+        badgeId: badgeId,
+        quizId,
+        quizTitle: quizData.title,
+        classId,
+        timestamp: serverTimestamp(),
+        activityDescription: `🏆 Claimed "${badgeData.name}" badge for perfect score on ${quizData.title}!`
+      };
+      await addDoc(collection(db, 'activities'), activityData);
+
+      return {
+        success: true,
+        message: `Achievement Unlocked! You've earned the "${badgeData.name}" badge!`,
+        status: 'success',
+        badgeId: badgeId
+      };
+    } catch (error) {
+      console.error('Error claiming badge:', error);
+      return {
+        success: false,
+        message: 'Failed to claim badge',
+        status: 'error'
+      };
+    }
+  }
+
+  static async getUserActivities(userId) {
+    try {
+      if (!userId) {
+        console.error('No user ID provided');
+        return [];
+      }
+
+      // Query for activities where user is either the userId or studentId
+      const q = query(
+        collection(db, 'activities'),
+        where('studentId', '==', userId),
+        orderBy('timestamp', 'desc'),
+        limit(10)
+      );
+      
+      const snapshot = await getDocs(q);
+      const activities = [];
+      
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        let className = 'Unknown Class';
+        let teacherName = 'Unknown Teacher';
+        
+        // Get class details if classId exists
+        if (data.classId) {
+          try {
+            const classDoc = await getDoc(doc(db, 'classes', data.classId));
+            if (classDoc.exists()) {
+              const classData = classDoc.data();
+              className = classData.name || 'Unknown Class';
+              
+              // Get teacher details
+              if (classData.teacherId) {
+                const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+                if (teacherDoc.exists()) {
+                  teacherName = teacherDoc.data().name || 'Unknown Teacher';
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Error loading class or teacher details:', err);
+          }
+        }
+        
+        // Map activity type to display text
+        let activityTypeText = 'Unknown Activity';
+        switch (data.type) {
+          case 'enrollment_request':
+            activityTypeText = 'Requested to join class';
+            break;
+          case 'enrollment_accepted':
+            activityTypeText = 'Enrollment accepted';
+            break;
+          case 'enrollment_rejected':
+            activityTypeText = 'Enrollment rejected';
+            break;
+          case 'quiz_started':
+            activityTypeText = 'Started quiz';
+            break;
+          case 'quiz_completed':
+            activityTypeText = 'Completed quiz';
+            break;
+          case 'quiz_retake':
+            activityTypeText = 'Retook quiz';
+            break;
+          case 'achievement':
+            activityTypeText = 'Earned achievement';
+            break;
+          case 'progress':
+            activityTypeText = 'Made progress';
+            break;
+          case 'class_joined':
+            activityTypeText = 'Joined class';
+            break;
+          case 'class_left':
+            activityTypeText = 'Left class';
+            break;
+        }
+        
+        activities.push({
+          id: docSnap.id,
+          classId: data.classId,
+          className: className,
+          teacherName: teacherName,
+          timestamp: data.timestamp?.toDate() || new Date(),
+          type: data.type,
+          typeText: activityTypeText,
+          userId: data.userId,
+          studentId: data.studentId,
+          studentName: data.studentName,
+          status: data.status,
+          quizId: data.quizId,
+          quizTitle: data.quizTitle,
+          score: data.score,
+          correctAnswers: data.correctAnswers,
+          totalQuestions: data.totalQuestions,
+          timeSpent: data.timeSpent,
+          improvement: data.improvement,
+          activityDescription: data.activityDescription
+        });
+      }
+      
+      return activities;
+    } catch (error) {
+      console.error('Error getting user activities:', error);
+      throw error;
+    }
+  }
+
+  static async getUserQuizHistory(userId) {
+    try {
+      if (!userId) {
+        throw new Error('User ID is required to fetch quiz history');
+      }
+
+      const q = query(
+        collection(db, 'quizAttempts'),
+        where('userId', '==', userId),
+        orderBy('timestamp', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      const attempts = [];
+      
+      for (const snapDoc of snapshot.docs) {
+        const attemptData = snapDoc.data();
+        
+        // Get quiz details
+        const quizDoc = await getDoc(doc(db, 'quizzes', attemptData.quizId));
+        const quizData = quizDoc.data();
+        
+        // Get class details
+        const classDoc = await getDoc(doc(db, 'classes', attemptData.classId));
+        const classData = classDoc.data();
+        
+        attempts.push({
+          id: snapDoc.id,
+          quizId: attemptData.quizId,
+          quizTitle: quizData?.title || 'Unknown Quiz',
+          classId: attemptData.classId,
+          className: classData?.name || 'Unknown Class',
+          score: attemptData.score,
+          correctAnswers: attemptData.correctAnswers,
+          questionCount: attemptData.questionCount,
+          submittedAt: attemptData.timestamp?.toDate(),
+          timeSpent: attemptData.timeSpent,
+          questionResults: attemptData.questionResults?.map(result => ({
+            questionText: result.questionText,
+            selectedOption: result.selectedOption,
+            isCorrect: result.isCorrect,
+            correctIndex: result.correctIndex
+          })) || []
+        });
+      }
+      
+      return attempts;
+    } catch (error) {
+      console.error('Error getting user history:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's badges
+   * @param {string} userId - The user ID to get badges for
+   * @returns {Promise<Array<Object>>} Array of badge objects
+   */
+  static async getUserBadges(userId) {
+    try {
+      const badgesRef = collection(db, 'badges');
+      const q = query(badgesRef, where('metadata.userId', '==', userId));
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error fetching user badges:', error);
       throw error;
     }
   }
