@@ -10,9 +10,12 @@
         <BaseAnimation type="loading" :loop="true" />
       </div>    
       
+      <div v-else-if="error" class="text-red-600">
+        {{ error }}
+      </div>
+      
       <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
-       
-        You haven't joined any classes yet.
+        You are not enrolled in any classes yet.
       </div>
       
       <div v-else class="space-y-6">
@@ -66,6 +69,7 @@
           <!-- Class Progress -->
           <div v-if="classItem.enrollmentStatus === 'accepted'" class="mt-4">
             <h4 class="font-lg font-bold mb-2">Quizzes</h4>
+          
             <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
               No quizzes available yet.
             </div>
@@ -81,6 +85,9 @@
                   <div class="flex items-center space-x-2">
                     <span v-if="getQuizAttempt(classItem.id, quiz.id)" class="text-sm text-gray-500">
                       Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
+                      <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
+                        - Review quiz and claim badge
+                      </span>
                     </span>
                     <div class="flex space-x-2">
                       <button
@@ -110,7 +117,7 @@
                       <button
                         v-else-if="!getQuizAttempt(classItem.id, quiz.id)"
                         @click="startQuiz(classItem.id, quiz)"
-                        class="text-sm font-medium text-primary-600 hover:text-primary-500"
+                        class="text-sm font-medium rounded bg-primary-600 p-2 text-white hover:text-gray-5200"
                       >
                         Take Quiz
                       </button>
@@ -304,6 +311,7 @@ export default {
     const quizCompleted = ref(false);
     const quizScore = ref(0);
     const quizAttempts = ref({});
+    const quizAttemptsWithBadges = ref({});
     const explanations = ref({});
     const quizStartTime = ref(0);
     const error = ref(null);
@@ -348,8 +356,9 @@ export default {
       
       try {
         loading.value = true;
+        error.value = null;
         const loadedClasses = await FirebaseService.getClassesByStudent(user.value.uid);
-        
+        console.log(loadedClasses)
         // Get enrollment status for each class
         const classesWithStatus = await Promise.all(loadedClasses.map(async classItem => {
           if (!classItem.id) {
@@ -374,25 +383,59 @@ export default {
         enrolledClasses.value = classes.value;
 
         // Load quiz attempts
-        if (loadedClasses.length > 0) {
-          const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
-          quizAttempts.value = {};
-          attempts.forEach(attempt => {
-            if (!quizAttempts.value[attempt.classId]) {
-              quizAttempts.value[attempt.classId] = {};
-            }
-            if (!quizAttempts.value[attempt.classId][attempt.quizId]) {
-              quizAttempts.value[attempt.classId][attempt.quizId] = [];
-            }
-            quizAttempts.value[attempt.classId][attempt.quizId].push(attempt);
-          });
-        }
+        await loadQuizAttempts();
           
-      } catch (error) {
+      } catch (err) {
+        console.error('Error loading classes:', err);
+        error.value = 'Failed to load classes';
         showError('Failed to load classes');
       } finally {
         loading.value = false;
       }
+    };
+
+    const loadQuizAttempts = async () => {
+      if (!user.value?.uid) return;
+      
+      try {
+        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
+        quizAttempts.value = {};
+        quizAttemptsWithBadges.value = {};
+        
+        // Get all badges for this user
+        const badges = await FirebaseService.getUserBadges(user.value.uid);
+        const badgeMap = new Map(badges.map(badge => [badge.metadata.quizId, true]));
+        
+        attempts.forEach(attempt => {
+          if (!quizAttempts.value[attempt.classId]) {
+            quizAttempts.value[attempt.classId] = {};
+          }
+          if (!quizAttempts.value[attempt.classId][attempt.quizId]) {
+            quizAttempts.value[attempt.classId][attempt.quizId] = [];
+          }
+          quizAttempts.value[attempt.classId][attempt.quizId].push(attempt);
+          
+          // If score is 100, check if badge exists
+          if (attempt.score === 100) {
+            if (!quizAttemptsWithBadges.value[attempt.classId]) {
+              quizAttemptsWithBadges.value[attempt.classId] = {};
+            }
+            if (!quizAttemptsWithBadges.value[attempt.classId][attempt.quizId]) {
+              quizAttemptsWithBadges.value[attempt.classId][attempt.quizId] = {};
+            }
+            quizAttemptsWithBadges.value[attempt.classId][attempt.quizId] = {
+              ...attempt,
+              hasBadge: badgeMap.has(attempt.quizId)
+            };
+          }
+        });
+      } catch (error) {
+        console.error('Error loading quiz attempts:', error);
+      }
+    };
+
+    const getQuizAttempt = (classId, quizId) => {
+      return quizAttemptsWithBadges.value[classId]?.[quizId] || quizAttempts.value[classId]?.[quizId]?.[0];
     };
 
     // Watch for both user and initialization changes
@@ -422,8 +465,8 @@ export default {
         window.dispatchEvent(new CustomEvent('classLeft'));
 
         showSuccess('Successfully left the class');
-      } catch (error) {
-        console.error('Error leaving class:', error);
+      } catch (err) {
+        console.error('Error leaving class:', err);
         showError('Failed to leave the class. Please try again.');
       }
     };
@@ -603,25 +646,6 @@ export default {
         console.error('Error saving quiz results:', error);
         showError('There was an error saving your quiz results. Please try again.');
       }
-    };
-
-    const getQuizAttempt = (classId, quizId) => {
-      if (!quizAttempts.value[classId]?.[quizId]) return null;
-      
-      // Get all attempts for this quiz
-      const attempts = quizAttempts.value[classId][quizId];
-      
-      // If it's already a single attempt, return it
-      if (!Array.isArray(attempts)) return attempts;
-      
-      // Sort attempts by timestamp to get the latest one
-      const sortedAttempts = attempts.sort((a, b) => {
-        const timeA = a.timestamp?.toDate?.() || new Date(0);
-        const timeB = b.timestamp?.toDate?.() || new Date(0);
-        return timeB - timeA;
-      });
-      
-      return sortedAttempts[0];
     };
 
     const calculateProgress = (classItem) => {

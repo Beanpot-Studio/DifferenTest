@@ -128,77 +128,89 @@ class FirebaseService {
       
       console.log('Getting classes for student:', studentId);
       
-      // Get all enrollments for the student
-      const enrollmentsQuery = query(
-        collection(db, 'enrollments'),
-        where('studentId', '==', studentId)
+      // First get all enrollments for the student without status filter
+      const enrollmentsSnapshot = await getDocs(
+        query(
+          collection(db, 'enrollments'),
+          where('studentId', '==', studentId)
+        )
       );
-      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-      console.log('Enrollments found:', enrollmentsSnapshot.docs.length);
+
+      console.log('All enrollments found:', enrollmentsSnapshot.docs.length);
       
-      // Get class details for each enrollment
+      const enrollments = enrollmentsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Get all classes the student is enrolled in
       const classes = await Promise.all(
-        enrollmentsSnapshot.docs.map(async (enrollmentDoc) => {
-          const enrollmentData = enrollmentDoc.data();
-          if (!enrollmentData.classId) {
-            console.warn('Enrollment missing classId:', enrollmentDoc.id);
+        enrollments.map(async (enrollment) => {
+          if (!enrollment.classId) {
+            console.warn('Enrollment missing classId:', enrollment.id);
             return null;
           }
 
-          const classDoc = await getDoc(doc(db, 'classes', enrollmentData.classId));
+          const classDoc = await getDoc(doc(db, 'classes', enrollment.classId));
           if (!classDoc.exists()) {
-            console.warn('Class not found:', enrollmentData.classId);
+            console.warn('Class not found:', enrollment.classId);
             return null;
           }
 
           const classData = classDoc.data();
-          // Get teacher information
+          
+          // Get teacher info
           const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
           const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-          
-          // Get quiz details with question counts
-          const quizzesWithDetails = await Promise.all(
-            (classData.quizzes || []).map(async (quiz) => {
-              if (!quiz.id) {
-                console.warn('Quiz missing id in class:', classDoc.id);
-                return null;
-              }
 
-              const quizDoc = await getDoc(doc(db, 'quizzes', quiz.id));
-              if (!quizDoc.exists()) {
-                console.warn('Quiz not found:', quiz.id);
-                return null;
-              }
-
-              const quizData = quizDoc.data();
-              const questions = quizData.questions || [];
-              const questionCount = questions.length;
-              
-              return {
-                ...quiz,
-                questionCount,
-                className: classData.name
-              };
-            })
-          );
-          
           return {
             id: classDoc.id,
             ...classData,
-            quizzes: quizzesWithDetails.filter(Boolean),
-            teacherName: teacherData?.name || 'Unknown Teacher',
-            enrollmentId: enrollmentDoc.id,
-            enrolledAt: enrollmentData.enrolledAt
+            teacher: teacherData ? {
+              id: teacherDoc.id,
+              name: teacherData.name
+            } : null,
+            enrollmentId: enrollment.id,
+            enrolledAt: enrollment.enrolledAt,
+            enrollmentStatus: enrollment.status || 'active' // Default to active if status not set
           };
         })
       );
+
+      const validClasses = classes.filter(Boolean);
+      console.log('Valid classes found:', validClasses.length);
+
+      // Get all quizzes for these classes in a single query
+      const classIds = validClasses.map(c => c.id);
       
-      // Filter out any null results and sort by enrollment date
-      return classes
-        .filter(Boolean)
-        .sort((a, b) => b.enrolledAt?.toDate() - a.enrolledAt?.toDate());
+      // If there are no valid classes, return early with empty quizzes
+      if (classIds.length === 0) {
+        return validClasses;
+      }
+
+      const quizzesSnapshot = await getDocs(
+        query(
+          collection(db, 'quizzes'),
+          where('classId', 'in', classIds)
+        )
+      );
+
+      console.log('Quizzes found:', quizzesSnapshot.docs.length);
+
+      const quizzes = quizzesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Associate quizzes with their classes
+      const classesWithQuizzes = validClasses.map(classItem => ({
+        ...classItem,
+        quizzes: quizzes.filter(quiz => quiz.classId === classItem.id)
+      }));
+
+      return classesWithQuizzes.sort((a, b) => b.enrolledAt?.toDate() - a.enrolledAt?.toDate());
     } catch (error) {
-      console.error('Error getting classes by student:', error);
+      console.error('Error getting student classes:', error);
       throw error;
     }
   }
