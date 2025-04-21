@@ -14,13 +14,7 @@
         <div v-for="quiz in quizzes" :key="quiz.id" class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
           <div>
             <div class="flex items-center space-x-2">
-              <!--all quizzes are de facto private-->
-              <!--<span v-if="quiz.isPublic" class="text-yellow-500" title="Public Class">
-                <IconService name="star" size="4" />
-              </span>
-              <span v-else class="text-gray-600" title="Private Class">
-                <IconService name="lock" size="4" />
-              </span>-->
+             
               <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
               <!-- Badge Image -->
               <div v-if="quiz.badgeImage" class="relative group">
@@ -243,14 +237,33 @@ export default {
     const isEditing = ref(false);
     const editedLessonPlan = ref('');
 
-    const fetchQuizzes = async () => {
+    const loadQuizzes = async () => {
       if (!user.value) return;
-
+      
       try {
-        quizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        loading.value = true;
+        const fetchedQuizzes = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        
+        // Fetch class names for each quiz
+        const quizzesWithClassNames = await Promise.all(
+          fetchedQuizzes.map(async (quiz) => {
+            const classData = await FirebaseService.getClass(quiz.classId);
+            return {
+              ...quiz,
+              className: classData?.name || 'Unknown Class'
+            };
+          })
+        );
+        
+        // Sort quizzes by class name
+        quizzes.value = quizzesWithClassNames.sort((a, b) => 
+          a.className.localeCompare(b.className)
+        );
       } catch (error) {
-        console.error('Error fetching quizzes:', error);
-        showError('Error fetching quizzes');
+        console.error('Error loading quizzes:', error);
+        showError('Failed to load quizzes');
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -262,7 +275,7 @@ export default {
     const closeEditModal = () => {
       showEditModal.value = false;
       currentQuiz.value = null;
-      fetchQuizzes(); // Refresh the list
+      loadQuizzes(); // Refresh the list
     };
 
     const saveQuiz = async () => {
@@ -286,7 +299,7 @@ export default {
       try {
         await FirebaseService.deleteQuiz(quizId);
         showSuccess('Quiz deleted successfully');
-        fetchQuizzes(); // Refresh the list
+        loadQuizzes(); // Refresh the list
       } catch (error) {
         console.error('Error deleting quiz:', error);
         showError('Error deleting quiz');
@@ -341,7 +354,7 @@ export default {
     };
 
     onMounted(() => {
-      fetchQuizzes();
+      loadQuizzes();
     });
 
     return {

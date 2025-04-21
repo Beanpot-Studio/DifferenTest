@@ -518,6 +518,9 @@ export default {
         }
 
         showSuccess('Lesson plan and quiz saved successfully!');
+        
+        // Emit event to update stats
+        emit('quiz-updated');
       } catch (error) {
         console.error('Error saving lesson plan:', error);
         showError('Failed to save lesson plan. Please try again.');

@@ -215,9 +215,10 @@ export default {
       selectedClassId,
       stats,
       isLoading,
+      tabs,
+      loadStats,
       handleQuizSelect,
-      handleQuizGenerated,
-      tabs
+      handleQuizGenerated
     };
   }
 };
