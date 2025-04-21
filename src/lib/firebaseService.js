@@ -1617,6 +1617,72 @@ class FirebaseService {
       throw error;
     }
   }
+
+  static async getPublicClasses() {
+    try {
+      // First get all public classes
+      const classesQuery = query(
+        collection(db, 'classes'),
+        where('isPublic', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+      const classesSnapshot = await getDocs(classesQuery);
+      const publicClassIds = classesSnapshot.docs.map(doc => doc.id);
+
+      if (publicClassIds.length === 0) {
+        return [];
+      }
+
+      // Get all quizzes for these public classes
+      const quizzesQuery = query(
+        collection(db, 'quizzes'),
+        where('classId', 'in', publicClassIds),
+        orderBy('createdAt', 'desc')
+      );
+      const quizzesSnapshot = await getDocs(quizzesQuery);
+      
+      // Group quizzes by class and get class details
+      const classes = await Promise.all(
+        publicClassIds.map(async (classId) => {
+          const classDoc = await getDoc(doc(db, 'classes', classId));
+          const classData = classDoc.data();
+          
+          // Get teacher information
+          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+          const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+          
+          // Get quizzes for this class
+          const classQuizzes = quizzesSnapshot.docs
+            .filter(doc => doc.data().classId === classId)
+            .map(doc => {
+              const quizData = doc.data();
+              return {
+                id: doc.id,
+                title: quizData.title,
+                description: quizData.description,
+                questionCount: quizData.questions?.length || 0,
+                lessonPlan: quizData.lessonPlan || ''
+              };
+            });
+          
+          return {
+            id: classId,
+            name: classData.name,
+            description: classData.description || '',
+            quizzes: classQuizzes,
+            teacherName: teacherData?.name || 'Unknown Teacher',
+            code: classData.code,
+            lessonPlan: classQuizzes[0]?.lessonPlan || ''
+          };
+        })
+      );
+      
+      return classes;
+    } catch (error) {
+      console.error('Error getting public classes:', error);
+      throw error;
+    }
+  }
 }
 
 export default FirebaseService; 
