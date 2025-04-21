@@ -40,7 +40,7 @@
             </button>
            
             <button
-              @click="openEditModal(quiz)"
+              @click="editQuiz(quiz)"
               class="text-primary-600 hover:text-primary-800 font-medium"
             >
             <IconService name="edit" size="6" />
@@ -59,82 +59,104 @@
     </div>
 
     <!-- Edit Quiz Modal -->
-    <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold">Edit Quiz: {{ currentQuiz.title }}</h3>
-          <button @click="closeEditModal" class="text-gray-500 hover:text-gray-700">
-            <IconService name="x" size="6" />
-          </button>
-        </div>
-
-        <!-- Quiz Title -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Quiz Title</label>
-          <input
-            v-model="currentQuiz.title"
-            type="text"
-            class="w-full p-2 border rounded-lg"
-          />
-        </div>
-
-        <!-- Questions -->
-        <div v-for="(question, index) in currentQuiz.questions" :key="index" class="border rounded-lg p-4 mb-4">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Question {{ index + 1 }}</label>
-            <textarea
-              v-model="question.text"
-              class="w-full p-2 border rounded-lg"
-              rows="3"
-              @input="saveQuiz"
-            ></textarea>
+    <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
+        <h2 class="text-2xl font-bold mb-4">Edit Quiz</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Title</label>
+            <input
+              v-model="currentQuiz.title"
+              type="text"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
           </div>
-          
-          <div class="space-y-2">
-            <div v-for="(option, optionIndex) in question.options" :key="optionIndex" class="flex items-center space-x-2">
+
+         
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Badge Image</label>
+            <div class="mt-1 flex items-center space-x-4">
               <input
-                type="radio"
-                :name="'correct-' + index"
-                :checked="optionIndex === question.correctIndex"
-                @change="question.correctIndex = optionIndex; saveQuiz()"
-                class="text-primary-600"
-              />
-              <input
-                v-model="option.text"
-                class="flex-1 p-2 border rounded-lg"
-                @input="saveQuiz"
+                ref="badgeImageInput"
+                type="file"
+                accept="image/*"
+                @change="handleBadgeImageUpload"
+                class="hidden"
               />
               <button
-                @click="removeOption(index, optionIndex)"
-                class="text-red-600 hover:text-red-800 p-1"
-                title="Remove option"
+                @click="badgeImageInput.click()"
+                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >
-                <IconService name="x" size="6" />
+                {{ badgeImageName || 'Upload Badge Image' }}
+              </button>
+              <div v-if="currentQuiz.badgeImage" class="flex items-center space-x-2">
+                <img :src="currentQuiz.badgeImage" class="w-10 h-10 rounded-full object-cover" />
+                <span class="text-sm text-gray-500">Current badge</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Questions Section -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-medium text-gray-900">Questions</h3>
+            <div v-for="(question, index) in currentQuiz.questions" :key="index" class="border rounded-lg p-4">
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Question {{ index + 1 }}</label>
+                <textarea
+                  v-model="question.text"
+                  rows="2"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                ></textarea>
+              </div>
+
+              <div class="space-y-2">
+                <div v-for="(option, optionIndex) in question.options" :key="optionIndex" class="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    :name="'correct-' + index"
+                    :checked="optionIndex === question.correctIndex"
+                    @change="question.correctIndex = optionIndex"
+                    class="text-primary-600"
+                  />
+                  <input
+                    v-model="option.text"
+                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  />
+                  <button
+                    @click="removeOption(index, optionIndex)"
+                    class="text-red-600 hover:text-red-800 p-1"
+                    title="Remove option"
+                  >
+                    <IconService name="x" size="4" />
+                  </button>
+                </div>
+              </div>
+
+              <button
+                @click="addOption(index)"
+                class="mt-2 text-sm text-primary-600 hover:text-primary-800"
+              >
+                + Add Option
               </button>
             </div>
-            
+          </div>
+
+          <div class="flex justify-end space-x-4">
             <button
-              @click="addOption(index)"
-              class="text-sm text-primary-600 hover:text-primary-800"
+              @click="showEditModal = false"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              + Add Option
+              Cancel
+            </button>
+            <button
+              @click="saveQuiz"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              Save Changes
             </button>
           </div>
-        </div>
-
-        <div class="flex justify-end space-x-4 mt-6">
-          <button
-            @click="closeEditModal"
-            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Close
-          </button>
-          <button
-            @click="saveQuiz"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            Save Changes
-          </button>
         </div>
       </div>
     </div>
@@ -208,6 +230,7 @@ import { useNotification } from '../composables/useNotification';
 import BaseAnimation from './BaseAnimation.vue';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
+import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 
 export default {
   name: 'QuizManager',
@@ -226,6 +249,9 @@ export default {
     const quizzes = ref([]);
     const showEditModal = ref(false);
     const currentQuiz = ref(null);
+    const badgeImageFile = ref(null);
+    const badgeImageName = ref('');
+    const badgeImageInput = ref(null);
     const { showSuccess, showError } = useNotification();
     const showLessonPlanModal = ref(false);
     const currentLessonPlan = ref(null);
@@ -267,29 +293,75 @@ export default {
       }
     };
 
-    const openEditModal = (quiz) => {
+    const editQuiz = (quiz) => {
       currentQuiz.value = { ...quiz };
+      badgeImageFile.value = null;
+      badgeImageName.value = '';
       showEditModal.value = true;
     };
 
     const closeEditModal = () => {
       showEditModal.value = false;
       currentQuiz.value = null;
+      badgeImageFile.value = null;
+      badgeImageName.value = '';
       loadQuizzes(); // Refresh the list
+    };
+
+    const handleBadgeImageUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        console.log('Badge image selected:', {
+          name: file.name,
+          type: file.type,
+          size: file.size
+        });
+        badgeImageFile.value = file;
+        badgeImageName.value = file.name;
+      }
     };
 
     const saveQuiz = async () => {
       if (!currentQuiz.value) return;
-
+      
       try {
-        await FirebaseService.updateQuiz(currentQuiz.value.id, {
+        loading.value = true;
+        
+        // Handle badge image upload if provided
+        let badgeImageUrl = currentQuiz.value.badgeImage;
+        if (badgeImageFile.value) {
+          console.log('Starting badge image upload process...');
+          badgeImageUrl = await uploadToCloudinary(badgeImageFile.value);
+          console.log('Badge image upload response:', badgeImageUrl);
+          
+          if (!badgeImageUrl) {
+            throw new Error('Failed to get badge image URL');
+          }
+        }
+
+        // Update quiz with new data
+        const quizData = {
           ...currentQuiz.value,
+          badgeImage: badgeImageUrl,
           updatedAt: new Date()
-        });
+        };
+
+        await FirebaseService.updateQuiz(currentQuiz.value.id, quizData);
         showSuccess('Quiz updated successfully');
+        
+        // Reset form
+        showEditModal.value = false;
+        currentQuiz.value = null;
+        badgeImageFile.value = null;
+        badgeImageName.value = '';
+        
+        // Refresh the list
+        loadQuizzes();
       } catch (error) {
-        console.error('Error saving quiz:', error);
-        showError('Error saving quiz');
+        console.error('Error updating quiz:', error);
+        showError('Failed to update quiz');
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -362,15 +434,19 @@ export default {
       loading,
       showEditModal,
       currentQuiz,
+      badgeImageFile,
+      badgeImageName,
+      badgeImageInput,
+      handleBadgeImageUpload,
+      editQuiz,
+      saveQuiz,
       showLessonPlanModal,
       currentLessonPlan,
       lessonPlanText,
       generating,
       error,
       success,
-      openEditModal,
       closeEditModal,
-      saveQuiz,
       deleteQuiz,
       viewLessonPlan,
       closeLessonPlanModal,
