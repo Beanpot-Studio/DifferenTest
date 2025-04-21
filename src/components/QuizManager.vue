@@ -187,6 +187,36 @@
             {{ currentLessonPlan?.content }}
           </div>
           <div v-else>
+            <!-- Image Upload Section -->
+            <div class="mb-4 p-4 border rounded-lg bg-gray-50">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Upload Image</h4>
+              <div class="flex items-center space-x-4">
+                <input
+                  ref="lessonPlanImageInput"
+                  type="file"
+                  accept="image/*"
+                  @change="handleLessonPlanImageUpload"
+                  class="hidden"
+                />
+                <button
+                  @click="lessonPlanImageInput.click()"
+                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                >
+                  {{ lessonPlanImageName || 'Choose Image' }}
+                </button>
+                <button
+                  v-if="uploadedImageUrl"
+                  @click="copyMarkdownImage"
+                  class="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200"
+                >
+                  Copy Markdown
+                </button>
+              </div>
+              <div v-if="uploadedImageUrl" class="mt-2">
+                <img :src="uploadedImageUrl" class="max-w-xs rounded-lg" />
+              </div>
+            </div>
+
             <textarea
               v-model="editedLessonPlan"
               class="w-full h-[60vh] p-4 border rounded-lg font-mono text-sm"
@@ -262,6 +292,10 @@ export default {
     const loading = ref(false);
     const isEditing = ref(false);
     const editedLessonPlan = ref('');
+    const lessonPlanImageFile = ref(null);
+    const lessonPlanImageName = ref('');
+    const lessonPlanImageInput = ref(null);
+    const uploadedImageUrl = ref(null);
 
     const loadQuizzes = async () => {
       if (!user.value) return;
@@ -425,6 +459,42 @@ export default {
       }
     };
 
+    const handleLessonPlanImageUpload = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        try {
+          loading.value = true;
+          lessonPlanImageFile.value = file;
+          lessonPlanImageName.value = file.name;
+          
+          // Upload to Cloudinary
+          const imageUrl = await uploadToCloudinary(file, 'differentest-lesson-images/lesson-plans');
+          uploadedImageUrl.value = imageUrl;
+          
+          // Show success message with markdown format
+          showSuccess('Image uploaded successfully! Use this markdown: ![Image](' + imageUrl + ')');
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          showError('Failed to upload image');
+        } finally {
+          loading.value = false;
+        }
+      }
+    };
+
+    const copyMarkdownImage = () => {
+      if (uploadedImageUrl.value) {
+        const markdown = `![Image](${uploadedImageUrl.value})`;
+        navigator.clipboard.writeText(markdown);
+        showSuccess('Markdown copied to clipboard!');
+        
+        // Clear the upload area
+        uploadedImageUrl.value = null;
+        lessonPlanImageFile.value = null;
+        lessonPlanImageName.value = '';
+      }
+    };
+
     onMounted(() => {
       loadQuizzes();
     });
@@ -454,7 +524,13 @@ export default {
       removeOption,
       isEditing,
       editedLessonPlan,
-      saveLessonPlan
+      saveLessonPlan,
+      lessonPlanImageFile,
+      lessonPlanImageName,
+      lessonPlanImageInput,
+      handleLessonPlanImageUpload,
+      uploadedImageUrl,
+      copyMarkdownImage
     };
   }
 };
