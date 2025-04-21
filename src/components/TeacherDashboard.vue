@@ -81,7 +81,7 @@
             Create New Quiz
           </button>
         </div>
-        <QuizManager :classId="selectedClassId" />
+        <QuizManager :classId="selectedClassId"/>
       </div>
       <div v-else-if="activeTab === 'quiz-generator'" class="space-y-6">
         <div class="flex justify-between items-center">
@@ -93,7 +93,7 @@
             Back to Quizzes
           </button>
         </div>
-        <QuizGenerator :classId="selectedClassId" @generated="handleQuizGenerated" @quiz-updated="loadStats" />
+        <QuizGenerator @generated="handleQuizGenerated" @quiz-updated="loadStats" />
       </div>
       <div v-else-if="activeTab === 'submissions'">
         <TeacherSubmissions />
@@ -155,6 +155,12 @@ export default {
         isLoading.value = true;
         const dashboardStats = await FirebaseService.getTeacherDashboardStats(user.value.uid);
         stats.value = dashboardStats;
+        
+        // If we don't have a selected class and there are classes available,
+        // select the first one
+        if (!selectedClassId.value && dashboardStats.classes && dashboardStats.classes.length > 0) {
+          selectedClassId.value = dashboardStats.classes[0].id;
+        }
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
         showError('Failed to load dashboard statistics');

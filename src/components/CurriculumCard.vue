@@ -237,7 +237,7 @@ const claimBadge = async (quiz) => {
       classId: props.curriculum.id,
       name: `${quiz.title} Master`,
       description: `Awarded for completing ${quiz.title} with a perfect score`,
-      image: quiz.badgeImage || 'https://badges.beanpotstudio.com/badges/default-badge.png',
+      image: quiz.badgeImage,
       metadata: {
         title: `Perfect Score: ${quiz.title}`,
         description: `Achieved a perfect score on the ${quiz.title} quiz`,

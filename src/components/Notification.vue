@@ -106,14 +106,6 @@ export default {
       type: Number,
       default: 5000
     }
-  },
-  mounted() {
-    console.log('Notification mounted with props:', {
-      title: this.title,
-      message: this.message,
-      type: this.type,
-      duration: this.duration
-    });
   }
 };
 </script> 

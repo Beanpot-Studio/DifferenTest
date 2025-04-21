@@ -27,7 +27,6 @@ export default {
     
     // Add watcher to debug notifications
     watch(notifications, (newNotifications) => {
-      console.log('NotificationContainer - Notifications changed:', newNotifications);
     }, { deep: true });
 
     return {

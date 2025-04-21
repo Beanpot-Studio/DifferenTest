@@ -244,15 +244,12 @@ class FirebaseService {
 
       const classDoc = {
         name: classData.name,
-        description: classData.description || '',
         code: classCode,
         teacherId: classData.teacherId,
         teacherName: teacherName,
         isPublic: classData.isPublic || false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        quizzes: [],
-        students: []
       };
 
       const docRef = await addDoc(collection(db, 'classes'), classDoc);
@@ -335,56 +332,23 @@ class FirebaseService {
 
   static async createQuiz(quizData) {
     try {
-      // Validate required fields
-      if (!quizData.teacherId) {
-        throw new Error('Teacher ID is required to create a quiz');
-      }
+      
+      // Create a clean quiz object with only defined fields
+      const cleanQuizData = {
+        ...quizData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      console.log('Quiz data:', cleanQuizData);
 
-      if (!quizData.classId) {
-        throw new Error('Class ID is required to create a quiz');
-      }
-
-      if (!quizData.title) {
-        throw new Error('Quiz title is required');
-      }
-
-      if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
-        throw new Error('Quiz must have at least one question');
-      }
-
-      // Ensure all questions have required fields
-      quizData.questions.forEach((question, index) => {
-        if (!question.text) {
-          throw new Error(`Question ${index + 1} must have text`);
-        }
-        if (!question.options || !Array.isArray(question.options) || question.options.length === 0) {
-          throw new Error(`Question ${index + 1} must have at least one option`);
-        }
-        if (typeof question.correctIndex !== 'number') {
-          throw new Error(`Question ${index + 1} must have a correct answer index`);
+      // Remove any undefined fields
+      Object.keys(cleanQuizData).forEach(key => {
+        if (cleanQuizData[key] === undefined) {
+          delete cleanQuizData[key];
         }
       });
 
-      // Create a clean quiz object without any undefined fields
-      const cleanQuizData = {
-        title: quizData.title,
-        teacherId: quizData.teacherId,
-        userId: quizData.userId,
-        classId: quizData.classId,
-        isPublic: quizData.isPublic || false,
-        questions: quizData.questions,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        lessonPlan: quizData.lessonPlan || ''
-      };
-
-      // Only add badgeImage if it's defined
-      if (quizData.badgeImage) {
-        cleanQuizData.badgeImage = quizData.badgeImage;
-      }
-
-      console.log('Creating quiz with clean data:', cleanQuizData);
-
+      console.log('Creating quiz with data:', cleanQuizData);
       const quizRef = await addDoc(collection(db, 'quizzes'), cleanQuizData);
       return quizRef.id;
     } catch (error) {
@@ -916,43 +880,18 @@ class FirebaseService {
     }
   }
 
-  static async getAllLessonPlans() {
+  static async getAllLessonPlans(teacherId) {
     try {
-      const lessonPlansQuery = query(
-        collection(db, 'lessonPlans'),
-        orderBy('createdAt', 'desc')
-      );
-      const lessonPlansSnapshot = await getDocs(lessonPlansQuery);
+      const lessonPlansRef = collection(db, 'lessonPlans');
+      const q = query(lessonPlansRef, where('teacherId', '==', teacherId));
+      const snapshot = await getDocs(q);
       
-      const lessonPlans = await Promise.all(
-        lessonPlansSnapshot.docs.map(async (doc) => {
-          const lessonPlan = doc.data();
-          lessonPlan.id = doc.id;
-
-          // Fetch associated quizzes
-          if (lessonPlan.quizIds && lessonPlan.quizIds.length > 0) {
-            const quizzes = await Promise.all(
-              lessonPlan.quizIds.map(async (quizId) => {
-                const quizRef = doc(db, 'quizzes', quizId);
-                const quizSnap = await getDoc(quizRef);
-                if (quizSnap.exists()) {
-                  const quiz = quizSnap.data();
-                  quiz.id = quizSnap.id;
-                  return quiz;
-                }
-                return null;
-              })
-            );
-            lessonPlan.quizzes = quizzes.filter(quiz => quiz !== null);
-          }
-
-          return lessonPlan;
-        })
-      );
-      
-      return lessonPlans;
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
     } catch (error) {
-      console.error('Error getting lesson plans:', error);
+      console.error('Error fetching lesson plans:', error);
       throw error;
     }
   }
@@ -1675,46 +1614,6 @@ class FirebaseService {
       }));
     } catch (error) {
       console.error('Error fetching lesson plans:', error);
-      throw error;
-    }
-  }
-
-  static async addQuizToClass(classId, quizData) {
-    try {
-      if (!classId || !quizData || !quizData.id) {
-        throw new Error('Class ID and quiz data with ID are required');
-      }
-
-      const classRef = doc(db, 'classes', classId);
-      const classDoc = await getDoc(classRef);
-
-      if (!classDoc.exists()) {
-        throw new Error('Class not found');
-      }
-
-      const classData = classDoc.data();
-      const quizzes = classData.quizzes || [];
-
-      // Check if quiz already exists in class
-      if (quizzes.some(q => q.id === quizData.id)) {
-        throw new Error('Quiz already exists in this class');
-      }
-
-      // Add the new quiz to the quizzes array
-      quizzes.push({
-        id: quizData.id,
-        title: quizData.title
-      });
-
-      // Update the class document with the new quizzes array
-      await updateDoc(classRef, {
-        quizzes: quizzes,
-        updatedAt: serverTimestamp()
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error adding quiz to class:', error);
       throw error;
     }
   }

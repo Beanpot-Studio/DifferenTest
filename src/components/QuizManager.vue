@@ -22,7 +22,17 @@
                 <IconService name="lock" size="4" />
               </span>-->
               <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
-              
+              <!-- Badge Image -->
+              <div v-if="quiz.badgeImage" class="relative group">
+                <img 
+                  :src="quiz.badgeImage" 
+                  alt="Quiz Badge" 
+                  class="w-8 h-8 rounded-full object-cover"
+                />
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Quiz Badge
+                </div>
+              </div>
             </div>
             <p class="text-sm text-gray-500">Class: {{ quiz.className }} / {{ quiz.questions?.length || 0 }} questions</p>
           </div>
@@ -71,7 +81,6 @@
             v-model="currentQuiz.title"
             type="text"
             class="w-full p-2 border rounded-lg"
-            @input="saveQuiz"
           />
         </div>
 

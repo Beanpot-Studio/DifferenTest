@@ -20,11 +20,6 @@ classes
     code
     createdAt
     name
-    quizzes
-        id
-        title
-    students
-        (id of student is the value of the index)
     teacherId
     updatedAt
 

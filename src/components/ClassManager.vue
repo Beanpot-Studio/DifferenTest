@@ -203,7 +203,6 @@ export default {
     const availableQuizzes = ref([]);
     const newClass = ref({
       name: '',
-      description: '',
       code: '',
       isPublic: false
     });
@@ -226,15 +225,12 @@ export default {
         loading.value = true;
         const classData = {
           name: newClass.value.name.trim(),
-          description: newClass.value.description,
           code: newClass.value.code,
           isPublic: newClass.value.isPublic,
           teacherId: user.value.uid,
           teacherName: user.value.displayName || 'Unknown Teacher',
           createdAt: new Date(),
           updatedAt: new Date(),
-          quizzes: [],
-          students: []
         };
         
         await FirebaseService.createClass(classData);
@@ -242,7 +238,6 @@ export default {
         // Reset form
         newClass.value = {
           name: '',
-          description: '',
           code: '',
           isPublic: false
         };
