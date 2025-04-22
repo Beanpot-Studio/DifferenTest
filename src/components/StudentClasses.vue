@@ -1,11 +1,72 @@
 <template>
   <div class="space-y-6">
     <!-- Class Search -->
-    <ClassSearch @enrolled="loadClasses" @search="handleSearch" />
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-4">Find Classes</h2>
+      <div class="flex gap-4">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search for classes..."
+          class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+        <button
+          @click="searchClasses"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        >
+          Search
+        </button>
+      </div>
+      
+      <!-- Search Results -->
+      <div v-if="searchResults.length > 0" class="mt-4 space-y-4">
+        <div v-for="classItem in searchResults" :key="classItem.id" class="border rounded-lg p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
+              <p class="text-sm text-gray-600">Teacher: {{ classItem.teacherName }}</p>
+              <p class="text-sm text-gray-600">Class Code: {{ classItem.code }}</p>
+            </div>
+            <button
+              v-if="!isEnrolled(classItem.id)"
+              @click="requestToJoin(classItem.id)"
+              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              Request to Join
+            </button>
+            <span
+              v-else
+              class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+            >
+              Enrolled
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Classes -->
+    <div v-if="pendingClasses.length > 0" class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-4">Pending Classes</h2>
+      <div class="space-y-4">
+        <div v-for="classItem in pendingClasses" :key="classItem.id" class="border rounded-lg p-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
+              <p class="text-sm text-gray-600">Teacher: {{ classItem.teacherName }}</p>
+              <p class="text-sm text-gray-600">Class Code: {{ classItem.code }}</p>
+            </div>
+            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+              Pending Approval
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- My Classes -->
     <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-bold mb-4">My Classes</h2>
+      <h2 class="text-2xl font-bold mb-4">Enrolled Classes</h2>
       <div v-if="loading" class="text-center py-4">
         <BaseAnimation type="loading" :loop="true" />
       </div>    
@@ -14,12 +75,12 @@
         {{ error }}
       </div>
       
-      <div v-else-if="classes.length === 0" class="text-gray-500 text-center py-4">
+      <div v-else-if="enrolledClasses.length === 0" class="text-gray-500 text-center py-4">
         You are not enrolled in any classes yet.
       </div>
       
       <div v-else class="space-y-6">
-        <div v-for="classItem in filteredClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div v-for="classItem in enrolledClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
           <div class="flex justify-between items-start">
             <div>
               <div class="flex items-center ">
@@ -53,7 +114,7 @@
                 </div>
               </div>
             </div>
-            <button
+            <!--<button
               @click="leaveClass(classItem.id)"
               :disabled="classItem.enrollmentStatus !== 'accepted'"
               :class="{
@@ -63,7 +124,7 @@
               class="px-4 py-2 text-white rounded-lg transition-colors flex items-center space-x-1"
             >
               <span>Leave Class</span>
-            </button>
+            </button>-->
           </div>
 
           <!-- Class Progress -->
@@ -100,7 +161,7 @@
                       </button>
                       <a
                         v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
-                        :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
+                        :href="getQuizAttempt(classItem.id, quiz.id)?.verificationUrl"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
@@ -231,8 +292,7 @@
               <span v-else>🏆</span>
               <span>{{ isMintingBadge ? 'Claiming Badge...' : 'Claim Badge' }}</span>
             </button>
-           
-           
+            
           </div>
         </div>
         <div v-else-if="loading" class="text-center py-4">
@@ -318,6 +378,7 @@ export default {
     const { showSuccess, showError } = useNotification();
     const activeTab = ref('activities');
     const enrolledClasses = ref([]);
+    const pendingClasses = ref([]);
     const reviewData = ref(null);
     const tabs = [
       { id: 'activities', name: 'Activities' },
@@ -327,25 +388,59 @@ export default {
 
     // Add search query ref and filtered classes computed property
     const searchQuery = ref('');
+    const searchResults = ref([]);
+
+    // Filter classes to only show enrolled ones
     const filteredClasses = computed(() => {
-      if (!searchQuery.value) return classes.value;
-      
-      const search = searchQuery.value.toLowerCase().trim();
-      return classes.value.filter(classItem => {
-        const nameMatch = classItem.name?.toLowerCase().includes(search);
-        const teacherMatch = classItem.teacherName?.toLowerCase().includes(search);
-        const descriptionMatch = classItem.description?.toLowerCase().includes(search);
-        const statusMatch = classItem.enrollmentStatus?.toLowerCase().includes(search);
-        
-        return nameMatch || teacherMatch || descriptionMatch || statusMatch;
-      });
+      return enrolledClasses.value;
     });
 
-    // Handle search from ClassBrowser
-    const handleSearch = (query) => {
-      searchQuery.value = query;
-      // Force a re-render of the filtered classes
-      classes.value = [...classes.value];
+    const isEnrolled = (classId) => {
+      return enrolledClasses.value.some(c => c.id === classId);
+    };
+
+    const searchClasses = async () => {
+      if (!searchQuery.value.trim()) {
+        searchResults.value = [];
+        return;
+      }
+
+      try {
+        loading.value = true;
+        const { classes: foundClasses } = await FirebaseService.getClasses({
+          searchQuery: searchQuery.value,
+          includeTeacherInfo: true,
+          isPublic: false
+        });
+        
+        // Filter out classes where user is already enrolled
+        searchResults.value = foundClasses.filter(classItem => 
+          !enrolledClasses.value.some(enrolled => enrolled.id === classItem.id)
+        );
+      } catch (err) {
+        console.error('Error searching classes:', err);
+        showError('Failed to search classes');
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const requestToJoin = async (classId) => {
+      if (!user.value?.uid) return;
+      
+      try {
+        const result = await FirebaseService.enrollInClass(classId, user.value.uid);
+        if (result.success) {
+          showSuccess(result.message);
+          // Refresh the search results to update the UI
+          await searchClasses();
+        } else {
+          showError(result.message);
+        }
+      } catch (err) {
+        console.error('Error requesting to join class:', err);
+        showError('Failed to send join request');
+      }
     };
 
     const loadClasses = async () => {
@@ -360,30 +455,26 @@ export default {
         const { classes: loadedClasses } = await FirebaseService.getClasses({
           studentId: user.value.uid,
           includeQuizzes: true,
-          includeTeacherInfo: true
+          includeTeacherInfo: true,
+          includeEnrollmentInfo: true
         });
-        // Get enrollment status for each class
-        const classesWithStatus = await Promise.all(loadedClasses.map(async classItem => {
-          if (!classItem.id) {
-            return null;
-          }
-          const enrollmentStatus = await FirebaseService.getEnrollmentStatus(user.value.uid, classItem.id);
-          return {
-            ...classItem,
-            id: classItem.id,
-            name: classItem.name || 'Unnamed Class',
-            teacherName: classItem.teacherName || 'Unknown Teacher',
-            code: classItem.code || 'N/A',
-            quizzes: classItem.quizzes || [],
-            enrollmentStatus: enrollmentStatus
-          };
-        }));
 
-        classes.value = classesWithStatus
-          .filter(Boolean)
+        // Separate classes by enrollment status
+        enrolledClasses.value = loadedClasses
+          .filter(classItem => classItem.enrollment?.status === 'accepted')
+          .map(classItem => ({
+            ...classItem,
+            enrollmentStatus: classItem.enrollment?.status
+          }))
           .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
-        // Also update enrolledClasses for components that need it
-        enrolledClasses.value = classes.value;
+
+        pendingClasses.value = loadedClasses
+          .filter(classItem => classItem.enrollment?.status === 'pending')
+          .map(classItem => ({
+            ...classItem,
+            enrollmentStatus: classItem.enrollment?.status
+          }))
+          .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
 
         // Load quiz attempts
         await loadQuizAttempts();
@@ -407,7 +498,12 @@ export default {
         
         // Get all badges for this user
         const badges = await FirebaseService.getUserBadges(user.value.uid);
-        const badgeMap = new Map(badges.map(badge => [badge.metadata.quizId, true]));
+        const badgeMap = new Map(badges.map(badge => [badge.metadata.quizId, {
+          hasBadge: true,
+          badgeId: badge.id,
+          verificationUrl: badge.metadata.verificationUrl,
+          metadata: badge.metadata
+        }]));
         
         attempts.forEach(attempt => {
           if (!quizAttempts.value[attempt.classId]) {
@@ -423,12 +519,10 @@ export default {
             if (!quizAttemptsWithBadges.value[attempt.classId]) {
               quizAttemptsWithBadges.value[attempt.classId] = {};
             }
-            if (!quizAttemptsWithBadges.value[attempt.classId][attempt.quizId]) {
-              quizAttemptsWithBadges.value[attempt.classId][attempt.quizId] = {};
-            }
+            const badgeData = badgeMap.get(attempt.quizId);
             quizAttemptsWithBadges.value[attempt.classId][attempt.quizId] = {
               ...attempt,
-              hasBadge: badgeMap.has(attempt.quizId)
+              ...(badgeData || { hasBadge: false })
             };
           }
         });
@@ -438,6 +532,12 @@ export default {
     };
 
     const getQuizAttempt = (classId, quizId) => {
+      const attemptWithBadge = quizAttemptsWithBadges.value[classId]?.[quizId];
+      if (attemptWithBadge) {
+        return attemptWithBadge;
+      }
+      
+      const regularAttempts = quizAttempts.value[classId]?.[quizId];
       return quizAttemptsWithBadges.value[classId]?.[quizId] || quizAttempts.value[classId]?.[quizId]?.[0];
     };
 
@@ -664,12 +764,13 @@ export default {
     const reviewQuiz = async (classId, quizId) => {
       try {
         loading.value = true;
-        currentClassId.value = classId;
+        showReviewModal.value = true; // Set modal to show immediately
         
         // Get the quiz attempt
         const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
         if (!attempts || attempts.length === 0) {
           showError('No quiz attempt found to review');
+          showReviewModal.value = false;
           return;
         }
         
@@ -687,18 +788,24 @@ export default {
         const quizData = await FirebaseService.getQuiz(quizId);
         if (!quizData) {
           showError('Quiz not found');
+          showReviewModal.value = false;
           return;
         }
         
         // Get class details
-        const classData = classes.value.find(c => c.id === classId);
+        const classData = enrolledClasses.value.find(c => c.id === classId);
         if (!classData) {
           showError('Class not found');
+          showReviewModal.value = false;
           return;
         }
 
-        // Check if badge already exists
-        const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, quizId);
+        // Check if badge exists in the badges collection
+        const badges = await FirebaseService.getUserBadges(user.value.uid);
+        const hasBadge = badges.some(badge => 
+          badge.metadata.quizId === quizId && 
+          badge.metadata.userId === user.value.uid
+        );
         
         // Set the review data
         reviewData.value = {
@@ -726,10 +833,10 @@ export default {
           hasBadge
         };
         
-        showReviewModal.value = true;
       } catch (error) {
         console.error('Error loading quiz review:', error);
         showError('Failed to load quiz review');
+        showReviewModal.value = false;
       } finally {
         loading.value = false;
       }
@@ -966,14 +1073,18 @@ export default {
       activeTab,
       tabs,
       filteredClasses,
-      handleSearch,
       searchQuery,
+      searchResults,
+      searchClasses,
+      requestToJoin,
       enrolledClasses,
+      pendingClasses,
       handleQuizCompleted,
       showQuizReview,
       reviewData,
       claimBadge,
-      isMintingBadge
+      isMintingBadge,
+      isEnrolled
     };
   }
 };

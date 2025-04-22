@@ -57,9 +57,18 @@ const averageScore = ref(0);
 
 const updateDashboardStats = async (userId) => {
   try {
-    // Get active classes count
-    const classes = await FirebaseService.getClassesByStudent(userId);
-    activeClassesCount.value = classes.length;
+    // Get classes with enrollment info
+    const { classes } = await FirebaseService.getClasses({
+      studentId: userId,
+      includeQuizzes: true,
+      includeTeacherInfo: true,
+      includeEnrollmentInfo: true
+    });
+    
+    // Count only classes where enrollment status is 'accepted'
+    activeClassesCount.value = classes.filter(classItem => 
+      classItem.enrollment?.status === 'accepted'
+    ).length;
 
     // Get quiz attempts
     const attempts = await FirebaseService.getQuizAttemptsByUser(userId);

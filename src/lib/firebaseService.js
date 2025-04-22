@@ -1003,7 +1003,7 @@ class FirebaseService {
       const badgesSnapshot = await getDocs(badgesRef);
       
       return badgesSnapshot.docs.map(doc => ({
-        id: doc.badgeId,
+        id: doc.id,
         ...doc.data()
       }));
     } catch (error) {

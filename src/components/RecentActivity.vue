@@ -12,7 +12,7 @@
 
     <!-- Recent Activity -->
     <div v-else class="space-y-4">
-      <div v-if="activities.length === 0" class="text-center py-8">
+      <div v-if="activities.length === 0" class="text-center py-4">
         <p class="text-gray-500">No recent activity found.</p>
       </div>
 
@@ -68,7 +68,7 @@
                 />
                 <IconService 
                   v-else-if="activity.type === 'enrollment_request'" 
-                  name="user-plus" 
+                  name="plus" 
                   size="4" 
                   color="text-indigo-600"
                 />
@@ -118,13 +118,46 @@
             </div>
           </div>
         </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="totalActivities > 5" class="flex items-center justify-center space-x-2 mt-8 py-4 border-t">
+          <button
+            @click="previousPage"
+            :disabled="currentPage === 1"
+            class="px-4 py-2 rounded-md border "
+            :class="currentPage === 1 ? 'text-gray-400 cursor-not-allowed bg-gray-100' : 'text-gray-700 hover:bg-gray-50'"
+          >
+            <IconService name="chevron-left" size="4" />
+          </button>
+          
+          <div class="flex space-x-2">
+            <button
+              v-for="page in totalPages"
+              :key="page"
+              @click="goToPage(page)"
+              class="w-8 h-8 flex items-center justify-center rounded-md border"
+              :class="page === currentPage ? 'bg-primary-600 text-white border-primary-600' : 'text-gray-700 hover:bg-gray-50 border-gray-300'"
+            >
+              {{ page }}
+            </button>
+          </div>
+          
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+            class="px-4 py-2 rounded-md border"
+            :class="currentPage === totalPages ? 'text-gray-400 cursor-not-allowed bg-gray-100' : 'text-gray-700 hover:bg-gray-50'"
+          >
+            <IconService name="chevron-right" size="4" />
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
 import IconService from './IconService.vue';
@@ -140,6 +173,9 @@ export default {
     const activities = ref([]);
     const loading = ref(true);
     const error = ref(null);
+    const currentPage = ref(1);
+    const itemsPerPage = 5;
+    const totalActivities = ref(0);
 
     const loadRecentActivity = async () => {
       if (!user.value?.uid) {
@@ -151,12 +187,41 @@ export default {
       loading.value = true;
       error.value = null;
       try {
-        activities.value = await FirebaseService.getUserActivities(user.value.uid, 5);
+        const allActivities = await FirebaseService.getUserActivities(user.value.uid);
+        totalActivities.value = allActivities.length;
+        const startIndex = (currentPage.value - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        activities.value = allActivities.slice(startIndex, endIndex);
       } catch (err) {
         console.error('Error loading recent activity:', err);
         error.value = 'Failed to load recent activity. Please try again.';
       } finally {
         loading.value = false;
+      }
+    };
+
+    const totalPages = computed(() => {
+      return Math.max(1, Math.ceil(totalActivities.value / itemsPerPage));
+    });
+
+    const goToPage = (page) => {
+      if (page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+        loadRecentActivity();
+      }
+    };
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+        loadRecentActivity();
+      }
+    };
+
+    const previousPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--;
+        loadRecentActivity();
       }
     };
 
@@ -227,7 +292,13 @@ export default {
       }
     };
 
+    // Load activities when component mounts
     onMounted(() => {
+      loadRecentActivity();
+    });
+
+    // Watch for page changes
+    watch(currentPage, () => {
       loadRecentActivity();
     });
 
@@ -238,7 +309,13 @@ export default {
       formatDate,
       formatRelativeTime,
       getStatusText,
-      getActivityTypeText
+      getActivityTypeText,
+      currentPage,
+      totalPages,
+      goToPage,
+      nextPage,
+      previousPage,
+      totalActivities
     };
   }
 };
