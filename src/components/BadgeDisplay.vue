@@ -80,7 +80,6 @@ export default {
         }
 
         badges.value = await FirebaseService.getUserBadges(user.value.uid);
-        console.log('Loaded badges:', badges.value); // Debug log
        
       } catch (err) {
         console.error('Error loading badges:', err);

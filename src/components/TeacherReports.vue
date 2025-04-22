@@ -141,7 +141,6 @@ export default {
       
       loading.value = true;
       try {
-        console.log('Loading report for quiz:', selectedQuiz.value);
         
         // Get all submissions for the selected quiz
         const submissions = await FirebaseService.getTeacherSubmissions(
@@ -149,11 +148,9 @@ export default {
           selectedClass.value,
           selectedQuiz.value
         );
-        console.log('Submissions:', submissions);
 
         // Get quiz details
         const quiz = await FirebaseService.getQuiz(selectedQuiz.value);
-        console.log('Quiz details:', quiz);
         
         if (!quiz || !quiz.questions) {
           console.error('Quiz data is missing or invalid');
@@ -162,7 +159,6 @@ export default {
         
         // Analyze the data
         const analysis = analyzeQuizData(submissions, quiz);
-        console.log('Analysis results:', analysis);
         
         // Set report data and wait for DOM update
         reportData.value = analysis;
@@ -184,10 +180,8 @@ export default {
     };
 
     const analyzeQuizData = (submissions, quiz) => {
-      console.log('Analyzing data:', { submissions, quiz });
       
       if (!submissions || submissions.length === 0) {
-        console.log('No submissions found');
         return {
           questions: [],
           classPerformance: {}
@@ -199,7 +193,6 @@ export default {
           isCorrect: sub.questionResults?.[index]?.isCorrect,
           selectedAnswer: sub.questionResults?.[index]?.selectedAnswer
         }));
-        console.log(`Question ${index} answers:`, answers);
 
         const correctCount = answers.filter(a => a.isCorrect).length;
         const totalAnswers = answers.length;
@@ -243,7 +236,6 @@ export default {
     };
 
     const updateCharts = (analysis) => {
-      console.log('Updating charts with data:', analysis);
       
       // Update Difficulty Chart
       if (difficultyChartInstance) {
@@ -251,7 +243,6 @@ export default {
       }
       
       if (difficultyChart.value) {
-        console.log('Difficulty chart canvas found');
         const difficultyCtx = difficultyChart.value.getContext('2d');
         
         const difficultyData = {
@@ -264,7 +255,6 @@ export default {
             borderWidth: 1
           }]
         };
-        console.log('Difficulty chart data:', difficultyData);
         
         difficultyChartInstance = new Chart(difficultyCtx, {
           type: 'bar',
@@ -300,7 +290,6 @@ export default {
       }
       
       if (classChart.value) {
-        console.log('Class performance chart canvas found');
         const classCtx = classChart.value.getContext('2d');
         const classData = Object.values(analysis.classPerformance);
         
@@ -314,7 +303,6 @@ export default {
             borderWidth: 1
           }]
         };
-        console.log('Class performance chart data:', performanceData);
         
         classChartInstance = new Chart(classCtx, {
           type: 'bar',

@@ -84,7 +84,6 @@ const handleClassJoined = async (userId) => {
 };
 
 const handleClassLeft = async (userId) => {
-  console.log("Class left event received, updating dashboard...");
   await updateDashboardStats(userId);
   const studentClassesComponent = document.querySelector("student-classes");
   if (studentClassesComponent) {
@@ -93,7 +92,6 @@ const handleClassLeft = async (userId) => {
 };
 
 const handleQuizCompleted = async (userId) => {
-  console.log("Quiz completed event received, updating dashboard...");
   await updateDashboardStats(userId);
   const studentClassesComponent = document.querySelector("student-classes");
   if (studentClassesComponent) {
@@ -102,7 +100,6 @@ const handleQuizCompleted = async (userId) => {
 };
 
 const handleEnrollmentStatusChanged = async (userId) => {
-  console.log("Enrollment status changed event received, updating dashboard...");
   await updateDashboardStats(userId);
   const studentClassesComponent = document.querySelector("student-classes");
   if (studentClassesComponent) {

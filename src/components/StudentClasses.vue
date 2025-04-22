@@ -358,7 +358,6 @@ export default {
         loading.value = true;
         error.value = null;
         const loadedClasses = await FirebaseService.getClassesByStudent(user.value.uid);
-        console.log(loadedClasses)
         // Get enrollment status for each class
         const classesWithStatus = await Promise.all(loadedClasses.map(async classItem => {
           if (!classItem.id) {
@@ -803,11 +802,9 @@ export default {
     const showQuizReview = async (classId, quizId) => {
       try {
         loading.value = true;
-        console.log('Loading quiz review for:', { classId, quizId });
         
         // Get the quiz attempt
         const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
-        console.log('Quiz attempts:', attempts);
         
         if (!attempts || attempts.length === 0) {
           showError('No quiz attempt found to review');
@@ -816,7 +813,6 @@ export default {
         
         // Get the most recent attempt
         const attempt = attempts[0];
-        console.log('Selected attempt:', attempt);
         
         // Get quiz details
         const quiz = await FirebaseService.getQuiz(quizId);
@@ -857,7 +853,6 @@ export default {
           }
         };
         
-        console.log('Review data set:', reviewData.value);
         showReviewModal.value = true;
       } catch (error) {
         console.error('Error loading quiz review:', error);

@@ -122,7 +122,6 @@ class FirebaseService {
         return [];
       }
       
-      console.log('Getting classes for student:', studentId);
       
       // First get all enrollments for the student without status filter
       const enrollmentsSnapshot = await getDocs(
@@ -132,7 +131,6 @@ class FirebaseService {
         )
       );
 
-      console.log('All enrollments found:', enrollmentsSnapshot.docs.length);
       
       const enrollments = enrollmentsSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -174,7 +172,6 @@ class FirebaseService {
       );
 
       const validClasses = classes.filter(Boolean);
-      console.log('Valid classes found:', validClasses.length);
 
       // Get all quizzes for these classes in a single query
       const classIds = validClasses.map(c => c.id);
@@ -191,7 +188,6 @@ class FirebaseService {
         )
       );
 
-      console.log('Quizzes found:', quizzesSnapshot.docs.length);
 
       const quizzes = quizzesSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -352,7 +348,6 @@ class FirebaseService {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
-      console.log('Quiz data:', cleanQuizData);
 
       // Remove any undefined fields
       Object.keys(cleanQuizData).forEach(key => {
@@ -361,7 +356,6 @@ class FirebaseService {
         }
       });
 
-      console.log('Creating quiz with data:', cleanQuizData);
       const quizRef = await addDoc(collection(db, 'quizzes'), cleanQuizData);
       return quizRef.id;
     } catch (error) {
@@ -402,7 +396,6 @@ class FirebaseService {
 
   // Quiz Attempt Operations
   static async getQuizAttemptsByUser(userId, quizId = null) {
-    console.log('Getting quiz attempts for user:', userId, quizId);
     try {
       if (!userId) {
         throw new Error('User ID is required to fetch quiz attempts');
@@ -1012,7 +1005,6 @@ class FirebaseService {
   }
 
   static async getBadge(badgeId) {
-    console.log('Getting badge:', badgeId);
     try {
       const badgeRef = doc(db, 'badges', badgeId);
       const badgeDoc = await getDoc(badgeRef);
@@ -1600,7 +1592,7 @@ class FirebaseService {
 
   static async getPublicClasses(userId = null) {
     try {
-      // First get all public classes
+      // Get all public classes
       const publicClassesQuery = query(
         collection(db, 'classes'),
         where('isPublic', '==', true),
@@ -1617,68 +1609,9 @@ class FirebaseService {
       );
       const publicQuizzesSnapshot = await getDocs(publicQuizzesQuery);
 
-      // If no user is logged in, only return public classes
-      if (!userId) {
-        return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
-      }
-
-      // For logged-in users, also get their private classes
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (!userDoc.exists()) {
-        return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
-      }
-
-      const userData = userDoc.data();
-      let privateClassIds = [];
-
-      if (userData.role === 'teacher') {
-        // Get teacher's private classes
-        const teacherClassesQuery = query(
-          collection(db, 'classes'),
-          where('teacherId', '==', userId),
-          where('isPublic', '==', false)
-        );
-        const teacherClassesSnapshot = await getDocs(teacherClassesQuery);
-        privateClassIds = teacherClassesSnapshot.docs.map(doc => doc.id);
-      } else if (userData.role === 'student') {
-        // Get student's enrolled private classes
-        const enrollmentsQuery = query(
-          collection(db, 'enrollments'),
-          where('studentId', '==', userId),
-          where('status', '==', 'enrolled')
-        );
-        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-        const enrolledClassIds = enrollmentsSnapshot.docs.map(doc => doc.data().classId);
-
-        // Get private classes where student is enrolled
-        if (enrolledClassIds.length > 0) {
-          const privateClassesQuery = query(
-            collection(db, 'classes'),
-            where('id', 'in', enrolledClassIds),
-            where('isPublic', '==', false)
-          );
-          const privateClassesSnapshot = await getDocs(privateClassesQuery);
-          privateClassIds = privateClassesSnapshot.docs.map(doc => doc.id);
-        }
-      }
-
-      // Get quizzes for private classes
-      const privateQuizzesQuery = query(
-        collection(db, 'quizzes'),
-        where('classId', 'in', privateClassIds),
-        orderBy('createdAt', 'desc')
-      );
-      const privateQuizzesSnapshot = await getDocs(privateQuizzesQuery);
-
-      // Combine public and private classes
-      const allClassIds = [...new Set([...publicClassIds, ...privateClassIds])];
-      const allQuizzesSnapshot = {
-        docs: [...publicQuizzesSnapshot.docs, ...privateQuizzesSnapshot.docs]
-      };
-
-      return await this._formatClassesWithQuizzes(allClassIds, allQuizzesSnapshot);
+      return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
     } catch (error) {
-      console.error('Error getting classes:', error);
+      console.error('Error getting public classes:', error);
       throw error;
     }
   }
@@ -1727,14 +1660,6 @@ class FirebaseService {
     );
     
     return classes;
-  }
-
-  static async getAllClasses() {
-    const classesSnapshot = await getDocs(collection(db, "classes"));
-    return classesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
   }
 }
 

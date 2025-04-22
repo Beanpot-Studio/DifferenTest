@@ -223,7 +223,6 @@ export default {
       try {
         const { classes: loadedClasses, enrolledClasses: enrolled } = await FirebaseService.getAvailableClasses(user.value.uid);
         classes.value = loadedClasses;
-        console.log(classes.value);
         enrolledClasses.value = enrolled;
       } catch (err) {
         console.error('Error loading classes:', err);

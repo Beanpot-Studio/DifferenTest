@@ -92,7 +92,6 @@ export default {
 
     onMounted(() => {
       // Ensure the component is properly initialized
-      console.log("LoginPopupHelper mounted");
       window.addEventListener('show-register-modal', handleShowRegisterModal);
     });
 

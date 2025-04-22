@@ -187,12 +187,10 @@ export default {
 
     // Add watch for role changes
     watch(role, (newRole) => {
-      console.log('Role changed:', newRole);
     }, { immediate: true });
 
     // Add watch for user changes
     watch(user, (newUser) => {
-      console.log('User changed:', newUser);
     }, { immediate: true });
 
     const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
@@ -209,14 +207,12 @@ export default {
         }
 
         const quizId = props.quizId.trim();
-        console.log('Loading quiz with ID:', quizId);
 
         const quizData = await FirebaseService.getQuiz(quizId);
         if (!quizData) {
           throw new Error(`Quiz with ID ${quizId} not found`);
         }
 
-        console.log('Quiz data:', quizData);
 
         if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
           throw new Error('Quiz has no questions');

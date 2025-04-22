@@ -159,13 +159,11 @@ const isStudent = computed(() => {
 
 const loadQuizAttempts = async () => {
   if (!user.value?.uid) {
-    console.log('No user UID available');
     return;
   }
   
   try {
     const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
-    console.log('Quiz attempts:', attempts);
     const attemptsByQuiz = {};
     
     attempts.forEach(attempt => {
@@ -178,7 +176,6 @@ const loadQuizAttempts = async () => {
       }
     });
     
-    console.log('Attempts by quiz:', attemptsByQuiz);
     quizAttempts.value = attemptsByQuiz;
   } catch (error) {
     console.error('Error loading quiz attempts:', error);
@@ -187,7 +184,6 @@ const loadQuizAttempts = async () => {
 
 const loadBadgeStatus = async () => {
   if (!user.value?.uid) {
-    console.log('No user UID available for badge status');
     return;
   }
   
@@ -206,7 +202,6 @@ const loadBadgeStatus = async () => {
 // Add watcher for user state changes
 watch(() => user.value, async (newUser) => {
   if (!isMounted.value) return;
-  console.log('User state changed:', newUser);
   if (newUser) {
     await loadQuizAttempts();
     await loadBadgeStatus();

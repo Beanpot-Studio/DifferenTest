@@ -139,7 +139,6 @@ import IconService from "../../components/IconService.vue";
 
         // Listen for class left events
         window.addEventListener("classLeft", async () => {
-          console.log("Class left event received, updating dashboard...");
           // Update dashboard stats
           await updateDashboardStats(user.uid);
 
@@ -155,7 +154,6 @@ import IconService from "../../components/IconService.vue";
 
         // Listen for quiz completed events
         window.addEventListener("quizCompleted", async () => {
-          console.log("Quiz completed event received, updating dashboard...");
           // Update dashboard stats
           await updateDashboardStats(user.uid);
 
@@ -171,9 +169,7 @@ import IconService from "../../components/IconService.vue";
 
         // Listen for enrollment status changed events
         window.addEventListener("enrollmentStatusChanged", async () => {
-          console.log(
-            "Enrollment status changed event received, updating dashboard..."
-          );
+         
           // Update dashboard stats
           await updateDashboardStats(user.uid);
 

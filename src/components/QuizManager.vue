@@ -247,7 +247,6 @@ export default {
     const handleBadgeImageUpload = (event) => {
       const file = event.target.files[0];
       if (file) {
-        console.log('Badge image selected:', {
           name: file.name,
           type: file.type,
           size: file.size
@@ -266,9 +265,7 @@ export default {
         // Handle badge image upload if provided
         let badgeImageUrl = currentQuiz.value.badgeImage;
         if (badgeImageFile.value) {
-          console.log('Starting badge image upload process...');
           badgeImageUrl = await uploadToCloudinary(badgeImageFile.value);
-          console.log('Badge image upload response:', badgeImageUrl);
           
           if (!badgeImageUrl) {
             throw new Error('Failed to get badge image URL');

@@ -291,9 +291,7 @@ export default {
         isLoading.value = true;
         const teacherClasses = await FirebaseService.getClassesByTeacher(user.value.uid);
         classes.value = teacherClasses;
-        console.log('Loaded classes:', teacherClasses);
       } catch (error) {
-        console.error('Error loading classes:', error);
         showError('Failed to load classes');
       } finally {
         isLoading.value = false;
@@ -371,7 +369,6 @@ export default {
     const handleBadgeImageUpload = (event) => {
       const file = event.target.files[0];
       if (file) {
-        console.log('Badge image selected:', {
           name: file.name,
           type: file.type,
           size: file.size
@@ -409,15 +406,12 @@ export default {
         // Handle badge image upload first if provided
         let badgeImageUrl = null;
         if (badgeImageFile.value) {
-          console.log('Starting badge image upload process...');
-          console.log('Badge image file:', {
             name: badgeImageFile.value.name,
             type: badgeImageFile.value.type,
             size: badgeImageFile.value.size
           });
 
           badgeImageUrl = await uploadToCloudinary(badgeImageFile.value);
-          console.log('Badge image upload response:', badgeImageUrl);
           
           if (!badgeImageUrl) {
             throw new Error('Failed to get badge image URL');
@@ -437,7 +431,6 @@ export default {
           lessonPlan: fileContent.value
         };
         
-        console.log('Creating quiz with data:', quizData);
 
         if (badgeImageUrl) {
           quizData.badgeImage = badgeImageUrl;
@@ -446,7 +439,6 @@ export default {
       
 
         const quizId = await FirebaseService.createQuiz(quizData);
-        console.log('Quiz created with ID:', quizId);
         
         if (!quizId) {
           throw new Error('Failed to create quiz');
@@ -509,7 +501,6 @@ export default {
           lessonPlan: fileContent.value
         };
 
-        console.log('saving lesson plan for quiz with data:', quizData);
 
 
         const quizId = await FirebaseService.createQuiz(quizData);
