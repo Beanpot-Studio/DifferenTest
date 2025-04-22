@@ -357,7 +357,11 @@ export default {
       try {
         loading.value = true;
         error.value = null;
-        const loadedClasses = await FirebaseService.getClassesByStudent(user.value.uid);
+        const { classes: loadedClasses } = await FirebaseService.getClasses({
+          studentId: user.value.uid,
+          includeQuizzes: true,
+          includeTeacherInfo: true
+        });
         // Get enrollment status for each class
         const classesWithStatus = await Promise.all(loadedClasses.map(async classItem => {
           if (!classItem.id) {
@@ -377,7 +381,7 @@ export default {
 
         classes.value = classesWithStatus
           .filter(Boolean)
-          .sort((a, b) => b.updatedAt?.toDate() - a.updatedAt?.toDate());
+          .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
         // Also update enrolledClasses for components that need it
         enrolledClasses.value = classes.value;
 

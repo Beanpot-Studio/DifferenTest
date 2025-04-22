@@ -204,23 +204,63 @@ export default {
     const error = ref(null);
 
     const loadClasses = async () => {
+      if (!user.value) return;
+      
       try {
-        const { classes: loadedClasses } = await FirebaseService.getTeacherClasses(user.value.uid);
-        classes.value = loadedClasses;
+        loading.value = true;
+        const response = await FirebaseService.getClasses({
+          teacherId: user.value.uid,
+          includeQuizzes: true,
+          includeTeacherInfo: true
+        });
+        
+        if (!response || !response.classes) {
+          classes.value = [];
+          return;
+        }
+        
+        classes.value = response.classes.map(classData => ({
+          id: classData.id,
+          name: classData.name,
+          quizzes: classData.quizzes || []
+        }));
       } catch (error) {
         console.error('Error loading classes:', error);
+        showError('Failed to load classes');
+      } finally {
+        loading.value = false;
       }
     };
 
     const loadQuizzes = async () => {
+      if (!user.value) return;
+      
       try {
-        if (selectedClass.value) {
-          quizzes.value = await FirebaseService.getClassQuizzes(selectedClass.value);
-        } else {
-          quizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        loading.value = true;
+        const response = await FirebaseService.getClasses({
+          teacherId: user.value.uid,
+          includeQuizzes: true,
+          includeTeacherInfo: true
+        });
+        
+        if (!response || !response.classes) {
+          quizzes.value = [];
+          return;
         }
+        
+        // Flatten all quizzes from all classes
+        quizzes.value = response.classes.flatMap(classData => 
+          (classData.quizzes || []).map(quiz => ({
+            ...quiz,
+            className: classData.name,
+            classId: classData.id
+          }))
+        );
       } catch (error) {
         console.error('Error loading quizzes:', error);
+        showError('Failed to load quizzes');
+      } finally {
+        loading.value = false;
       }
     };
 

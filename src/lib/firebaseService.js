@@ -46,172 +46,103 @@ class FirebaseService {
     return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
   }
 
-  static async getTeacherClasses(teacherId) {
-    // Get teacher's classes
-    const classesQuery = query(
-      collection(db, 'classes'),
-      where('teacherId', '==', teacherId),
-      orderBy('createdAt', 'desc')
-    );
-    const classesSnapshot = await getDocs(classesQuery);
-    const classes = classesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  static async getClasses(options = {}) {
+    const { 
+      teacherId, 
+      studentId, 
+      isPublic = null,
+      includeQuizzes = false,
+      includeTeacherInfo = false,
+      includeEnrollmentInfo = false
+    } = options;
 
-    // Get total submissions for all classes
-    const activitiesQuery = query(
-      collection(db, 'activities'),
-      where('type', '==', 'quiz_completed'),
-      where('teacherId', '==', teacherId)
-    );
-    const activitiesSnapshot = await getDocs(activitiesQuery);
-    const totalSubmissions = activitiesSnapshot.size;
-
-    return { classes, totalSubmissions };
-  }
-
-  static async getTeacherQuizzes(teacherId) {
     try {
-      // First get all classes for this teacher
-      const classesQuery = query(
+      // Build base query
+      let queryConstraints = [];
+      
+      if (teacherId) {
+        queryConstraints.push(where('teacherId', '==', teacherId));
+      }
+      if (isPublic !== null) {
+        queryConstraints.push(where('isPublic', '==', isPublic));
+      }
+      
+      const q = query(
         collection(db, 'classes'),
-        where('teacherId', '==', teacherId)
+        ...queryConstraints,
+        orderBy('createdAt', 'desc')
       );
-      const classesSnapshot = await getDocs(classesQuery);
-      const classIds = classesSnapshot.docs.map(doc => doc.id);
+      
+      const snapshot = await getDocs(q);
+      const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      if (classIds.length === 0) {
-        return [];
+      // If no additional data needed, return early
+      if (!includeQuizzes && !includeTeacherInfo && !includeEnrollmentInfo) {
+        return { classes, totalSubmissions: 0 };
       }
 
-      // Get all quizzes for these classes
-      const quizzes = await Promise.all(
-        classIds.map(async (classId) => {
-          const classQuizzes = await this.getQuizzesByClass(classId);
-          const classDoc = await getDoc(doc(db, 'classes', classId));
-          const className = classDoc.exists() ? classDoc.data().name : 'Unknown Class';
+      // Get additional data if requested
+      const enhancedClasses = await Promise.all(classes.map(async (classData) => {
+        const enhancedClass = { ...classData };
 
-          return classQuizzes.map(quiz => ({
-            ...quiz,
-            className,
-            questionCount: quiz.questions?.length || 0
-          }));
-        })
-      );
-
-      // Flatten the array of arrays and sort by createdAt
-      return quizzes.flat().sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
-    } catch (error) {
-      console.error('Error getting teacher quizzes:', error);
-      throw error;
-    }
-  }
-
-  static async getClassesByTeacher(teacherId) {
-    const q = query(
-      collection(db, 'classes'),
-      where('teacherId', '==', teacherId),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  }
-
-  static async getClassesByStudent(studentId) {
-    try {
-      if (!studentId) {
-        console.error('No student ID provided');
-        return [];
-      }
-      
-      
-      // First get all enrollments for the student without status filter
-      const enrollmentsSnapshot = await getDocs(
-        query(
-          collection(db, 'enrollments'),
-          where('studentId', '==', studentId)
-        )
-      );
-
-      
-      const enrollments = enrollmentsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // Get all classes the student is enrolled in
-      const classes = await Promise.all(
-        enrollments.map(async (enrollment) => {
-          if (!enrollment.classId) {
-            console.warn('Enrollment missing classId:', enrollment.id);
-            return null;
-          }
-
-          const classDoc = await getDoc(doc(db, 'classes', enrollment.classId));
-          if (!classDoc.exists()) {
-            console.warn('Class not found:', enrollment.classId);
-            return null;
-          }
-
-          const classData = classDoc.data();
-          
-          // Get teacher info
+        // Get teacher info if requested
+        if (includeTeacherInfo) {
           const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-          const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+          enhancedClass.teacher = teacherDoc.exists() ? teacherDoc.data() : null;
+        }
 
-          return {
-            id: classDoc.id,
-            ...classData,
-            teacher: teacherData ? {
-              id: teacherDoc.id,
-              name: teacherData.name
-            } : null,
-            enrollmentId: enrollment.id,
-            enrolledAt: enrollment.enrolledAt,
-            enrollmentStatus: enrollment.status || 'active' // Default to active if status not set
-          };
-        })
-      );
+        // Get enrollment info if requested
+        if (includeEnrollmentInfo && studentId) {
+          const enrollmentQuery = query(
+            collection(db, 'enrollments'),
+            where('classId', '==', classData.id),
+            where('studentId', '==', studentId)
+          );
+          const enrollmentSnapshot = await getDocs(enrollmentQuery);
+          enhancedClass.enrollment = !enrollmentSnapshot.empty ? enrollmentSnapshot.docs[0].data() : null;
+        }
 
-      const validClasses = classes.filter(Boolean);
+        // Get quizzes if requested
+        if (includeQuizzes) {
+          const quizzesQuery = query(
+            collection(db, 'quizzes'),
+            where('classId', '==', classData.id),
+            orderBy('createdAt', 'desc')
+          );
+          const quizzesSnapshot = await getDocs(quizzesQuery);
+          enhancedClass.quizzes = quizzesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+        }
 
-      // Get all quizzes for these classes in a single query
-      const classIds = validClasses.map(c => c.id);
-      
-      // If there are no valid classes, return early with empty quizzes
-      if (classIds.length === 0) {
-        return validClasses;
+        return enhancedClass;
+      }));
+
+      // Get total submissions if quizzes are included
+      let totalSubmissions = 0;
+      if (includeQuizzes) {
+        const quizIds = enhancedClasses.flatMap(c => c.quizzes?.map(q => q.id) || []);
+        if (quizIds.length > 0) {
+          const submissionsQuery = query(
+            collection(db, 'quizAttempts'),
+            where('quizId', 'in', quizIds)
+          );
+          const submissionsSnapshot = await getDocs(submissionsQuery);
+          totalSubmissions = submissionsSnapshot.size;
+        }
       }
 
-      const quizzesSnapshot = await getDocs(
-        query(
-          collection(db, 'quizzes'),
-          where('classId', 'in', classIds)
-        )
-      );
-
-
-      const quizzes = quizzesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      // Associate quizzes with their classes
-      const classesWithQuizzes = validClasses.map(classItem => ({
-        ...classItem,
-        quizzes: quizzes.filter(quiz => quiz.classId === classItem.id)
-      }));
-
-      return classesWithQuizzes.sort((a, b) => b.enrolledAt?.toDate() - a.enrolledAt?.toDate());
+      return { 
+        classes: enhancedClasses,
+        totalSubmissions 
+      };
     } catch (error) {
-      console.error('Error getting student classes:', error);
+      console.error('Error getting classes:', error);
       throw error;
     }
   }
 
-  /**
-   * Create a new class
-   * @param {Object} classData - The class data to create
-   * @returns {Promise<string>} The ID of the created class
-   */
   static async createClass(classData) {
     try {
       if (!classData.teacherId) {
@@ -1077,66 +1008,6 @@ class FirebaseService {
       }));
     } catch (error) {
       console.error('Error getting all badges:', error);
-      throw error;
-    }
-  }
-
-  static async getAvailableClasses(userId) {
-    try {
-      if (!userId) {
-        throw new Error('User ID is required to fetch available classes');
-      }
-
-      // Get user's current enrollments
-      const enrollmentsQuery = query(
-        collection(db, 'enrollments'),
-        where('studentId', '==', userId)
-      );
-      const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
-      const enrolledClassIds = enrollmentsSnapshot.docs.map(enrollmentDoc => enrollmentDoc.data().classId);
-
-      // Get all non-public classes with teacher details
-      const classesQuery = query(
-        collection(db, 'classes'),
-        where('isPublic', '==', false),
-        orderBy('createdAt', 'desc')
-      );
-      const classesSnapshot = await getDocs(classesQuery);
-      
-      const classes = [];
-      
-      for (const classDoc of classesSnapshot.docs) {
-        const classData = classDoc.data();
-        
-        // Get teacher information
-        const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-        const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-        
-        // Get quizzes for this class
-        const quizzesQuery = query(
-          collection(db, 'quizzes'),
-          where('classId', '==', classDoc.id)
-        );
-        const quizzesSnapshot = await getDocs(quizzesQuery);
-        const quizCount = quizzesSnapshot.size;
-        
-        classes.push({
-          id: classDoc.id,
-          name: classData.name,
-          teacherName: teacherData?.name || 'Unknown Teacher',
-          isEnrolled: enrolledClassIds.includes(classDoc.id),
-          code: classData.code || '',
-          description: classData.description || '',
-          quizCount: quizCount
-        });
-      }
-      
-      return {
-        classes,
-        enrolledClasses: enrolledClassIds
-      };
-    } catch (error) {
-      console.error('Error getting available classes:', error);
       throw error;
     }
   }

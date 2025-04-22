@@ -179,25 +179,29 @@ export default {
         loading.value = true;
         error.value = null;
         
-        // Get all quizzes for the teacher
-        const quizzes = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        const { classes: loadedClasses } = await FirebaseService.getClasses({
+          teacherId: user.value.uid,
+          includeQuizzes: true,
+          includeTeacherInfo: true
+        });
         
         // Group quizzes by class
         const classMap = new Map();
         
-        for (const quiz of quizzes) {
+        for (const classData of loadedClasses) {
+          classMap.set(classData.id, {
+            id: classData.id,
+            name: classData.name,
+            quizzes: []
+          });
+        }
+        
+        for (const quiz of loadedClasses.flatMap(c => c.quizzes)) {
           if (!quiz.lessonPlan) continue;
           
-          if (!classMap.has(quiz.classId)) {
-            const classData = await FirebaseService.getClass(quiz.classId);
-            classMap.set(quiz.classId, {
-              id: quiz.classId,
-              name: classData.name,
-              quizzes: []
-            });
+          if (classMap.has(quiz.classId)) {
+            classMap.get(quiz.classId).quizzes.push(quiz);
           }
-          
-          classMap.get(quiz.classId).quizzes.push(quiz);
         }
         
         classesWithLessonPlans.value = Array.from(classMap.values());

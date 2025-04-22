@@ -201,6 +201,7 @@ export default {
     const { user } = useAuth();
     const classes = ref([]);
     const availableQuizzes = ref([]);
+    const classesWithQuizzes = ref([]);
     const newClass = ref({
       name: '',
       code: '',
@@ -258,11 +259,21 @@ export default {
       if (!user.value) return;
 
       try {
-        const { classes: loadedClasses, totalSubmissions } = await FirebaseService.getTeacherClasses(user.value.uid);
-        classes.value = loadedClasses.map(classItem => ({
-          ...classItem,
-          totalSubmissions
-        }));
+        const response = await FirebaseService.getClasses({
+          teacherId: user.value.uid,
+          includeQuizzes: true,
+          includeTeacherInfo: true,
+          includeEnrollmentInfo: true
+        });
+        
+        if (response && response.classes) {
+          classes.value = response.classes.map(classItem => ({
+            ...classItem,
+            totalSubmissions: response.totalSubmissions || 0
+          }));
+        } else {
+          classes.value = [];
+        }
       } catch (error) {
         console.error('Error fetching classes:', error);
         showError('Error fetching classes. Please try again.');
@@ -271,12 +282,47 @@ export default {
 
     const fetchQuizzes = async () => {
       if (!user.value) return;
-
+      
       try {
-        availableQuizzes.value = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        loading.value = true;
+        const response = await FirebaseService.getClasses({
+          teacherId: user.value.uid,
+          includeQuizzes: true,
+          includeTeacherInfo: true
+        });
+        
+        if (!response || !response.classes) {
+          classesWithQuizzes.value = [];
+          return;
+        }
+        
+        // Group quizzes by class
+        const classMap = new Map();
+        
+        for (const classData of response.classes) {
+          if (!classData.id || !classData.name) continue;
+          classMap.set(classData.id, {
+            id: classData.id,
+            name: classData.name,
+            quizzes: []
+          });
+        }
+        
+        for (const classData of response.classes) {
+          if (!classData.quizzes) continue;
+          for (const quiz of classData.quizzes) {
+            if (quiz && quiz.classId && classMap.has(quiz.classId)) {
+              classMap.get(quiz.classId).quizzes.push(quiz);
+            }
+          }
+        }
+        
+        classesWithQuizzes.value = Array.from(classMap.values());
       } catch (error) {
         console.error('Error fetching quizzes:', error);
-        showError('Error fetching quizzes. Please try again.');
+        showError('Failed to fetch quizzes');
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -385,6 +431,7 @@ export default {
     return {
       classes,
       availableQuizzes,
+      classesWithQuizzes,
       newClass,
       editingClass,
       selectedQuiz,

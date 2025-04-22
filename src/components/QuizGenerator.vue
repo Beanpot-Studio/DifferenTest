@@ -1,241 +1,199 @@
 <template>
-  <div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold mb-4">Generate Quiz from Lesson</h2>
-    
-    <!-- Class Selection -->
-    <div class="mb-6">
-      <div class="flex items-center justify-between mb-2">
-        <label class="block text-sm font-medium text-gray-700">
-          Select Class
-        </label>
-      </div>
-      <select
-        v-model="selectedClassId"
-        class="w-full p-2 border rounded-lg"
-        required
-      >
-        <option value="">Select a class</option>
-        <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
-          {{ classItem.name }}
-          <template v-if="classItem.isPublic">
-            (Public)
-          </template>
-        </option>
-      </select>
-    </div>
-
-  
-    <!-- Number of Questions -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Number of Questions
-      </label>
-      <input
-        type="number"
-        v-model="numQuestions"
-        min="1"
-        max="10"
-        class="w-24 p-2 border rounded-lg"
-      />
-    </div>
-
-    <!-- Quiz Title -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Quiz Title
-      </label>
-      <input
-        type="text"
-        v-model="quizTitle"
-        class="w-full p-2 border rounded-lg"
-      />
-    </div>
-
-    <!-- Badge Image Upload -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Badge Image (Optional)
-      </label>
-      <div class="flex items-center">
-        <input
-          type="file"
-          ref="badgeImageInput"
-          accept="image/*"
-          class="hidden"
-          @change="handleBadgeImageUpload"
-        />
-        <button
-          @click="$refs.badgeImageInput.click()"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          Choose Badge Image
-        </button>
-        <span v-if="badgeImageName" class="text-sm text-gray-600 ml-2">{{ badgeImageName }}</span>
-      </div>
-      <p class="mt-1 text-sm text-gray-500">Upload a custom badge image for this quiz (recommended size: 512x512px)</p>
-    </div>
-
-    <!-- Upload Section -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-2">
-        Upload Lesson Plan (PDF, Text, or Markdown)
-      </label>
-      <div class="flex items-center">
-        <input
-          type="file"
-          ref="fileInput"
-          accept=".pdf,.txt,.md,.markdown"
-          class="hidden"
-          @change="handleFileUpload"
-        />
-        <button
-          @click="$refs.fileInput.click()"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          Choose File
-        </button>
-        <span v-if="fileName" class="text-sm text-gray-600">{{ fileName }}</span>
-      </div>
-    </div>
-
-    <!-- Loading State -->
+  <div class="space-y-6">
+    <!-- Loading state -->
     <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
       <BaseAnimation type="loading" :loop="true" />
     </div>
 
-    <!-- Quiz Editor -->
-    <div v-if="quiz" class="space-y-6">
-      <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">{{ quiz.title }}</h3>
-      </div>
+    <!-- Quiz List -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-4">Your Quizzes</h2>
       
-      <div v-for="(question, index) in quiz.questions" :key="index" class="border rounded-lg p-4">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Question {{ index + 1 }}
-          </label>
-          <textarea
-            v-model="question.text"
-            class="w-full p-2 border rounded-lg"
-            rows="3"
-          ></textarea>
-        </div>
-        
-        <div class="space-y-2">
-          <div v-for="(option, optionIndex) in question.options" :key="optionIndex" class="flex items-center space-x-2">
-            <input
-              type="radio"
-              :name="'correct-' + index"
-              :checked="optionIndex === question.correctIndex"
-              @change="question.correctIndex = optionIndex"
-              class="text-primary-600"
-            />
-            <input
-              v-model="option.text"
-              class="flex-1 p-2 border rounded-lg"
-            />
+      <!-- Quiz List -->
+      <div v-if="quizzes.length > 0" class="space-y-2">
+        <div v-for="quiz in quizzes" :key="quiz.id" class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+          <div>
+            <div class="flex items-center space-x-2">
+             
+              <h3 class="text-lg font-bold">{{ quiz.title }}</h3>
+              <!-- Badge Image -->
+              <div v-if="quiz.badgeImage" class="relative group">
+                <img 
+                  :src="quiz.badgeImage" 
+                  alt="Quiz Badge" 
+                  class="w-8 h-8 rounded-full object-cover"
+                />
+                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Quiz Badge
+                </div>
+              </div>
+            </div>
+            <p class="text-sm text-gray-500">Class: {{ quiz.className }} / {{ quiz.questions?.length || 0 }} questions</p>
+          </div>
+          <div class="flex space-x-2">
             <button
-              @click="removeOption(index, optionIndex)"
-              class="text-red-600 hover:text-red-800 p-1"
-              title="Remove option"
+              v-if="quiz.lessonPlan"
+              @click="viewLessonPlan(quiz)"
+              class="px-3 py-1 text-blue-600"
             >
-              <IconService name="x" size="6" />
+            <IconService name="search" size="6" />
+            </button>
+           
+            <button
+              @click="openEditModal(quiz)"
+              class="text-primary-600 hover:text-primary-800 font-medium"
+            >
+            <IconService name="edit" size="6" />
+            </button>
+            <button
+              @click="deleteQuiz(quiz.id)"
+              class="text-red-600 hover:text-red-800 p-1"
+              title="Delete quiz"
+            >
+            <IconService name="trash" size="6" />
             </button>
           </div>
-          
-          <button
-            @click="addOption(index)"
-            class="text-sm text-primary-600 hover:text-primary-800"
-          >
-            + Add Option
-          </button>
         </div>
       </div>
-
-      <div class="flex justify-between">
-        <button
-          @click="saveQuiz"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-        >
-          Save Quiz
-        </button>
-        <button
-          @click="generateNewQuiz"
-          class="px-4 py-2 bg-secondary-600 text-white rounded-lg hover:bg-secondary-700 transition"
-        >
-          Generate New Quiz
-        </button>
-      </div>
+      <p v-else class="text-gray-500">No quizzes created yet.</p>
     </div>
 
-    <!-- Lesson Plan Editor Modal -->
-    <div v-if="showLessonPlanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <!-- Edit Quiz Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Edit Lesson Plan</h3>
-          <button @click="showLessonPlanModal = false" class="text-gray-500 hover:text-gray-700">
-            <IconService name="close" size="6" />
+          <h3 class="text-xl font-bold">Edit Quiz: {{ currentQuiz.title }}</h3>
+          <button @click="closeEditModal" class="text-gray-500 hover:text-gray-700">
+            <IconService name="x" size="6" />
           </button>
         </div>
 
-        <!-- Lesson Title -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Lesson Title
-          </label>
+        <!-- Quiz Title -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Quiz Title</label>
           <input
-            v-model="quizTitle"
+            v-model="currentQuiz.title"
+            type="text"
             class="w-full p-2 border rounded-lg"
-            placeholder="Enter lesson title"
           />
         </div>
 
-        <!-- Image Upload Section -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Upload Image
-          </label>
-          <div class="flex items-center space-x-4">
-            <input
-              type="file"
-              ref="lessonImageInput"
-              accept="image/*"
-              class="hidden"
-              @change="handleLessonImageUpload"
-            />
-            <button
-              @click="$refs.lessonImageInput.click()"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Upload Image
-            </button>
-            <span v-if="lessonImageUrl" class="text-sm text-gray-600">
-              Image URL: {{ lessonImageUrl }}
-            </span>
+        <!-- Questions -->
+        <div v-for="(question, index) in currentQuiz.questions" :key="index" class="border rounded-lg p-4 mb-4">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Question {{ index + 1 }}</label>
+            <textarea
+              v-model="question.text"
+              class="w-full p-2 border rounded-lg"
+              rows="3"
+              @input="saveQuiz"
+            ></textarea>
           </div>
-          <p class="mt-1 text-sm text-gray-500">Upload an image and paste its URL into your lesson plan</p>
+          
+          <div class="space-y-2">
+            <div v-for="(option, optionIndex) in question.options" :key="optionIndex" class="flex items-center space-x-2">
+              <input
+                type="radio"
+                :name="'correct-' + index"
+                :checked="optionIndex === question.correctIndex"
+                @change="question.correctIndex = optionIndex; saveQuiz()"
+                class="text-primary-600"
+              />
+              <input
+                v-model="option.text"
+                class="flex-1 p-2 border rounded-lg"
+                @input="saveQuiz"
+              />
+              <button
+                @click="removeOption(index, optionIndex)"
+                class="text-red-600 hover:text-red-800 p-1"
+                title="Remove option"
+              >
+                <IconService name="x" size="6" />
+              </button>
+            </div>
+            
+            <button
+              @click="addOption(index)"
+              class="text-sm text-primary-600 hover:text-primary-800"
+            >
+              + Add Option
+            </button>
+          </div>
         </div>
 
-        <!-- Lesson Plan Editor -->
-        <div class="mb-4">
-          <textarea
-            v-model="editedLessonPlan"
-            class="w-full h-[60vh] p-4 border rounded-lg font-mono text-sm"
-            placeholder="Edit your lesson plan content here..."
-          ></textarea>
-        </div>
-        <div class="flex justify-end space-x-4">
+        <div class="flex justify-end space-x-4 mt-6">
           <button
-            @click="showLessonPlanModal = false"
-            class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            @click="closeEditModal"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Close
+          </button>
+          <button
+            @click="saveQuiz"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+
+   
+    <!-- View Lesson Plan Modal -->
+    <div v-if="showLessonPlanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">Lesson Plan: {{ currentLessonPlan?.title }}</h3>
+          <div class="flex items-center space-x-2">
+            <button
+              v-if="!isEditing"
+              @click="isEditing = true"
+              class="text-primary-600 hover:text-primary-700"
+              title="Edit lesson plan"
+            >
+              <IconService name="edit" size="6" />
+            </button>
+            <button @click="closeLessonPlanModal" class="text-gray-500 hover:text-gray-700">
+              <IconService name="x" size="6" />
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <div v-if="!isEditing" class="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-4 rounded-lg">
+            {{ currentLessonPlan?.content }}
+          </div>
+          <div v-else>
+            <textarea
+              v-model="editedLessonPlan"
+              class="w-full h-[60vh] p-4 border rounded-lg font-mono text-sm"
+              placeholder="Edit your lesson plan content here..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-6">
+          <button
+            v-if="isEditing"
+            @click="isEditing = false"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
+            v-if="isEditing"
             @click="saveLessonPlan"
             class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
           >
-            Save & Generate Quiz
+            Save Changes
+          </button>
+          <button
+            v-if="!isEditing"
+            @click="closeLessonPlanModal"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Close
           </button>
         </div>
       </div>
@@ -244,315 +202,183 @@
 </template>
 
 <script>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import BaseAnimation from './BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
+import BaseAnimation from './BaseAnimation.vue';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
-import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 
 export default {
-  name: 'QuizGenerator',
+  name: 'QuizManager',
   components: {
     BaseAnimation, IconService
   },
-  
-  emits: ['generated'],
-  setup(props, { emit }) {
+  props: {
+    classId: {
+      type: String,
+      required: false,
+      default: null
+    }
+  },
+  setup(props) {
     const { user } = useAuth();
+    const quizzes = ref([]);
+    const showEditModal = ref(false);
+    const currentQuiz = ref(null);
     const { showSuccess, showError } = useNotification();
-    const fileInput = ref(null);
-    const fileName = ref('');
-    const loading = ref(false);
-    const quiz = ref(null);
-    const fileContent = ref('');
-    const numQuestions = ref(3);
-    const quizTitle = ref('');
-    const selectedClassId = ref('');
-    const classes = ref([]);
-    const isPublic = ref(false);
-    const isClassPublic = ref(false);
-    const isLoading = ref(false);
     const showLessonPlanModal = ref(false);
+    const currentLessonPlan = ref(null);
+    const lessonPlanText = ref('');
+    const generating = ref(false);
+    const error = ref(null);
+    const success = ref(null);
+    const loading = ref(false);
+    const isEditing = ref(false);
     const editedLessonPlan = ref('');
-    const badgeImageInput = ref(null);
-    const badgeImageName = ref('');
-    const badgeImageFile = ref(null);
-    const lessonImageInput = ref(null);
-    const lessonImageUrl = ref('');
-    const modalTitle = ref('');
 
-    
-    const loadClasses = async () => {
+    const loadQuizzes = async () => {
       if (!user.value) return;
       
       try {
-        isLoading.value = true;
-        const teacherClasses = await FirebaseService.getClassesByTeacher(user.value.uid);
-        classes.value = teacherClasses;
+        loading.value = true;
+        const fetchedQuizzes = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        
+        // Fetch class names for each quiz
+        const quizzesWithClassNames = await Promise.all(
+          fetchedQuizzes.map(async (quiz) => {
+            const classData = await FirebaseService.getClass(quiz.classId);
+            return {
+              ...quiz,
+              className: classData?.name || 'Unknown Class'
+            };
+          })
+        );
+        
+        // Sort quizzes by class name
+        quizzes.value = quizzesWithClassNames.sort((a, b) => 
+          a.className.localeCompare(b.className)
+        );
       } catch (error) {
-        showError('Failed to load classes');
+        console.error('Error loading quizzes:', error);
+        showError('Failed to load quizzes');
       } finally {
-        isLoading.value = false;
+        loading.value = false;
+      }
+    };
+
+    const openEditModal = (quiz) => {
+      currentQuiz.value = { ...quiz };
+      showEditModal.value = true;
+    };
+
+    const closeEditModal = () => {
+      showEditModal.value = false;
+      currentQuiz.value = null;
+      loadQuizzes(); // Refresh the list
+    };
+
+    const saveQuiz = async () => {
+      if (!currentQuiz.value) return;
+
+      try {
+        await FirebaseService.updateQuiz(currentQuiz.value.id, {
+          ...currentQuiz.value,
+          updatedAt: new Date()
+        });
+        showSuccess('Quiz updated successfully');
+      } catch (error) {
+        console.error('Error saving quiz:', error);
+        showError('Error saving quiz');
+      }
+    };
+
+    const deleteQuiz = async (quizId) => {
+      if (!confirm('Are you sure you want to delete this quiz?')) return;
+
+      try {
+        await FirebaseService.deleteQuiz(quizId);
+        showSuccess('Quiz deleted successfully');
+        loadQuizzes(); // Refresh the list
+      } catch (error) {
+        console.error('Error deleting quiz:', error);
+        showError('Error deleting quiz');
+      }
+    };
+
+    const viewLessonPlan = (quiz) => {
+      if (!quiz.lessonPlan) {
+        showError('No lesson plan available for this quiz');
+        return;
+      }
+      currentLessonPlan.value = {
+        title: quiz.title,
+        content: quiz.lessonPlan,
+        id: quiz.id
+      };
+      editedLessonPlan.value = quiz.lessonPlan;
+      isEditing.value = false;
+      showLessonPlanModal.value = true;
+    };
+
+    const closeLessonPlanModal = () => {
+      showLessonPlanModal.value = false;
+      currentLessonPlan.value = null;
+    };
+
+    const addOption = (questionIndex) => {
+      currentQuiz.value.questions[questionIndex].options.push({ text: '' });
+      saveQuiz();
+    };
+
+    const removeOption = (questionIndex, optionIndex) => {
+      currentQuiz.value.questions[questionIndex].options.splice(optionIndex, 1);
+      saveQuiz();
+    };
+
+    const saveLessonPlan = async () => {
+      if (!currentLessonPlan.value) return;
+
+      try {
+        await FirebaseService.updateQuiz(currentLessonPlan.value.id, {
+          lessonPlan: editedLessonPlan.value,
+          updatedAt: new Date()
+        });
+        currentLessonPlan.value.content = editedLessonPlan.value;
+        isEditing.value = false;
+        showSuccess('Lesson plan updated successfully');
+      } catch (error) {
+        console.error('Error saving lesson plan:', error);
+        showError('Error saving lesson plan');
       }
     };
 
     onMounted(() => {
-      if (user.value) {
-        loadClasses();
-      }
-    });
-
-    watch(user, (newUser) => {
-      if (newUser) {
-        loadClasses();
-      }
-    });
-
-    const handleFileUpload = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      fileName.value = file.name;
-      loading.value = true;
-
-      try {
-        let text;
-        if (file.type === 'application/pdf') {
-          // Handle PDF files (you'll need to implement PDF parsing)
-          showError('PDF parsing not yet implemented');
-          return;
-        } else {
-          // Handle text and markdown files
-          text = await file.text();
-          
-          // If it's a markdown file, we can optionally convert it to plain text
-          // or keep the markdown formatting for better quiz generation
-          if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
-            // For now, we'll keep the markdown formatting as it might help with
-            // better quiz generation by preserving structure
-            text = text;
-          }
-        }
-        
-        fileContent.value = text;
-        editedLessonPlan.value = text;
-        showLessonPlanModal.value = true;
-      } catch (error) {
-        console.error('Error processing file:', error);
-        showError('Error processing file. Please try again.');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const generateQuiz = async (content, numQuestions) => {
-      try {
-        loading.value = true;
-        const generatedQuiz = await FirebaseService.generateQuiz(content, numQuestions);
-        // Create a new quiz object instead of modifying the existing one
-        const newQuiz = {
-          ...generatedQuiz,
-          title: quizTitle.value || generatedQuiz.title
-        };
-        quiz.value = newQuiz;
-        emit('generated', newQuiz);
-      } catch (error) {
-        console.error('Error generating quiz:', error);
-        showError('Failed to generate quiz: ' + error.message);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const handleBadgeImageUpload = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-          name: file.name,
-          type: file.type,
-          size: file.size
-        });
-        badgeImageFile.value = file;
-        badgeImageName.value = file.name;
-      }
-    };
-
-    const handleLessonImageUpload = async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      try {
-        loading.value = true;
-        const imageUrl = await uploadToCloudinary(file, 'differentest-lesson-images/lessons');
-        lessonImageUrl.value = imageUrl;
-        showSuccess('Image uploaded successfully!');
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        showError('Failed to upload image. Please try again.');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const saveQuiz = async () => {
-      if (!quiz.value || !user.value || !props.classId) {
-        showError('Please select a class');
-        return;
-      }
-
-      loading.value = true;
-      try {
-        // Handle badge image upload first if provided
-        let badgeImageUrl = null;
-        if (badgeImageFile.value) {
-            name: badgeImageFile.value.name,
-            type: badgeImageFile.value.type,
-            size: badgeImageFile.value.size
-          });
-
-          badgeImageUrl = await uploadToCloudinary(badgeImageFile.value);
-          
-          if (!badgeImageUrl) {
-            throw new Error('Failed to get badge image URL');
-          }
-        }
-
-        // Create the quiz with the badge image URL if available
-        const quizData = {
-          ...quiz.value,
-          title: quizTitle.value || quiz.value.title,
-          teacherId: user.value.uid,
-          classId: props.classId,
-          userId: user.value.uid,
-          isPublic: isPublic.value,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          lessonPlan: fileContent.value
-        };
-        
-
-        if (badgeImageUrl) {
-          quizData.badgeImage = badgeImageUrl;
-        }
-
-      
-
-        const quizId = await FirebaseService.createQuiz(quizData);
-        
-        if (!quizId) {
-          throw new Error('Failed to create quiz');
-        }
-
-        showSuccess(`Quiz "${quizData.title}" saved successfully!`);
-        
-        // Emit event to update stats
-        emit('quiz-updated');
-        
-        // Reset form after successful save
-        quiz.value = null;
-        fileContent.value = '';
-        fileName.value = '';
-        quizTitle.value = '';
-        selectedClassId.value = '';
-        isPublic.value = false;
-        badgeImageFile.value = null;
-        badgeImageName.value = '';
-      } catch (error) {
-        console.error('Error saving quiz:', error);
-        showError(`Error saving quiz: ${error.message}`);
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const addOption = (questionIndex) => {
-      quiz.value.questions[questionIndex].options.push({ text: '' });
-    };
-
-    const removeOption = (questionIndex, optionIndex) => {
-      quiz.value.questions[questionIndex].options.splice(optionIndex, 1);
-    };
-
-    const generateNewQuiz = () => {
-      if (fileContent.value) {
-        generateQuiz(fileContent.value, numQuestions.value);
-      }
-    };
-
-    const saveLessonPlan = async () => {
-      loading.value = true;
-      showLessonPlanModal.value = false;
-      try {
-        // Update the main quizTitle with the modal's title before generating
-        quizTitle.value = modalTitle.value;
-        await generateQuiz(fileContent.value, numQuestions.value);
-        
-        // Create the quiz with all required fields
-        const quizData = {
-          ...quiz.value,
-          title: quizTitle.value || quiz.value.title,
-          teacherId: user.value.uid,
-          classId: selectedClassId.value,
-          userId: user.value.uid,
-          isPublic: isPublic.value,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          lessonPlan: fileContent.value
-        };
-
-
-
-        const quizId = await FirebaseService.createQuiz(quizData);
-        if (!quizId) {
-          throw new Error('Failed to create quiz');
-        }
-
-        showSuccess('Lesson plan and quiz saved successfully!');
-        
-        // Emit event to update stats
-        emit('quiz-updated');
-      } catch (error) {
-        console.error('Error saving lesson plan:', error);
-        showError('Failed to save lesson plan. Please try again.');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    // Update the modal title when opening
-    watch(showLessonPlanModal, (newValue) => {
-      if (newValue) {
-        modalTitle.value = quizTitle.value;
-      }
+      loadQuizzes();
     });
 
     return {
-      fileInput,
-      fileName,
+      quizzes,
       loading,
-      quiz,
-      numQuestions,
-      quizTitle,
-      selectedClassId,
-      classes,
-      isPublic,
-      isClassPublic,
-      handleFileUpload,
+      showEditModal,
+      currentQuiz,
+      showLessonPlanModal,
+      currentLessonPlan,
+      lessonPlanText,
+      generating,
+      error,
+      success,
+      openEditModal,
+      closeEditModal,
+      saveQuiz,
+      deleteQuiz,
+      viewLessonPlan,
+      closeLessonPlanModal,
       addOption,
       removeOption,
-      generateNewQuiz,
-      saveQuiz,
-      showLessonPlanModal,
+      isEditing,
       editedLessonPlan,
-      saveLessonPlan,
-      badgeImageInput,
-      badgeImageName,
-      handleBadgeImageUpload,
-      lessonImageInput,
-      lessonImageUrl,
-      handleLessonImageUpload,
-      modalTitle
+      saveLessonPlan
     };
   }
 };
