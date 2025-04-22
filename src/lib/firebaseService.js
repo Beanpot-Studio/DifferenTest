@@ -1728,6 +1728,14 @@ class FirebaseService {
     
     return classes;
   }
+
+  static async getAllClasses() {
+    const classesSnapshot = await getDocs(collection(db, "classes"));
+    return classesSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  }
 }
 
 export default FirebaseService; 

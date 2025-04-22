@@ -28,7 +28,7 @@
             <div>
               <div class="flex items-center space-x-2">
                 <a 
-                  :href="'/classes/' + quiz.classId + '/quiz/' + quiz.id"
+                  :href="'/classes/' + quiz.classId + '/assignments/' + quiz.id"
                   class="text-lg font-bold text-primary-600 hover:text-primary-800"
                 >
                   {{ quiz.title }}

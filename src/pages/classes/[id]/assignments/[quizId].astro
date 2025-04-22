@@ -1,0 +1,133 @@
+---
+import Layout from "../../../../layouts/MainLayout.astro";
+import { useAuth } from "../../../../stores/auth";
+import FirebaseService from "../../../../lib/firebaseService";
+
+const { initialize } = useAuth();
+await initialize();
+
+export async function getStaticPaths() {
+  // Get all classes and their quizzes
+  const classes = await FirebaseService.getAllClasses();
+  const paths = [];
+
+  for (const classData of classes) {
+    const quizzes = await FirebaseService.getQuizzesByClass(classData.id);
+    paths.push(
+      ...quizzes.map((quiz) => ({
+        params: {
+          id: classData.id,
+          quizId: quiz.id,
+        },
+      }))
+    );
+  }
+
+  return paths;
+}
+
+const { id, quizId } = Astro.params;
+
+// Get class data
+const classData = await FirebaseService.getClass(id);
+if (!classData) {
+  return Astro.redirect("/404");
+}
+
+// Get quiz data
+const quiz = await FirebaseService.getQuiz(quizId);
+if (!quiz) {
+  return Astro.redirect("/404");
+}
+
+// Get teacher data
+const teacherData = await FirebaseService.getUserProfile(classData.teacherId);
+
+// Check if user has access to this class
+const user = useAuth().user;
+let hasAccess = classData.isPublic;
+
+if (user.value) {
+  if (user.value.role === "teacher" && user.value.uid === classData.teacherId) {
+    hasAccess = true;
+  } else if (user.value.role === "student") {
+    const enrollmentStatus = await FirebaseService.getEnrollmentStatus(
+      user.value.uid,
+      id
+    );
+    hasAccess = enrollmentStatus === "active";
+  }
+}
+
+if (!hasAccess) {
+  return Astro.redirect("/login");
+}
+---
+
+<Layout title={`${quiz.title} - ${classData.name}`}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">{quiz.title}</h1>
+        <p class="text-gray-600">From: {classData.name}</p>
+        <p class="text-gray-600">Teacher: {teacherData?.name}</p>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Lesson Plan</h2>
+        <div class="prose max-w-none">
+          {
+            quiz.lessonPlan ? (
+              <div class="bg-gray-50 p-4 rounded-lg">{quiz.lessonPlan}</div>
+            ) : (
+              <p class="text-gray-500">
+                No lesson plan available for this quiz.
+              </p>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quiz Details</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Number of Questions</p>
+            <p class="text-lg font-medium">{quiz.questions?.length || 0}</p>
+          </div>
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-500">Time to Complete</p>
+            <p class="text-lg font-medium">
+              ~{Math.ceil((quiz.questions?.length || 0) * 1.5)} minutes
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-center">
+        {
+          user.value?.role === "student" ? (
+            <a
+              href={`/student/quiz/${id}/${quizId}`}
+              class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Take Quiz
+            </a>
+          ) : (
+            <div class="text-center">
+              <p class="text-gray-600 mb-4">
+                Please log in as a student to take this quiz.
+              </p>
+              <a
+                href="/login"
+                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Log In
+              </a>
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</Layout>
