@@ -136,7 +136,7 @@
             </div>
             <div v-else class="space-y-2">
               <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
-                <div class="flex justify-between items-start">
+                <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="flex justify-between items-start">
                   <div>
                     <h4 class="font-medium text-gray-900">{{ quiz.title }}</h4>
                     <p class="text-sm text-gray-500 mt-1">
@@ -144,7 +144,7 @@
                     </p>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <span v-if="getQuizAttempt(classItem.id, quiz.id)" class="text-sm text-gray-500">
+                    <span class="text-sm text-gray-500">
                       Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
                       <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
                         - Review quiz and claim badge
@@ -152,7 +152,6 @@
                     </span>
                     <div class="flex space-x-2">
                       <button
-                        v-if="getQuizAttempt(classItem.id, quiz.id)"
                         @click="reviewQuiz(classItem.id, quiz.id)"
                         class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
                       >
@@ -169,18 +168,11 @@
                         <span>Verify Badge</span>
                       </a>
                       <button
-                        v-if="getQuizAttempt(classItem.id, quiz.id) && getQuizAttempt(classItem.id, quiz.id).score < 100"
+                        v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
                         @click="startQuiz(classItem.id, quiz)"
                         class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
                       >
                         Retake Quiz
-                      </button>
-                      <button
-                        v-else-if="!getQuizAttempt(classItem.id, quiz.id)"
-                        @click="startQuiz(classItem.id, quiz)"
-                        class="text-sm font-medium rounded bg-primary-600 p-2 text-white hover:text-gray-5200"
-                      >
-                        Take Quiz
                       </button>
                     </div>
                   </div>
@@ -194,6 +186,103 @@
           </div>
           <div v-else-if="classItem.enrollmentStatus === 'rejected'" class="mt-4 text-red-600">
             <p class="text-sm">Your enrollment request was rejected. Please contact the teacher if you believe this is an error.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Open Classes -->
+    <div v-if="openClasses?.length > 0" class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-4">Open Classes</h2>
+      <div v-if="loading" class="text-center py-4">
+        <BaseAnimation type="loading" :loop="true" />
+      </div>    
+      
+      <div v-else-if="error" class="text-red-600">
+        {{ error }}
+      </div>
+      
+      <div v-else class="space-y-6">
+        <div v-for="classItem in openClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <div class="flex justify-between items-start">
+            <div>
+              <div class="flex items-center">
+                <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
+                <span class="px-3 ml-5 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                  Open Class
+                </span>
+              </div>
+              <div class="flex items-center space-x-4 mt-2">
+                <div class="flex items-center space-x-2">
+                  <IconService name="user" size="4" />
+                  <p class="text-sm font-medium text-gray-700 pt-4">
+                    Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
+                  </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <IconService name="key" size="4" />
+                  <p class="text-sm font-medium text-gray-700 pt-4">
+                    Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Class Progress -->
+          <div class="mt-4">
+            <h4 class="font-lg font-bold mb-2">Attempted Quizzes</h4>
+          
+            <div v-if="!classItem.quizzes?.length" class="text-gray-500 text-sm">
+              No quizzes available yet.
+            </div>
+            <div v-else class="space-y-2">
+              <template v-for="quiz in classItem.quizzes" :key="quiz.id">
+                <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="border rounded p-3">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h4 class="font-medium text-gray-900">{{ quiz.title }}</h4>
+                      <p class="text-sm text-gray-500 mt-1">
+                        Questions: {{ quiz.questionCount || 0 }}
+                      </p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class="text-sm text-gray-500">
+                        Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
+                        <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
+                          - Review quiz and claim badge
+                        </span>
+                      </span>
+                      <div class="flex space-x-2">
+                        <button
+                          @click="reviewQuiz(classItem.id, quiz.id)"
+                          class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                        >
+                          <span>Review Quiz</span>
+                          <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
+                        </button>
+                        <a
+                          v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
+                          :href="getQuizAttempt(classItem.id, quiz.id)?.verificationUrl"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                        >
+                          <span>Verify Badge</span>
+                        </a>
+                        <button
+                          v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
+                          @click="startQuiz(classItem.id, quiz)"
+                          class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
+                        >
+                          Retake Quiz
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -292,7 +381,13 @@
               <span v-else>🏆</span>
               <span>{{ isMintingBadge ? 'Claiming Badge...' : 'Claim Badge' }}</span>
             </button>
-            
+            <button
+              v-if="reviewData.attempt.score < 100"
+              @click="startQuiz(reviewData.class.id, reviewData.quiz)"
+              class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Retake Quiz
+            </button>
           </div>
         </div>
         <div v-else-if="loading" class="text-center py-4">
@@ -379,6 +474,7 @@ export default {
     const activeTab = ref('activities');
     const enrolledClasses = ref([]);
     const pendingClasses = ref([]);
+    const openClasses = ref([]);
     const reviewData = ref(null);
     const tabs = [
       { id: 'activities', name: 'Activities' },
@@ -452,7 +548,9 @@ export default {
       try {
         loading.value = true;
         error.value = null;
-        const { classes: loadedClasses } = await FirebaseService.getClasses({
+        
+        // Get enrolled classes
+        const { classes: loadedClasses = [] } = await FirebaseService.getClasses({
           studentId: user.value.uid,
           includeQuizzes: true,
           includeTeacherInfo: true,
@@ -460,21 +558,46 @@ export default {
         });
 
         // Separate classes by enrollment status
-        enrolledClasses.value = loadedClasses
-          .filter(classItem => classItem.enrollment?.status === 'accepted')
+        enrolledClasses.value = (loadedClasses || [])
+          .filter(classItem => classItem?.enrollment?.status === 'accepted')
           .map(classItem => ({
             ...classItem,
             enrollmentStatus: classItem.enrollment?.status
           }))
-          .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
+          .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
 
-        pendingClasses.value = loadedClasses
-          .filter(classItem => classItem.enrollment?.status === 'pending')
+        pendingClasses.value = (loadedClasses || [])
+          .filter(classItem => classItem?.enrollment?.status === 'pending')
           .map(classItem => ({
             ...classItem,
             enrollmentStatus: classItem.enrollment?.status
           }))
-          .sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
+          .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+
+        // Get open classes where user has quiz attempts
+        const { classes: openClassesList = [] } = await FirebaseService.getClasses({
+          isPublic: true,
+          includeQuizzes: true,
+          includeTeacherInfo: true
+        });
+
+        // Get all quiz attempts
+        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
+        const attemptedClassIds = new Set((attempts || []).map(attempt => attempt.classId));
+
+        // Filter open classes to only include those where user has attempted quizzes
+        openClasses.value = (openClassesList || [])
+          .filter(classItem => 
+            classItem?.id && 
+            attemptedClassIds.has(classItem.id) && 
+            !enrolledClasses.value.some(c => c.id === classItem.id) &&
+            !pendingClasses.value.some(c => c.id === classItem.id)
+          )
+          .map(classItem => ({
+            ...classItem,
+            enrollmentStatus: 'open'
+          }))
+          .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
 
         // Load quiz attempts
         await loadQuizAttempts();
@@ -764,7 +887,7 @@ export default {
     const reviewQuiz = async (classId, quizId) => {
       try {
         loading.value = true;
-        showReviewModal.value = true; // Set modal to show immediately
+        showReviewModal.value = true;
         
         // Get the quiz attempt
         const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
@@ -792,8 +915,11 @@ export default {
           return;
         }
         
-        // Get class details
-        const classData = enrolledClasses.value.find(c => c.id === classId);
+        // Get class details - check both enrolled and open classes
+        let classData = enrolledClasses.value.find(c => c.id === classId);
+        if (!classData) {
+          classData = openClasses.value.find(c => c.id === classId);
+        }
         if (!classData) {
           showError('Class not found');
           showReviewModal.value = false;
@@ -1079,6 +1205,7 @@ export default {
       requestToJoin,
       enrolledClasses,
       pendingClasses,
+      openClasses,
       handleQuizCompleted,
       showQuizReview,
       reviewData,
