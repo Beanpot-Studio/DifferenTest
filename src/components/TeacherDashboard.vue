@@ -72,28 +72,12 @@
         <ClassManager @select-quiz="handleQuizSelect" />
       </div>
       <div v-else-if="activeTab === 'quizzes'" class="space-y-6">
-        <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold">Quiz Management</h2>
-          <button
-            @click="activeTab = 'quiz-generator'"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          >
-            Create New Quiz
-          </button>
-        </div>
+       
         <QuizManager :classId="selectedClassId"/>
       </div>
-      <div v-else-if="activeTab === 'quiz-generator'" class="space-y-6">
-        <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold">Create New Quiz</h2>
-          <button
-            @click="activeTab = 'quizzes'"
-            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Back to Quizzes
-          </button>
-        </div>
-        <QuizGenerator @generated="handleQuizGenerated" @quiz-updated="loadStats" />
+      <div v-else-if="activeTab === 'lesson-plans'" class="space-y-6">
+        
+        <LessonPlanManager :classId="selectedClassId" />
       </div>
       <div v-else-if="activeTab === 'submissions'">
         <TeacherSubmissions />
@@ -109,7 +93,6 @@
 import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
-import QuizGenerator from './QuizGenerator.vue';
 import QuizManager from './QuizManager.vue';
 import ClassManager from './ClassManager.vue';
 import TeacherSubmissions from './TeacherSubmissions.vue';
@@ -117,17 +100,18 @@ import TeacherReports from './TeacherReports.vue';
 import FirebaseService from '../lib/firebaseService';
 import IconService from './IconService.vue';
 import BaseAnimation from './BaseAnimation.vue';
+import LessonPlanManager from './LessonPlanManager.vue';
 
 export default {
   name: 'TeacherDashboard',
   components: {
-    QuizGenerator,
     QuizManager,
     ClassManager,
     TeacherSubmissions,
     TeacherReports,
     IconService,
-    BaseAnimation
+    BaseAnimation,
+    LessonPlanManager
   },
   setup() {
     const { user } = useAuth();
@@ -144,6 +128,7 @@ export default {
     const tabs = [
       { id: 'classes', name: 'Classes' },
       { id: 'quizzes', name: 'Quizzes' },
+      { id: 'lesson-plans', name: 'Lesson Plans' },
       { id: 'submissions', name: 'Submissions' },
       { id: 'reports', name: 'Reports' }
     ];
@@ -174,23 +159,6 @@ export default {
       selectedClassId.value = quizId;
     };
 
-    const handleQuizGenerated = async (quizData) => {
-      isLoading.value = true;
-      try {
-        await FirebaseService.createQuiz(quizData);
-        showSuccess(`Quiz "${quizData.title}" saved successfully!`);
-        // Reset form after successful save
-        activeTab.value = 'quizzes';
-        //reload stats
-        loadStats();
-      } catch (error) {
-        console.error('Error saving quiz:', error);
-        showError(`Error saving quiz "${quizData.title}". Please try again.`);
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
     onMounted(() => {
       if (user.value) {
         loadStats();
@@ -217,8 +185,7 @@ export default {
       isLoading,
       tabs,
       loadStats,
-      handleQuizSelect,
-      handleQuizGenerated
+      handleQuizSelect
     };
   }
 };

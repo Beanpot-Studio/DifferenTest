@@ -8,7 +8,7 @@
       <div class="mb-6">
         <div class="flex justify-between items-center mb-2">
           <span class="text-sm font-medium text-gray-700">Progress</span>
-          <span class="text-sm text-gray-500">{{ completedQuizzes }}/{{ totalQuizzes }} quizzes completed</span>
+          <span class="text-sm text-gray-500">{{ completedQuizzes }}/{{ totalQuizzes }} quizzes completed with 100% score</span>
         </div>
         <div class="w-full bg-gray-200 rounded-full h-2.5">
           <div 
@@ -62,12 +62,12 @@
                         Retake Quiz
                       </button>
                     </template>
-                    <template v-else-if="!badgeStatus[quiz.id]">
+                    <template v-else-if="quizAttempts[quiz.id].score === 100 && !badgeStatus[quiz.id]">
                       <a 
                         href="/student"
                         class="px-4 py-2 bg-yellow-500 text-black rounded-lg hover:bg-yellow-600 flex items-center space-x-2"
                       >
-                        🏆 Claim Badge
+                        🏆 Review Quiz & Claim Badge
                       </a>
                     </template>
                     <template v-else>
@@ -143,8 +143,10 @@ const props = defineProps({
 const totalQuizzes = computed(() => props.curriculum.quizzes.length);
 
 const completedQuizzes = computed(() => {
-  // Count only quizzes where the latest attempt has a 100% score
-  return Object.values(quizAttempts.value).filter(attempt => attempt.score === 100).length;
+  // Count only quizzes in this curriculum that have been passed with 100%
+  return props.curriculum.quizzes.filter(quiz => 
+    quizAttempts.value[quiz.id]?.score === 100
+  ).length;
 });
 
 const progressPercentage = computed(() => {
@@ -193,7 +195,7 @@ const loadBadgeStatus = async () => {
     const badges = await FirebaseService.getUserBadges(user.value.uid);
     const badgeStatusMap = {};
     badges.forEach(badge => {
-      badgeStatusMap[badge.quizId] = true;
+      badgeStatusMap[badge.metadata.quizId] = true;
     });
     badgeStatus.value = badgeStatusMap;
   } catch (error) {
@@ -213,52 +215,6 @@ watch(() => user.value, async (newUser) => {
     badgeStatus.value = {};
   }
 }, { immediate: true });
-
-const claimBadge = async (quiz) => {
-  if (!user.value) return;
-
-  try {
-    // Check if badge already exists in Firebase
-    const hasBadge = await FirebaseService.checkBadgeExists(user.value.uid, quiz.id);
-    if (hasBadge) {
-      showInfo('You already have this badge!');
-      return;
-    }
-
-    // Show initial loading state
-    showInfo('Issuing your badge...');
-
-    // Generate Open Badge JSON
-    const badgeData = {
-      userId: user.value.uid,
-      userEmail: user.value.email,
-      quizId: quiz.id,
-      quizTitle: quiz.title,
-      classId: props.curriculum.id,
-      name: `${quiz.title} Master`,
-      description: `Awarded for completing ${quiz.title} with a perfect score`,
-      image: quiz.badgeImage,
-      metadata: {
-        title: `Perfect Score: ${quiz.title}`,
-        description: `Achieved a perfect score on the ${quiz.title} quiz`,
-        type: 'quiz_perfect_score',
-        icon: '🏆',
-        color: 'gold',
-        timestamp: new Date().toISOString(),
-        quizId: quiz.id,
-        classId: props.curriculum.id
-      }
-    };
-
-    // Store badge in Firebase
-    await FirebaseService.createBadge(badgeData);
-    showSuccess('Badge issued successfully!');
-    await loadBadgeStatus();
-  } catch (error) {
-    console.error('Error claiming badge:', error);
-    showError('Failed to issue badge. Please try again.');
-  }
-};
 
 const verifyBadge = async (badgeId) => {
   try {

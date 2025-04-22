@@ -31,9 +31,6 @@ export async function getStaticPaths() {
 const { id, quizId } = Astro.params;
 const { classData, quiz } = Astro.props;
 
-if (!classData || !quiz) {
-  return Astro.redirect("/404");
-}
 
 // Initialize auth state
 const { initialize } = useAuth();

@@ -69,44 +69,40 @@ class FirebaseService {
   }
 
   static async getTeacherQuizzes(teacherId) {
-    const q = query(
-      collection(db, 'quizzes'),
-      where('teacherId', '==', teacherId),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    
-    // Get all quizzes with their class names
-    const quizzes = await Promise.all(
-      snapshot.docs.map(async (doc) => {
-        const quizData = doc.data();
-        
-        // Get the class name by finding the class that contains this quiz
-        let className = 'Unknown Class';
-        const classesQuery = query(
-          collection(db, 'classes'),
-          where('teacherId', '==', teacherId)
-        );
-        const classesSnapshot = await getDocs(classesQuery);
-        
-        for (const classDoc of classesSnapshot.docs) {
-          const classData = classDoc.data();
-          if (classData.quizzes?.some(q => q.id === doc.id)) {
-            className = classData.name;
-            break;
-          }
-        }
-        
-        return {
-          id: doc.id,
-          ...quizData,
-          className,
-          questionCount: quizData.questions?.length || 0
-        };
-      })
-    );
-    
-    return quizzes;
+    try {
+      // First get all classes for this teacher
+      const classesQuery = query(
+        collection(db, 'classes'),
+        where('teacherId', '==', teacherId)
+      );
+      const classesSnapshot = await getDocs(classesQuery);
+      const classIds = classesSnapshot.docs.map(doc => doc.id);
+
+      if (classIds.length === 0) {
+        return [];
+      }
+
+      // Get all quizzes for these classes
+      const quizzes = await Promise.all(
+        classIds.map(async (classId) => {
+          const classQuizzes = await this.getQuizzesByClass(classId);
+          const classDoc = await getDoc(doc(db, 'classes', classId));
+          const className = classDoc.exists() ? classDoc.data().name : 'Unknown Class';
+
+          return classQuizzes.map(quiz => ({
+            ...quiz,
+            className,
+            questionCount: quiz.questions?.length || 0
+          }));
+        })
+      );
+
+      // Flatten the array of arrays and sort by createdAt
+      return quizzes.flat().sort((a, b) => b.createdAt?.toDate() - a.createdAt?.toDate());
+    } catch (error) {
+      console.error('Error getting teacher quizzes:', error);
+      throw error;
+    }
   }
 
   static async getClassesByTeacher(teacherId) {
@@ -333,13 +329,18 @@ class FirebaseService {
   }
 
   static async getQuizzesByClass(classId) {
-    const q = query(
-      collection(db, 'quizzes'),
-      where('classId', '==', classId),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      const q = query(
+        collection(db, 'quizzes'),
+        where('classId', '==', classId),
+        orderBy('createdAt', 'desc')
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+      console.error('Error getting quizzes by class:', error);
+      throw error;
+    }
   }
 
   static async createQuiz(quizData) {
@@ -837,25 +838,6 @@ class FirebaseService {
     }
   }
 
-  static async getClassQuizzes(classId) {
-    try {
-      const q = query(
-        collection(db, 'quizzes'),
-        where('classId', '==', classId),
-        orderBy('createdAt', 'desc')
-      );
-      
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error getting class quizzes:', error);
-      throw error;
-    }
-  }
-
   async getLessonPlan(lessonPlanId) {
     try {
       const lessonPlanRef = doc(db, 'lessonPlans', lessonPlanId);
@@ -892,21 +874,7 @@ class FirebaseService {
     }
   }
 
-  static async getAllLessonPlans(teacherId) {
-    try {
-      const lessonPlansRef = collection(db, 'lessonPlans');
-      const q = query(lessonPlansRef, where('teacherId', '==', teacherId));
-      const snapshot = await getDocs(q);
-      
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error fetching lesson plans:', error);
-      throw error;
-    }
-  }
+ 
 
   static async createBadge(badgeData) {
     try {
@@ -1630,70 +1598,135 @@ class FirebaseService {
     }
   }
 
-  static async getPublicClasses() {
+  static async getPublicClasses(userId = null) {
     try {
       // First get all public classes
-      const classesQuery = query(
+      const publicClassesQuery = query(
         collection(db, 'classes'),
         where('isPublic', '==', true),
         orderBy('createdAt', 'desc')
       );
-      const classesSnapshot = await getDocs(classesQuery);
-      const publicClassIds = classesSnapshot.docs.map(doc => doc.id);
+      const publicClassesSnapshot = await getDocs(publicClassesQuery);
+      const publicClassIds = publicClassesSnapshot.docs.map(doc => doc.id);
 
-      if (publicClassIds.length === 0) {
-        return [];
-      }
-
-      // Get all quizzes for these public classes
-      const quizzesQuery = query(
+      // Get all quizzes for public classes
+      const publicQuizzesQuery = query(
         collection(db, 'quizzes'),
         where('classId', 'in', publicClassIds),
         orderBy('createdAt', 'desc')
       );
-      const quizzesSnapshot = await getDocs(quizzesQuery);
-      
-      // Group quizzes by class and get class details
-      const classes = await Promise.all(
-        publicClassIds.map(async (classId) => {
-          const classDoc = await getDoc(doc(db, 'classes', classId));
-          const classData = classDoc.data();
-          
-          // Get teacher information
-          const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
-          const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
-          
-          // Get quizzes for this class
-          const classQuizzes = quizzesSnapshot.docs
-            .filter(doc => doc.data().classId === classId)
-            .map(doc => {
-              const quizData = doc.data();
-              return {
-                id: doc.id,
-                title: quizData.title,
-                description: quizData.description,
-                questionCount: quizData.questions?.length || 0,
-                lessonPlan: quizData.lessonPlan || ''
-              };
-            });
-          
-          return {
-            id: classId,
-            name: classData.name,
-            description: classData.description || '',
-            quizzes: classQuizzes,
-            teacherName: teacherData?.name || 'Unknown Teacher',
-            code: classData.code,
-            lessonPlan: classQuizzes[0]?.lessonPlan || ''
-          };
-        })
+      const publicQuizzesSnapshot = await getDocs(publicQuizzesQuery);
+
+      // If no user is logged in, only return public classes
+      if (!userId) {
+        return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
+      }
+
+      // For logged-in users, also get their private classes
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (!userDoc.exists()) {
+        return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
+      }
+
+      const userData = userDoc.data();
+      let privateClassIds = [];
+
+      if (userData.role === 'teacher') {
+        // Get teacher's private classes
+        const teacherClassesQuery = query(
+          collection(db, 'classes'),
+          where('teacherId', '==', userId),
+          where('isPublic', '==', false)
+        );
+        const teacherClassesSnapshot = await getDocs(teacherClassesQuery);
+        privateClassIds = teacherClassesSnapshot.docs.map(doc => doc.id);
+      } else if (userData.role === 'student') {
+        // Get student's enrolled private classes
+        const enrollmentsQuery = query(
+          collection(db, 'enrollments'),
+          where('studentId', '==', userId),
+          where('status', '==', 'enrolled')
+        );
+        const enrollmentsSnapshot = await getDocs(enrollmentsQuery);
+        const enrolledClassIds = enrollmentsSnapshot.docs.map(doc => doc.data().classId);
+
+        // Get private classes where student is enrolled
+        if (enrolledClassIds.length > 0) {
+          const privateClassesQuery = query(
+            collection(db, 'classes'),
+            where('id', 'in', enrolledClassIds),
+            where('isPublic', '==', false)
+          );
+          const privateClassesSnapshot = await getDocs(privateClassesQuery);
+          privateClassIds = privateClassesSnapshot.docs.map(doc => doc.id);
+        }
+      }
+
+      // Get quizzes for private classes
+      const privateQuizzesQuery = query(
+        collection(db, 'quizzes'),
+        where('classId', 'in', privateClassIds),
+        orderBy('createdAt', 'desc')
       );
-      
-      return classes;
+      const privateQuizzesSnapshot = await getDocs(privateQuizzesQuery);
+
+      // Combine public and private classes
+      const allClassIds = [...new Set([...publicClassIds, ...privateClassIds])];
+      const allQuizzesSnapshot = {
+        docs: [...publicQuizzesSnapshot.docs, ...privateQuizzesSnapshot.docs]
+      };
+
+      return await this._formatClassesWithQuizzes(allClassIds, allQuizzesSnapshot);
     } catch (error) {
-      console.error('Error getting public classes:', error);
+      console.error('Error getting classes:', error);
       throw error;
     }
+  }
+
+  // Helper method to format classes with their quizzes
+  static async _formatClassesWithQuizzes(classIds, quizzesSnapshot) {
+    if (classIds.length === 0) {
+      return [];
+    }
+
+    const classes = await Promise.all(
+      classIds.map(async (classId) => {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const classData = classDoc.data();
+        
+        // Get teacher information
+        const teacherDoc = await getDoc(doc(db, 'users', classData.teacherId));
+        const teacherData = teacherDoc.exists() ? teacherDoc.data() : null;
+        
+        // Get quizzes for this class
+        const classQuizzes = quizzesSnapshot.docs
+          .filter(doc => doc.data().classId === classId)
+          .map(doc => {
+            const quizData = doc.data();
+            return {
+              id: doc.id,
+              title: quizData.title,
+              description: quizData.description,
+              questionCount: quizData.questions?.length || 0,
+              lessonPlan: quizData.lessonPlan || '',
+              classId: classId
+            };
+          });
+        
+        return {
+          id: classId,
+          name: classData.name,
+          description: classData.description || '',
+          quizzes: classQuizzes,
+          teacherName: teacherData?.name || 'Unknown Teacher',
+          code: classData.code,
+          lessonPlan: classQuizzes[0]?.lessonPlan || '',
+          isPublic: classData.isPublic
+        };
+      })
+    );
+    
+    return classes;
   }
 }
 
