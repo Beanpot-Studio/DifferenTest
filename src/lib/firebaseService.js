@@ -107,7 +107,7 @@ class FirebaseService {
           const quizzesQuery = query(
             collection(db, 'quizzes'),
             where('classId', '==', classData.id),
-            orderBy('createdAt', 'desc')
+            orderBy('createdAt', 'asc')
           );
           const quizzesSnapshot = await getDocs(quizzesQuery);
           enhancedClass.quizzes = quizzesSnapshot.docs.map(doc => ({
@@ -1467,7 +1467,7 @@ class FirebaseService {
       const publicClassesQuery = query(
         collection(db, 'classes'),
         where('isPublic', '==', true),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'asc')
       );
       const publicClassesSnapshot = await getDocs(publicClassesQuery);
       const publicClassIds = publicClassesSnapshot.docs.map(doc => doc.id);
@@ -1476,7 +1476,7 @@ class FirebaseService {
       const publicQuizzesQuery = query(
         collection(db, 'quizzes'),
         where('classId', 'in', publicClassIds),
-        orderBy('createdAt', 'desc')
+        orderBy('createdAt', 'asc')
       );
       const publicQuizzesSnapshot = await getDocs(publicQuizzesQuery);
 

@@ -211,19 +211,6 @@ watch(() => user.value, async (newUser) => {
   }
 }, { immediate: true });
 
-const verifyBadge = async (badgeId) => {
-  try {
-    const result = await FirebaseService.verifyBadge(badgeId);
-    if (result.valid) {
-      showSuccess('Badge verified successfully!');
-    } else {
-      showError('Invalid badge');
-    }
-  } catch (error) {
-    console.error('Error verifying badge:', error);
-    showError('Failed to verify badge');
-  }
-};
 
 const openQuizModal = (quiz) => {
   selectedQuiz.value = quiz;

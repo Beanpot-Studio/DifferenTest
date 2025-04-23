@@ -1141,6 +1141,38 @@ export default {
       }
     };
 
+    const loadQuizzes = async () => {
+      if (!user.value) return;
+      
+      try {
+        loading.value = true;
+        const fetchedQuizzes = await FirebaseService.getTeacherQuizzes(user.value.uid);
+        
+        // Fetch class names for each quiz
+        const quizzesWithClassNames = await Promise.all(
+          fetchedQuizzes.map(async (quiz) => {
+            const classData = await FirebaseService.getClass(quiz.classId);
+            return {
+              ...quiz,
+              className: classData?.name || 'Unknown Class'
+            };
+          })
+        );
+        
+        // Sort quizzes by creation time in ascending order (oldest first)
+        quizzes.value = quizzesWithClassNames.sort((a, b) => {
+          const timeA = a.createdAt?.toDate?.() || new Date(0);
+          const timeB = b.createdAt?.toDate?.() || new Date(0);
+          return timeA - timeB;
+        });
+      } catch (error) {
+        console.error('Error loading quizzes:', error);
+        showError('Failed to load quizzes');
+      } finally {
+        loading.value = false;
+      }
+    };
+
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
         await loadClasses();
@@ -1211,7 +1243,8 @@ export default {
       reviewData,
       claimBadge,
       isMintingBadge,
-      isEnrolled
+      isEnrolled,
+      loadQuizzes
     };
   }
 };
