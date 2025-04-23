@@ -1510,7 +1510,7 @@ class FirebaseService {
             return {
               id: doc.id,
               title: quizData.title,
-              description: quizData.description,
+              badgeImage: quizData.badgeImage,
               questionCount: quizData.questions?.length || 0,
               lessonPlan: quizData.lessonPlan || '',
               classId: classId

@@ -24,8 +24,8 @@ const publicClasses = await FirebaseService.getPublicClasses();
                 code: classData.code,
                 quizzes: classData.quizzes.map((quiz) => ({
                   id: quiz.id,
+                  badgeImage: quiz.badgeImage,
                   title: quiz.title,
-                  description: quiz.description,
                   lessonPlan: quiz.lessonPlan,
                   teacherId: classData.teacherId,
                   link: `/classes/${classData.id}/quiz/${quiz.id}`,

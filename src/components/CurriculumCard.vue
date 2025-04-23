@@ -23,6 +23,7 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
+                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Badge</th>
                 <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lesson</th>
                 <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quiz</th>
                 <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
@@ -30,6 +31,9 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="quiz in curriculum.quizzes" :key="quiz.id">
+                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                  <img :src="quiz.badgeImage" class="w-10 h-10" />
+                </td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                   <a :href="`${basePath}/${curriculum.id}/quiz/${quiz.id}`" class="text-blue-600 hover:text-blue-800">
                     {{ quiz.title }}
@@ -119,10 +123,8 @@ import IconService from './IconService.vue';
 import QuizInterface from './QuizInterface.vue';
 import { useAuth } from '../stores/auth';
 import FirebaseService from '../lib/firebaseService';
-import { useNotification } from '../composables/useNotification';
 
 const { user } = useAuth();
-const { showSuccess, showError, showInfo } = useNotification();
 const showModal = ref(false);
 const selectedQuiz = ref(null);
 const quizAttempts = ref({});
