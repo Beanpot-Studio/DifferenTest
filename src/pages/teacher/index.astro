@@ -33,11 +33,19 @@ import TeacherDashboard from "../../components/TeacherDashboard.vue";
       if (userDoc.exists()) {
         const role = userDoc.data().role;
         if (role !== "teacher") {
-          window.location.href = "/teacher?access=denied";
+          // If not a teacher, redirect to appropriate page
+          if (role === "student") {
+            window.location.href = "/student";
+          } else {
+            window.location.href = "/";
+          }
+          return;
         }
+        // If user is a teacher, they can stay on the page
       }
     } catch (error) {
       console.error("Error checking user role:", error);
+      window.location.href = "/";
     }
   });
 </script>

@@ -15,7 +15,6 @@ import IconService from "../../components/IconService.vue";
           Welcome back! Track your progress and continue learning.
         </p>
       </div>
-      
     </div>
 
     <div>
@@ -103,14 +102,19 @@ import IconService from "../../components/IconService.vue";
 
     try {
       const userDoc = await getDoc(doc(db, "users", user.uid));
-
       if (userDoc.exists()) {
         const role = userDoc.data().role;
         if (role !== "student") {
-          window.location.href = "/student?access=denied";
+          // If not a student, redirect to appropriate page
+          if (role === "teacher") {
+            window.location.href = "/teacher";
+          } else {
+            window.location.href = "/";
+          }
           return;
         }
 
+        // If user is a student, proceed with normal functionality
         // Initial updates
         await updateDashboardStats(user.uid);
 
@@ -161,7 +165,6 @@ import IconService from "../../components/IconService.vue";
 
         // Listen for enrollment status changed events
         window.addEventListener("enrollmentStatusChanged", async () => {
-         
           // Update dashboard stats
           await updateDashboardStats(user.uid);
 
@@ -177,6 +180,7 @@ import IconService from "../../components/IconService.vue";
       }
     } catch (error) {
       console.error("Error checking user role:", error);
+      window.location.href = "/";
     }
   });
 </script>
