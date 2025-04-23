@@ -444,7 +444,7 @@ import BadgeDisplay from './BadgeDisplay.vue';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',

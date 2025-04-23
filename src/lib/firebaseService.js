@@ -21,7 +21,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 
 // Get API key from environment variable
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = import.meta.env.PUBLIC_GEMINI_API_KEY;
 if (!apiKey) {
   console.error('Gemini API key not found in environment variables');
 }

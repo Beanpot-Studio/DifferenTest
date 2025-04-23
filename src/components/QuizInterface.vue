@@ -193,7 +193,7 @@ export default {
     watch(user, (newUser) => {
     }, { immediate: true });
 
-    const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+    const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
     const canSubmit = computed(() => {
       return selectedAnswers.value.length === quiz.value?.questions.length &&

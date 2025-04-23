@@ -31,21 +31,28 @@ export default defineConfig({
     },
     envDir: '.',
     define: {
-      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(process.env.VITE_GEMINI_API_KEY),
-      'import.meta.env.VITE_CLOUDINARY_CLOUD_NAME': JSON.stringify(process.env.VITE_CLOUDINARY_CLOUD_NAME),
-      'import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET': JSON.stringify(process.env.VITE_CLOUDINARY_UPLOAD_PRESET),
-      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(process.env.VITE_FIREBASE_API_KEY),
-      'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(process.env.VITE_FIREBASE_AUTH_DOMAIN),
-      'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(process.env.VITE_FIREBASE_PROJECT_ID),
-      'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(process.env.VITE_FIREBASE_STORAGE_BUCKET),
-      'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(process.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
-      'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(process.env.VITE_FIREBASE_APP_ID),
+      /*'import.meta.env.PUBLIC_GEMINI_API_KEY': JSON.stringify(process.env.PUBLIC_GEMINI_API_KEY),
+      'import.meta.env.PUBLIC_CLOUDINARY_CLOUD_NAME': JSON.stringify(process.env.PUBLIC_CLOUDINARY_CLOUD_NAME),
+      'import.meta.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET': JSON.stringify(process.env.PUBLIC_CLOUDINARY_UPLOAD_PRESET),
+      'import.meta.env.PUBLIC_FIREBASE_API_KEY': JSON.stringify(process.env.PUBLIC_FIREBASE_API_KEY),
+      'import.meta.env.PUBLIC_FIREBASE_AUTH_DOMAIN': JSON.stringify(process.env.PUBLIC_FIREBASE_AUTH_DOMAIN),
+      'import.meta.env.PUBLIC_FIREBASE_PROJECT_ID': JSON.stringify(process.env.PUBLIC_FIREBASE_PROJECT_ID),
+      'import.meta.env.PUBLIC_FIREBASE_STORAGE_BUCKET': JSON.stringify(process.env.PUBLIC_FIREBASE_STORAGE_BUCKET),
+      'import.meta.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(process.env.PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
+      'import.meta.env.PUBLIC_FIREBASE_APP_ID': JSON.stringify(process.env.PUBLIC_FIREBASE_APP_ID),*/
     }
   },
-  /*env: {
+  env: {
     schema: {
-      CLOUDINARY_CLOUD_NAME: envField.string({ context: "client", access: "public" }),
-      CLOUDINARY_UPLOAD_PRESET: envField.string({ context: "client", access: "public" }),
+      PUBLIC_CLOUDINARY_CLOUD_NAME: envField.string({ context: "client", access: "public" }),
+      PUBLIC_CLOUDINARY_UPLOAD_PRESET: envField.string({ context: "client", access: "public" }),
+      PUBLIC_FIREBASE_API_KEY: envField.string({ context: "client", access: "public" }),
+      PUBLIC_FIREBASE_AUTH_DOMAIN: envField.string({ context: "client", access: "public" }),
+      PUBLIC_FIREBASE_PROJECT_ID: envField.string({ context: "client", access: "public" }),
+      PUBLIC_FIREBASE_STORAGE_BUCKET: envField.string({ context: "client", access: "public" }),
+      PUBLIC_FIREBASE_MESSAGING_SENDER_ID: envField.string({ context: "client", access: "public" }),
+      PUBLIC_FIREBASE_APP_ID: envField.string({ context: "client", access: "public" }),
+      PUBLIC_GEMINI_API_KEY: envField.string({ context: "client", access: "public" }),
     }
-  }*/
+  }
 });
