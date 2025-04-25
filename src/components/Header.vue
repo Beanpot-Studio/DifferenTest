@@ -2,19 +2,21 @@
   <header class="relative z-50 text-white">
     <div class=" mx-auto px-4 py-3 flex bg-gradient-to-r from-primary-700 to-primary-950 justify-between items-center">
       <div class="flex items-center">
-        <a href="/" class="text-2xl text-white font-bold">DifferenTest</a>
+        <a :href="`${import.meta.env.BASE_URL}/`" class="text-2xl text-white font-bold">DifferenTest</a>
       </div>
     
       <div class="flex items-center space-x-4">
         <nav class="hidden md:flex space-x-6">
-          <a href="/curricula" class="hover:text-primary-200 transition text-white">Open Curricula</a>
+          <a :href="`${import.meta.env.BASE_URL}/curricula`" class="hover:text-primary-200 transition text-white">Open Curricula</a>
 
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
-            <a v-if="role === 'teacher'" href="/teacher" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
-            <a v-if="role === 'student'" href="/student" class="hover:text-primary-200 transition text-white">Student Portal</a>
+            <a v-if="role === 'teacher'" :href="`${import.meta.env.BASE_URL}/teacher`" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
+            <a v-if="role === 'student'" :href="`${import.meta.env.BASE_URL}/student`" class="hover:text-primary-200 transition text-white">Student Portal</a>
           </template>
           <!-- Curriculum Link (visible to all) -->
+          <a :href="`${import.meta.env.BASE_URL}/about`" class="text-gray-600 hover:text-gray-900">About</a>
+          <a :href="`${import.meta.env.BASE_URL}/help`" class="text-gray-600 hover:text-gray-900">Help</a>
         </nav>
 
         
