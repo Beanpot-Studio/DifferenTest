@@ -1,5 +1,7 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
+
+const baseUrl = import.meta.env.BASE_URL || "";
 ---
 
 <MainLayout title="Pricing">
@@ -22,7 +24,7 @@ import MainLayout from "../layouts/MainLayout.astro";
             $0<span class="text-lg font-normal text-gray-600">/forever</span>
           </p>
           <p class="text-gray-600 mb-6">
-            Perfect for individual teachers and students
+            Perfect for individual teachers, students, and small teams.
           </p>
           <ul class="space-y-3 mb-8">
             <li class="flex items-center">
@@ -83,11 +85,11 @@ import MainLayout from "../layouts/MainLayout.astro";
                   stroke-width="2"
                   d="M5 13l4 4L19 7"></path>
               </svg>
-              Community support
+              Basic support
             </li>
           </ul>
           <a
-            href="/signup"
+            href={`${baseUrl}/signup`}
             class="block w-full py-3 px-4 text-center bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
           >
             Get Started
@@ -188,10 +190,10 @@ import MainLayout from "../layouts/MainLayout.astro";
             </li>
           </ul>
           <a
-            href="/contact"
+            href={`${baseUrl}/contact`}
             class="block w-full py-3 px-4 text-center bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors"
           >
-            Contact Sales
+            Contact Us
           </a>
         </div>
       </div>
@@ -230,7 +232,7 @@ import MainLayout from "../layouts/MainLayout.astro";
             How do I get started with the Platinum plan?
           </h3>
           <p class="mt-2 text-gray-600">
-            Contact our sales team to discuss your specific requirements. We'll
+            Contact our team to discuss your specific requirements. We'll
             work with you to create a custom solution that meets your needs and
             budget.
           </p>
