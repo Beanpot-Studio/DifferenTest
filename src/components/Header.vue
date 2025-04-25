@@ -15,9 +15,7 @@
             <a v-if="role === 'student'" :href="`${baseUrl}/student`" class="hover:text-primary-200 transition text-white">Student Portal</a>
           </template>
           <!-- Curriculum Link (visible to all) -->
-          <a :href="`${baseUrl}/about`" class="text-gray-600 hover:text-gray-900">About</a>
-          <a :href="`${baseUrl}/help`" class="text-gray-600 hover:text-gray-900">Help</a>
-        </nav>
+         </nav>
 
         
         <!-- User Navigation Component -->

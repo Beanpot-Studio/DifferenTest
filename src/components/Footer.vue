@@ -18,7 +18,7 @@
         <div>
           <h3 class="text-lg font-bold mb-4">Resources</h3>
           <ul class="flex flex-wrap gap-4">
-            <li><a :href="`${baseUrl}/blog`" class="text-secondary-300 hover:text-white transition">Blog</a></li>
+            <li><a :href="`${baseUrl}/about`" class="text-secondary-300 hover:text-white transition">About</a></li>
             <li><a :href="`${baseUrl}/docs`" class="text-secondary-300 hover:text-white transition">Documentation</a></li>
             <li><a :href="`${baseUrl}/tutorials`" class="text-secondary-300 hover:text-white transition">Tutorials</a></li>
           </ul>

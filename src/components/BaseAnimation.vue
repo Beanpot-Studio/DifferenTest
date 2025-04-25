@@ -55,7 +55,7 @@ export default {
         case 'lost':
           return `${baseUrl.value}animations/lost.lottie`;
         case 'learning':
-          return `${baseUrl.value}animations/learning.lottie`;
+          return `${baseUrl.value}/animations/learning.lottie`;
         default:
           return `${baseUrl.value}animations/loading.lottie`;
       }
