@@ -33,7 +33,7 @@ async function logout() {
   try {
     await signOut(auth);
     clearAuthState();
-    window.location.href = '/';
+    window.location.href = import.meta.env.BASE_URL || '/';
   } catch (error) {
     error.value = error.message;
   }
