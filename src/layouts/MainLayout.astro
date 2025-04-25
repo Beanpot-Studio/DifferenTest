@@ -23,7 +23,7 @@ const { title } = Astro.props;
     <link
       rel="icon"
       type="image/svg+xml"
-      href={`${Astro.url.origin}${import.meta.env.BASE_URL || "/"}favicon.svg`}
+      href={`${Astro.url.origin}${import.meta.env.BASE_URL || ""}/favicon.svg`}
     />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | DifferenTest</title>
@@ -51,7 +51,7 @@ const { title } = Astro.props;
 
     <div class="absolute w-full top-5 max-h-12 z-0">
       <img
-        src={`${import.meta.env.BASE_URL || "/"}wave.svg`}
+        src={`${import.meta.env.BASE_URL || ""}/wave.svg`}
         alt="Wave"
         class="w-full h-full object-cover"
       />
