@@ -138,7 +138,7 @@ const props = defineProps({
   },
   basePath: {
     type: String,
-    default: `${import.meta.env.BASE_URL || ''}/curriculum`
+    default: () => baseUrl.value + '/curriculum'
   }
 });
 
