@@ -160,12 +160,12 @@
                       </button>
                       <a
                         v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
-                        :href="getQuizAttempt(classItem.id, quiz.id)?.verificationUrl"
+                        :href="`${baseUrl}/badges/verify/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                        class="text-blue-600 hover:text-blue-800"
                       >
-                        <span>Verify Badge</span>
+                        Verify Badge
                       </a>
                       <button
                         v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
@@ -263,12 +263,12 @@
                         </button>
                         <a
                           v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
-                          :href="getQuizAttempt(classItem.id, quiz.id)?.verificationUrl"
+                          :href="`${baseUrl}/badges/verify/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
                           target="_blank"
                           rel="noopener noreferrer"
-                          class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                          class="text-blue-600 hover:text-blue-800"
                         >
-                          <span>Verify Badge</span>
+                          Verify Badge
                         </a>
                         <button
                           v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
@@ -1173,6 +1173,10 @@ export default {
       }
     };
 
+    const baseUrl = computed(() => {
+      return import.meta.env.BASE_URL || '/'
+    })
+
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
         await loadClasses();
@@ -1244,7 +1248,8 @@ export default {
       claimBadge,
       isMintingBadge,
       isEnrolled,
-      loadQuizzes
+      loadQuizzes,
+      baseUrl
     };
   }
 };

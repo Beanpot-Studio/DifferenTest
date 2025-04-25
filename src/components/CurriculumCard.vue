@@ -35,7 +35,7 @@
                   <img :src="quiz.badgeImage" class="w-10 h-10" />
                 </td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                  <a :href="`${basePath}/${curriculum.id}/quiz/${quiz.id}`" class="text-blue-600 hover:text-blue-800">
+                  <a :href="`${baseUrl}/${curriculum.id}/quiz/${quiz.id}`" class="text-blue-600 hover:text-blue-800">
                     {{ quiz.title }}
                   </a>
                 </td>
@@ -157,6 +157,10 @@ const progressPercentage = computed(() => {
 
 const isStudent = computed(() => {
   return user.value?.role === 'student';
+});
+
+const baseUrl = computed(() => {
+  return import.meta.env.BASE_URL || '/';
 });
 
 const loadQuizAttempts = async () => {

@@ -31,7 +31,6 @@ export async function getStaticPaths() {
 const { id, quizId } = Astro.params;
 const { classData, quiz } = Astro.props;
 
-
 // Initialize auth state
 const { initialize } = useAuth();
 await initialize();
@@ -41,7 +40,10 @@ await initialize();
   <main class="container mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6">
       <div class="mb-6">
-        <a href="/curricula" class="text-blue-600 hover:text-blue-800">
+        <a
+          href={import.meta.env.BASE_URL + "/curricula"}
+          class="text-blue-600 hover:text-blue-800"
+        >
           ← Back to curricula
         </a>
       </div>

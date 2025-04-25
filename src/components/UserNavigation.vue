@@ -4,7 +4,7 @@
       <div class="flex items-center space-x-2">
         <!-- Messages Button -->
         <a 
-          href="/messages" 
+          :href="`${baseUrl}/messages`" 
           class="p-2 rounded-lg hover:bg-primary-300 transition text-white"
           title="Messages"
         >
@@ -13,7 +13,7 @@
 
         <!-- Profile Button -->
         <a 
-          href="/profile" 
+          :href="`${baseUrl}/profile`" 
           class="flex items-center space-x-2 px-3 py-1.5 rounded-lg text-white bg-primary-700 hover:bg-primary-300 transition"
         >
           <IconService name="user" size="4" />
@@ -54,6 +54,7 @@
 import { useAuth } from '../stores/auth';
 import { computed } from 'vue';
 import IconService from './IconService.vue';
+
 export default {
   name: 'UserNavigation',
   components: {
@@ -68,12 +69,17 @@ export default {
   setup() {
     const { isLoggedIn, role, user, logout } = useAuth();
     
+    const baseUrl = computed(() => {
+      return import.meta.env.BASE_URL || '/';
+    });
+
     return {
       isLoggedIn,
       userRole: role,
       userEmail: computed(() => user.value?.email || ''),
       userName: computed(() => user.value?.name || ''),
-      handleLogout: logout
+      handleLogout: logout,
+      baseUrl
     };
   },
   emits: ['login', 'register']

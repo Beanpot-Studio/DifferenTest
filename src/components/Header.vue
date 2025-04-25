@@ -2,21 +2,21 @@
   <header class="relative z-50 text-white">
     <div class=" mx-auto px-4 py-3 flex bg-gradient-to-r from-primary-700 to-primary-950 justify-between items-center">
       <div class="flex items-center">
-        <a href="/" class="text-2xl text-white font-bold">DifferenTest</a>
+        <a :href="baseUrl" class="text-2xl text-white font-bold">DifferenTest</a>
       </div>
     
       <div class="flex items-center space-x-4">
         <nav class="hidden md:flex space-x-6">
-          <a :href="`${import.meta.env.BASE_URL}/curricula`" class="hover:text-primary-200 transition text-white">Open Curricula</a>
+          <a :href="`${baseUrl}/curricula`" class="hover:text-primary-200 transition text-white">Open Curricula</a>
 
           <!-- Show these links only when logged in with specific roles -->
           <template v-if="isLoggedIn">
-            <a v-if="role === 'teacher'" :href="`${import.meta.env.BASE_URL}/teacher`" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
-            <a v-if="role === 'student'" :href="`${import.meta.env.BASE_URL}/student`" class="hover:text-primary-200 transition text-white">Student Portal</a>
+            <a v-if="role === 'teacher'" :href="`${baseUrl}/teacher`" class="hover:text-primary-200 transition text-white">Teacher Portal</a>
+            <a v-if="role === 'student'" :href="`${baseUrl}/student`" class="hover:text-primary-200 transition text-white">Student Portal</a>
           </template>
           <!-- Curriculum Link (visible to all) -->
-          <a :href="`${import.meta.env.BASE_URL}/about`" class="text-gray-600 hover:text-gray-900">About</a>
-          <a :href="`${import.meta.env.BASE_URL}/help`" class="text-gray-600 hover:text-gray-900">Help</a>
+          <a :href="`${baseUrl}/about`" class="text-gray-600 hover:text-gray-900">About</a>
+          <a :href="`${baseUrl}/help`" class="text-gray-600 hover:text-gray-900">Help</a>
         </nav>
 
         
@@ -70,6 +70,13 @@ export default {
     const showRegisterModal = ref(false);
     const { isLoggedIn, role, user, isTeacher, isStudent, cleanup } = useAuth();
     
+    // Compute base URL that works in both development and production
+    const baseUrl = computed(() => {
+      // In development, this will be '/'
+      // In production, it will be the base path from the environment
+      return import.meta.env.BASE_URL || '/';
+    });
+    
     onUnmounted(() => {
       cleanup();
     });
@@ -77,24 +84,24 @@ export default {
     const handleLoginSuccess = () => {
       showLoginModal.value = false;
       if (role.value === 'teacher') {
-        window.location.href = '/teacher';
+        window.location.href = `${baseUrl.value}/teacher`;
       } else if (role.value === 'student') {
-        window.location.href = '/student';
+        window.location.href = `${baseUrl.value}/student`;
       } else {
         // If no role is set, redirect to home page
-        window.location.href = '/';
+        window.location.href = baseUrl.value;
       }
     };
 
     const handleRegisterSuccess = () => {
       showRegisterModal.value = false;
       if (role.value === 'teacher') {
-        window.location.href = '/teacher';
+        window.location.href = `${baseUrl.value}/teacher`;
       } else if (role.value === 'student') {
-        window.location.href = '/student';
+        window.location.href = `${baseUrl.value}/student`;
       } else {
         // If no role is set, redirect to home page
-        window.location.href = '/';
+        window.location.href = baseUrl.value;
       }
     };
 
@@ -120,7 +127,8 @@ export default {
       handleLoginSuccess,
       handleRegisterSuccess,
       switchToRegister,
-      switchToLogin
+      switchToLogin,
+      baseUrl
     };
   }
 };
