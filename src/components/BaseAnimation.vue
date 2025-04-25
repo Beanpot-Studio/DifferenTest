@@ -47,17 +47,17 @@ export default {
     const animationSrc = computed(() => {
       switch (props.type) {
         case 'loading':
-          return `${baseUrl.value}animations/loading.lottie`;
+          return `${baseUrl.value}/animations/loading.lottie`;
         case 'lock':
-          return `${baseUrl.value}animations/lock.lottie`;
+          return `${baseUrl.value}/animations/lock.lottie`;
         case 'confetti':
-          return `${baseUrl.value}animations/confetti.lottie`;
+          return `${baseUrl.value}/animations/confetti.lottie`;
         case 'lost':
-          return `${baseUrl.value}animations/lost.lottie`;
+          return `${baseUrl.value}/animations/lost.lottie`;
         case 'learning':
           return `${baseUrl.value}/animations/learning.lottie`;
         default:
-          return `${baseUrl.value}animations/loading.lottie`;
+          return `${baseUrl.value}/animations/loading.lottie`;
       }
     });
 
