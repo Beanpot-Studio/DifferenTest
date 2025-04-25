@@ -39,7 +39,7 @@ const formatDate = (timestamp) => {
 };
 ---
 
-<Layout title={`Badge: ${badge.name}`}>
+<Layout title={`Badge: ${badge.metadata.badgeName}`}>
   <div class="bg-white shadow rounded-lg overflow-hidden">
     <div class="p-6">
       <div class="flex items-center space-x-4">
@@ -98,7 +98,6 @@ const formatDate = (timestamp) => {
           </div>
         </dl>
       </div>
-
     </div>
   </div>
 </Layout>
