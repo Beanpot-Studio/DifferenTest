@@ -1,13 +1,15 @@
 ---
-import Layout from "../layouts/MainLayout.astro";
+import MainLayout from "../layouts/MainLayout.astro";
 import CurriculumCard from "../components/CurriculumCard.vue";
 import FirebaseService from "../lib/firebaseService";
+
+const baseUrl = import.meta.env.BASE_URL || "";
 
 // Fetch public classes from Firebase
 const publicClasses = await FirebaseService.getPublicClasses();
 ---
 
-<Layout title="Curriculum">
+<MainLayout title="Curriculum">
   <main class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Open Classes</h1>
     <div class="grid grid-cols-1 gap-6">
@@ -23,19 +25,16 @@ const publicClasses = await FirebaseService.getPublicClasses();
                 teacherId: classData.teacherId,
                 code: classData.code,
                 quizzes: classData.quizzes.map((quiz) => ({
-                  id: quiz.id,
-                  badgeImage: quiz.badgeImage,
-                  title: quiz.title,
-                  lessonPlan: quiz.lessonPlan,
+                  ...quiz,
                   teacherId: classData.teacherId,
-                  link: `/classes/${classData.id}/quiz/${quiz.id}`,
+                  link: `${baseUrl}/classes/${classData.id}/quiz/${quiz.id}`,
                 })),
               }}
-              basePath="/classes"
+              basePath={`${baseUrl}/classes`}
             />
           </div>
         ))
       }
     </div>
   </main>
-</Layout>
+</MainLayout>
