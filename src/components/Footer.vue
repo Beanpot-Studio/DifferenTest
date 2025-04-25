@@ -8,26 +8,26 @@
         </div>
         <div>
           <h3 class="text-lg font-bold mb-4">Quick Links</h3>
-          <ul class="space-y-2">
-            <li><a :href="`${import.meta.env.BASE_URL}/`" class="text-secondary-300 hover:text-white transition">Home</a></li>
-            <li><a :href="`${import.meta.env.BASE_URL}/pricing`" class="text-secondary-300 hover:text-white transition">Pricing</a></li>
-            <li><a :href="`${import.meta.env.BASE_URL}/contact`" class="text-secondary-300 hover:text-white transition">Contact</a></li>
-            <li><a :href="`${import.meta.env.BASE_URL}/help`" class="text-secondary-300 hover:text-white transition">Support</a></li>
+          <ul class="flex flex-wrap gap-4">
+            <li><a href="/" class="text-secondary-300 hover:text-white transition">Home</a></li>
+            <li><a href="/pricing" class="text-secondary-300 hover:text-white transition">Pricing</a></li>
+            <li><a href="/contact" class="text-secondary-300 hover:text-white transition">Contact</a></li>
+            <li><a href="/help" class="text-secondary-300 hover:text-white transition">Support</a></li>
           </ul>
         </div>
         <div>
           <h3 class="text-lg font-bold mb-4">Resources</h3>
-          <ul class="space-y-2">
-            <li><a :href="`${import.meta.env.BASE_URL}/blog`" class="text-secondary-300 hover:text-white transition">Blog</a></li>
-            <li><a :href="`${import.meta.env.BASE_URL}/docs`" class="text-secondary-300 hover:text-white transition">Documentation</a></li>
-            <li><a :href="`${import.meta.env.BASE_URL}/tutorials`" class="text-secondary-300 hover:text-white transition">Tutorials</a></li>
+          <ul class="flex flex-wrap gap-4">
+            <li><a href="/blog" class="text-secondary-300 hover:text-white transition">Blog</a></li>
+            <li><a href="/docs" class="text-secondary-300 hover:text-white transition">Documentation</a></li>
+            <li><a href="/tutorials" class="text-secondary-300 hover:text-white transition">Tutorials</a></li>
           </ul>
         </div>
         <div>
           <h3 class="text-lg font-bold mb-4">Legal</h3>
-          <ul class="space-y-2">
-            <li><a :href="`${import.meta.env.BASE_URL}/privacy`" class="text-secondary-300 hover:text-white transition">Privacy Policy</a></li>
-            <li><a :href="`${import.meta.env.BASE_URL}/terms`" class="text-secondary-300 hover:text-white transition">Terms of Service</a></li>
+          <ul class="flex flex-wrap gap-4">
+            <li><a href="/privacy" class="text-secondary-300 hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="/terms" class="text-secondary-300 hover:text-white transition">Terms of Service</a></li>
           </ul>
         </div>
       </div>
