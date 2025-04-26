@@ -78,7 +78,6 @@ export default {
     onUnmounted(() => {
       cleanup();
     });
-    
     const handleLoginSuccess = () => {
       showLoginModal.value = false;
       if (role.value === 'teacher') {
