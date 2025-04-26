@@ -43,8 +43,9 @@ export default defineConfig({
       PUBLIC_FIREBASE_APP_ID: envField.string({ context: "client", access: "public" }),
       PUBLIC_GEMINI_API_KEY: envField.string({ context: "client", access: "public" }),
       PUBLIC_BASE_URL: envField.string({ context: "client", access: "public" }),
-
-
+      PUBLIC_MAILGUN_API_KEY: envField.string({ context: "client", access: "public" }),
+      PUBLIC_MAILGUN_DOMAIN: envField.string({ context: "client", access: "public" }),
+      PUBLIC_MAILGUN_CONTACT_EMAIL: envField.string({ context: "client", access: "public" }), 
     }
   }
 });
