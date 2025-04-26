@@ -26,7 +26,7 @@ export default defineConfig({
         strict: false,
       },
       cors: true,
-      allowedHosts: ['localhost', 'beanpot-studio.github.io'],
+      allowedHosts: ['localhost', 'beanpot-studio.github.io', 'differentest.club'],
     },
   },
   env: {
