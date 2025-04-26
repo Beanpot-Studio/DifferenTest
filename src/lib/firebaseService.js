@@ -182,6 +182,7 @@ class FirebaseService {
         teacherId: classData.teacherId,
         teacherName: teacherName,
         isPublic: classData.isPublic || false,
+        skinId: classData.skinId || 'default',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -251,7 +252,16 @@ class FirebaseService {
   // Quiz Operations
   static async getQuiz(quizId) {
     const quizDoc = await getDoc(doc(db, 'quizzes', quizId));
-    return quizDoc.exists() ? { id: quizDoc.id, ...quizDoc.data() } : null;
+    if (!quizDoc.exists()) {
+      return null;
+    }
+    const data = quizDoc.data();
+    return {
+      id: quizDoc.id,
+      title: data.title || 'Untitled Quiz',
+      lessonPlan: data.lessonPlan || '',
+      ...data, 
+    };
   }
 
   static async getQuizzesByClass(classId) {
@@ -1520,6 +1530,7 @@ class FirebaseService {
           id: classId,
           name: classData.name,
           description: classData.description || '',
+          skinId: classData.skinId || 'default',
           quizzes: classQuizzes,
           teacherName: teacherData?.name || 'Unknown Teacher',
           code: classData.code,

@@ -29,6 +29,19 @@
             Public classes can be discovered and joined by any student.
           </p>
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Skin
+          </label>
+          <select
+            v-model="newClass.skinId"
+            class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+          >
+            <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
+              {{ skin.name }} ({{ skin.ageRange }})
+            </option>
+          </select>
+        </div>
         <button
           @click="createClass"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
@@ -164,6 +177,19 @@
               </button>
             </div>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Skin
+            </label>
+            <select
+              v-model="editingClass.skinId"
+              class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+            >
+              <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
+                {{ skin.name }} ({{ skin.ageRange }})
+              </option>
+            </select>
+          </div>
         </div>
         <div class="flex justify-end space-x-4 mt-6">
           <button
@@ -185,12 +211,13 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../stores/auth';
 import ClassRoster from './ClassRoster.vue';
 import { useNotification } from '../composables/useNotification';
 import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
+import { useSkin } from '../composables/useSkin';
 
 export default {
   name: 'ClassManager',
@@ -199,13 +226,15 @@ export default {
   },
   setup() {
     const { user } = useAuth();
+    const { availableSkins } = useSkin();
     const classes = ref([]);
     const availableQuizzes = ref([]);
     const classesWithQuizzes = ref([]);
     const newClass = ref({
       name: '',
       code: '',
-      isPublic: false
+      isPublic: false,
+      skinId: 'default'
     });
     const editingClass = ref(null);
     const selectedQuiz = ref('');
@@ -228,6 +257,7 @@ export default {
           name: newClass.value.name.trim(),
           code: newClass.value.code,
           isPublic: newClass.value.isPublic,
+          skinId: newClass.value.skinId,
           teacherId: user.value.uid,
           teacherName: user.value.displayName || 'Unknown Teacher',
           createdAt: new Date(),
@@ -240,7 +270,8 @@ export default {
         newClass.value = {
           name: '',
           code: '',
-          isPublic: false
+          isPublic: false,
+          skinId: 'default'
         };
         
         showCreateClassModal.value = false;
@@ -328,27 +359,39 @@ export default {
 
     const editClass = (classItem) => {
       editingClass.value = { ...classItem };
+      if (!editingClass.value.skinId) {
+        editingClass.value.skinId = 'default';
+      }
     };
 
     const saveClass = async () => {
       if (!editingClass.value) return;
 
+      // Validate
+      if (!editingClass.value.name.trim()) {
+        showError('Class name cannot be empty');
+        return;
+      }
+
       try {
-        await FirebaseService.updateClass(editingClass.value.id, {
-          name: editingClass.value.name,
+        loading.value = true;
+        const updateData = {
+          name: editingClass.value.name.trim(),
+          isPublic: editingClass.value.isPublic || false,
+          skinId: editingClass.value.skinId || 'default',
           updatedAt: new Date()
-        });
-        
-        const index = classes.value.findIndex(c => c.id === editingClass.value.id);
-        if (index !== -1) {
-          classes.value[index] = { ...editingClass.value };
-        }
-        
+        };
+        await FirebaseService.updateClass(editingClass.value.id, updateData);
         editingClass.value = null;
         showSuccess('Class updated successfully');
+        await fetchClasses();
+        // Emit event to refresh stats
+        window.dispatchEvent(new CustomEvent('refreshStats'));
       } catch (error) {
         console.error('Error saving class:', error);
         showError('Error saving class. Please try again.');
+      } finally {
+        loading.value = false;
       }
     };
 
@@ -442,7 +485,12 @@ export default {
       addQuizToClass,
       removeQuizFromClass,
       copyClassCode,
-      formatDate
+      formatDate,
+      showSuccess,
+      showError,
+      loading,
+      showCreateClassModal,
+      availableSkins
     };
   }
 };

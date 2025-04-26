@@ -28,7 +28,7 @@
             <div>
               <div class="flex items-center space-x-2">
                 <a 
-                  :href="'/classes/' + quiz.classId + '/assignments/' + quiz.id"
+                  :href="'/classes/' + quiz.classId + '/quiz/' + quiz.id"
                   class="text-lg font-bold text-primary-600 hover:text-primary-800"
                 >
                   {{ quiz.title }}
@@ -248,18 +248,28 @@ export default {
 
       try {
         loading.value = true;
-        const quizData = {
-          ...currentLessonPlan.value,
-          lessonPlan: editedLessonPlan.value
-        };
+        const quizId = currentLessonPlan.value.id;
+        const updatedContent = editedLessonPlan.value;
 
-        await FirebaseService.updateQuiz(currentLessonPlan.value.id, quizData);
+        await FirebaseService.updateQuiz(quizId, { 
+          lessonPlan: updatedContent,
+          updatedAt: new Date()
+        });
+
+        currentLessonPlan.value.lessonPlan = updatedContent;
+        const classIndex = classesWithLessonPlans.value.findIndex(c => c.id === currentLessonPlan.value.classId);
+        if (classIndex !== -1) {
+          const quizIndex = classesWithLessonPlans.value[classIndex].quizzes.findIndex(q => q.id === quizId);
+          if (quizIndex !== -1) {
+            classesWithLessonPlans.value[classIndex].quizzes[quizIndex].lessonPlan = updatedContent;
+          }
+        }
+
+        isEditing.value = false;
         showSuccess('Lesson plan updated successfully');
-        await loadLessonPlans();
-        closeLessonPlanModal();
       } catch (err) {
         console.error('Error saving lesson plan:', err);
-        showError('Failed to save lesson plan');
+        showError('Failed to save lesson plan. Please try again.');
       } finally {
         loading.value = false;
       }

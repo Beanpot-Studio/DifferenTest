@@ -3,7 +3,7 @@ import MainLayout from "../layouts/MainLayout.astro";
 import CurriculumCard from "../components/CurriculumCard.vue";
 import FirebaseService from "../lib/firebaseService";
 
-const baseUrl = import.meta.env.BASE_URL || "";
+const baseUrl = import.meta.env.PUBLIC_BASE_URL || "";
 
 // Fetch public classes from Firebase
 const publicClasses = await FirebaseService.getPublicClasses();
@@ -30,7 +30,7 @@ const publicClasses = await FirebaseService.getPublicClasses();
                   link: `${baseUrl}/classes/${classData.id}/quiz/${quiz.id}`,
                 })),
               }}
-              //basePath={`${baseUrl}/classes`}
+              basePath={`${baseUrl}/classes`}
             />
           </div>
         ))

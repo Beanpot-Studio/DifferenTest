@@ -41,7 +41,7 @@ export default {
     const sizeValue = computed(() => Number(props.size));
     
     const baseUrl = computed(() => {
-      return import.meta.env.BASE_URL || '/';
+      return import.meta.env.PUBLIC_BASE_URL || '/';
     });
     
     const animationSrc = computed(() => {

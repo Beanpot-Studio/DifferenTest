@@ -72,7 +72,7 @@ export default {
     const baseUrl = computed(() => {
       // In development, this will be '/'
       // In production, it will be the base path from the environment
-      return import.meta.env.BASE_URL || '/';
+      return import.meta.env.PUBLIC_BASE_URL || '/';
     });
     
     onUnmounted(() => {

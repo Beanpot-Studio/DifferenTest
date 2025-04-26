@@ -160,7 +160,7 @@ const isStudent = computed(() => {
 });
 
 const baseUrl = computed(() => {
-  return import.meta.env.BASE_URL || '/';
+  return import.meta.env.PUBLIC_BASE_URL || '/';
 });
 
 const loadQuizAttempts = async () => {

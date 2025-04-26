@@ -1,0 +1,15 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="24" cy="24" r="20" fill="#BAE6FD"/> <!-- Light Blue background -->
+  <circle cx="16" cy="20" r="3" fill="#1E293B"/> <!-- Eye -->
+  <circle cx="32" cy="20" r="3" fill="#1E293B"/> <!-- Eye -->
+  <path d="M18 32H30" stroke="#1E293B" stroke-width="3" stroke-linecap="round"/> <!-- Neutral Mouth -->
+  <path d="M12 12L18 18" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/> <!-- Left Whisker -->
+  <path d="M12 16L18 20" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+  <path d="M36 12L30 18" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/> <!-- Right Whisker -->
+  <path d="M36 16L30 20" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+  <path d="M20 8L16 4" stroke="#FF9D87" stroke-width="3" stroke-linecap="round"/> <!-- Left Ear -->
+  <path d="M28 8L32 4" stroke="#FF9D87" stroke-width="3" stroke-linecap="round"/> <!-- Right Ear -->
+  <!-- Thinking Bubble -->
+  <circle cx="38" cy="10" r="4" fill="#FFF5F2"/>
+  <circle cx="42" cy="16" r="2" fill="#FFF5F2"/>
+</svg> 

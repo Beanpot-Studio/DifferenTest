@@ -5,31 +5,93 @@ import QuizInterface from "../../../../components/QuizInterface.vue";
 import FirebaseService from "../../../../lib/firebaseService";
 import { useAuth } from "../../../../stores/auth";
 
-export async function getStaticPaths() {
-  // Get all public classes to generate paths
-  const publicClasses = await FirebaseService.getPublicClasses();
+// Define Interfaces for stricter typing
+interface QuizData {
+  id: string;
+  title: string;
+  lessonPlan?: string; // Markdown content
+  // Add other quiz properties as needed
+}
 
-  // Generate paths for each quiz in each class
-  const paths = [];
+interface ClassInfo {
+  id: string;
+  name: string;
+  skinId?: string;
+  // Add other class properties as needed
+}
+
+interface PageProps {
+  classData: ClassInfo;
+  quiz: QuizData;
+}
+
+export async function getStaticPaths() {
+  // Type the paths array
+  const paths: Array<{
+    params: { id: string; quizId: string };
+    props: PageProps;
+  }> = [];
+
+  // Assuming FirebaseService.getPublicClasses returns an array of ClassInfo
+  // and each classData.quizzes is an array of QuizData
+  const publicClasses: ClassInfo[] = await FirebaseService.getPublicClasses();
+
+  if (!Array.isArray(publicClasses)) {
+    console.error("getPublicClasses did not return an array");
+    return []; // Return empty if data is invalid
+  }
+
   for (const classData of publicClasses) {
-    for (const quiz of classData.quizzes) {
-      paths.push({
-        params: {
-          id: classData.id,
-          quizId: quiz.id,
-        },
-        props: {
-          classData,
-          quiz,
-        },
-      });
+    // Ensure quizzes exist and is an array before iterating
+    const quizRefs = await FirebaseService.getQuizzesByClass(classData.id);
+    if (!Array.isArray(quizRefs)) continue;
+
+    for (const quizRef of quizRefs) {
+      if (!quizRef || !quizRef.id) continue; // Skip invalid quiz reference
+
+      try {
+        // Fetch quiz data - Should now return full QuizData
+        const quiz: QuizData | null = await FirebaseService.getQuiz(quizRef.id);
+
+        // Ensure the full quiz data was found and has necessary fields
+        if (!quiz || !quiz.id || !quiz.title) {
+          // Type checking should work now
+          // Keep checks
+          console.warn(
+            `Full details (or title) not found for quiz ID: ${quizRef.id} in class ${classData.id}`
+          );
+          continue;
+        }
+
+        paths.push({
+          params: {
+            id: classData.id,
+            quizId: quiz.id,
+          },
+          props: {
+            classData,
+            quiz, // No assertion needed here anymore
+          },
+        });
+      } catch (fetchError) {
+        console.error(
+          `Error fetching full details for quiz ID: ${quizRef.id}`,
+          fetchError
+        );
+        // Decide if you want to skip this path or handle error differently
+        continue;
+      }
     }
   }
   return paths;
 }
 
-const { id, quizId } = Astro.params;
-const { classData, quiz } = Astro.props;
+// Use the defined interface for Astro.props
+const { classData, quiz } = Astro.props as PageProps;
+const { id, quizId } = Astro.params; // Params are strings by default
+
+// Get the skinId from the typed class data
+const initialSkinId = classData?.skinId || "default";
 
 // Initialize auth state
 const { initialize } = useAuth();
@@ -41,7 +103,7 @@ await initialize();
     <div class="bg-white rounded-lg shadow-md p-6">
       <div class="mb-6">
         <a
-          href={import.meta.env.BASE_URL + "/curricula"}
+          href={import.meta.env.PUBLIC_BASE_URL + "/curricula"}
           class="text-blue-600 hover:text-blue-800"
         >
           ← Back to curricula
@@ -63,4 +125,27 @@ await initialize();
       </div>
     </div>
   </main>
+
+  {/* Client-side script to apply the correct skin */}
+  <script define:vars={{ skinToApply: initialSkinId }}>
+    // Directly set the attribute instead of importing the composable here
+    // import { useSkin } from '../../../../composables/useSkin';
+    // const { applySkin } = useSkin();
+    // applySkin(skinToApply);
+    if (skinToApply && typeof document !== "undefined") {
+      const validSkins = ["default", "cats"]; // Maintain a list of valid skins
+      const finalSkin = validSkins.includes(skinToApply)
+        ? skinToApply
+        : "default";
+      document.documentElement.setAttribute("data-theme", finalSkin);
+      if (finalSkin !== skinToApply) {
+        console.warn(
+          `Invalid skin ID "${skinToApply}" received. Applied default.`
+        );
+      }
+    } else if (typeof document !== "undefined") {
+      // Apply default if nothing was passed
+      document.documentElement.setAttribute("data-theme", "default");
+    }
+  </script>
 </Layout>

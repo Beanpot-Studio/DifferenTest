@@ -545,6 +545,9 @@ export default {
             throw new Error('Failed to read lesson plan file');
           }
           
+          // Store the lesson plan content in the ref
+          newQuiz.value.lessonPlan = lessonPlanContent;
+
           // Generate questions from lesson plan
           const generatedQuiz = await FirebaseService.generateQuiz(lessonPlanContent, newQuiz.value.questionCount);
           newQuiz.value.questions = generatedQuiz.questions;

@@ -1,0 +1,308 @@
+/* Cat Theme Variables */
+:root[data-theme="cats"] {
+  /* Custom Colors */
+  --cat-primary: 255, 157, 135; /* #FF9D87 - Soft coral for main elements (RGB format for Tailwind compatibility) */
+  --cat-secondary: 255, 181, 167; /* #FFB5A7 - Lighter coral (RGB) */
+  --cat-accent: 139, 211, 221; /* #8BD3DD - Soft teal (RGB) */
+  --cat-background: 255, 245, 242; /* #FFF5F2 - Very light peachy background (RGB) */
+  
+  /* Override default theme colors - Using RGB values for Tailwind */
+  --color-primary: var(--cat-primary);
+  --color-secondary: var(--cat-secondary);
+  --color-success: 74, 222, 128; /* Brighter green for success with cats */
+  --color-danger: 248, 113, 113; /* Softer red for danger with cats */
+  --color-info: var(--cat-accent);
+  --color-warning: 251, 191, 36; /* Adjust warning if needed */
+
+  /* Custom Properties */
+  --cat-paw-cursor: url('/skins/cats/assets/cat-cursor.svg') 16 16, auto; /* Added hotspot */
+  --cat-loading-animation: url('/skins/cats/assets/cat-loading.svg');
+}
+
+/* Base Styles */
+[data-theme="cats"] body {
+  cursor: var(--cat-paw-cursor);
+  background-color: rgb(var(--cat-background)); /* Use rgb() for Tailwind compatibility */
+  /* Consider adding the background image via a specific container if needed, 
+     as applying it directly to body might interfere with other layouts */
+  /* background-image: url('/skins/cats/assets/cat-background.svg'); */
+  /* background-repeat: repeat; */
+  /* background-size: 200px; */
+}
+
+/* Example: Apply background pattern to main content area */
+[data-theme="cats"] main {
+   background-image: url('/skins/cats/assets/cat-background.svg');
+   background-repeat: repeat;
+   background-size: 200px;
+}
+
+
+/* --- Component Overrides for Cat Theme --- */
+
+/* Buttons */
+[data-theme="cats"] .btn-primary {
+  @apply bg-[rgb(var(--cat-primary))] text-white hover:bg-[rgba(var(--cat-primary),0.8)];
+}
+[data-theme="cats"] .btn-secondary {
+  @apply bg-[rgb(var(--cat-secondary))] text-gray-800 hover:bg-[rgba(var(--cat-secondary),0.8)];
+}
+
+/* Cards */
+[data-theme="cats"] .card {
+  @apply bg-white rounded-2xl border-2 border-[rgb(var(--cat-secondary))] shadow-[0_4px_12px_rgba(var(--cat-primary),0.2)];
+}
+
+/* Inputs */
+[data-theme="cats"] .input {
+   @apply border-[rgb(var(--cat-secondary))] focus:ring-[rgb(var(--cat-primary))] focus:border-[rgb(var(--cat-primary))];
+}
+
+/* Badges */
+[data-theme="cats"] .badge-primary {
+  @apply bg-[rgba(var(--cat-primary),0.1)] text-[rgb(var(--cat-primary))];
+}
+[data-theme="cats"] .badge-success {
+    @apply bg-[rgba(var(--color-success),0.1)] text-[rgb(var(--color-success))];
+}
+[data-theme="cats"] .badge-danger {
+    @apply bg-[rgba(var(--color-danger),0.1)] text-[rgb(var(--color-danger))];
+}
+[data-theme="cats"] .badge-info {
+    @apply bg-[rgba(var(--color-info),0.1)] text-[rgb(var(--color-info))];
+}
+
+
+/* --- Quiz Specific Elements --- */
+[data-theme="cats"] .quiz-container { /* Assuming a wrapper div with this class */
+  border-radius: 20px;
+  border: 3px solid rgb(var(--cat-primary));
+  box-shadow: 0 4px 12px rgba(var(--cat-primary), 0.2);
+  @apply bg-white p-6;
+}
+
+/* Answer Options */
+[data-theme="cats"] .quiz-option { /* Assuming each answer option has this class */
+  border-radius: 15px;
+  border: 2px dashed rgb(var(--cat-secondary));
+  transition: all 0.3s ease;
+  position: relative;
+  @apply p-4 my-2 cursor-pointer bg-white hover:bg-[rgb(var(--cat-background))];
+}
+
+[data-theme="cats"] .quiz-option:hover {
+  transform: scale(1.02);
+  border-style: solid;
+  border-color: rgb(var(--cat-primary));
+}
+
+/* Selected state */
+[data-theme="cats"] .quiz-option.selected {
+   border-style: solid;
+   border-color: rgb(var(--cat-primary));
+   background-color: rgb(var(--cat-background));
+   box-shadow: 0 0 5px rgba(var(--cat-primary), 0.5);
+}
+
+/* Add cat ear decorations (Optional visual flair) */
+/*
+[data-theme="cats"] .quiz-option::before,
+[data-theme="cats"] .quiz-option::after {
+  content: '';
+  position: absolute;
+  top: -10px; 
+  width: 20px;
+  height: 20px;
+  background-color: rgb(var(--cat-primary));
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0; 
+  transform-origin: bottom center;
+}
+
+[data-theme="cats"] .quiz-option::before {
+  left: 15px;
+  transform: rotate(-35deg);
+}
+
+[data-theme="cats"] .quiz-option::after {
+  right: 15px;
+  transform: rotate(35deg);
+}
+*/
+
+/* Correct/Wrong Answer Visual Feedback */
+/* Apply these classes dynamically via JS/Vue */
+[data-theme="cats"] .quiz-option.correct-answer {
+  border-color: rgb(var(--color-success));
+  background-color: rgba(var(--color-success), 0.1);
+  animation: bounce 0.5s ease;
+}
+[data-theme="cats"] .quiz-option.correct-answer::after {
+  content: url('/skins/cats/assets/cat-icons/correct-answer.svg'); /* Example using icon */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5); /* Adjust scale */
+}
+
+
+[data-theme="cats"] .quiz-option.wrong-answer {
+  border-color: rgb(var(--color-danger));
+  background-color: rgba(var(--color-danger), 0.1);
+  animation: shake 0.5s ease;
+}
+[data-theme="cats"] .quiz-option.wrong-answer::after {
+  content: url('/skins/cats/assets/cat-icons/wrong-answer.svg'); /* Example using icon */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.5); /* Adjust scale */
+}
+
+
+/* Loading Animation Placeholder */
+[data-theme="cats"] .loading-indicator { /* Apply to a loading element */
+  width: 50px;
+  height: 50px;
+  background-image: var(--cat-loading-animation);
+  background-size: contain;
+  background-repeat: no-repeat;
+  animation: rotate 2s linear infinite;
+  display: inline-block; /* or block */
+}
+
+/* Celebration Animation Container */
+/* This would likely be a dedicated component added on success */
+[data-theme="cats"] .celebration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1000; /* Ensure it's on top */
+}
+
+/* Individual confetti element */
+[data-theme="cats"] .cat-confetti {
+  position: absolute;
+  width: 20px; /* Match SVG size */
+  height: 20px; /* Match SVG size */
+  background-image: url('/skins/cats/assets/cat-icons/celebration.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  animation: fall 5s linear infinite; /* Adjust duration */
+  opacity: 0; /* Start hidden */
+}
+
+/* Animations */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.05); }
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Improved Fall animation for confetti */
+@keyframes fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg); /* Add rotation */
+    opacity: 0;
+  }
+}
+
+/* Add this helper class to trigger the celebration */
+.start-celebration .cat-confetti {
+   /* Use JS to add delays for a staggered effect */
+   /* Example: animation-delay: calc(var(--i) * 0.1s); */
+}
+
+/* --- Styling for CurriculumViewer within Cat Theme (Increased Specificity) --- */
+
+html[data-theme="cats"] .curriculum-content {
+  /* Apply a slightly different background if desired, or keep default */
+  /* background-color: rgba(var(--cat-background), 0.5); */ 
+  border: 2px dashed rgb(var(--cat-secondary));
+  border-radius: 15px;
+  padding: 1.5rem; /* Adjust padding if needed */
+  margin-top: 1rem; /* Add some space */
+}
+
+html[data-theme="cats"] .curriculum-content h1,
+html[data-theme="cats"] .curriculum-content h2,
+html[data-theme="cats"] .curriculum-content h3,
+html[data-theme="cats"] .curriculum-content h4 {
+  color: rgb(var(--cat-primary)); /* Use primary cat color for headings */
+  border-bottom-color: rgba(var(--cat-primary), 0.3);
+}
+
+html[data-theme="cats"] .curriculum-content p,
+html[data-theme="cats"] .curriculum-content li {
+  color: #5a4640; /* A darker, cat-friendly brown/gray */
+  font-size: 1.05em; /* Slightly larger text */
+  line-height: 1.7;
+}
+
+html[data-theme="cats"] .curriculum-content a {
+  color: rgb(var(--cat-accent)); /* Use accent color for links */
+  font-weight: bold;
+}
+
+html[data-theme="cats"] .curriculum-content code {
+  background-color: rgba(var(--cat-secondary), 0.3);
+  color: rgb(var(--cat-primary));
+  border-radius: 4px;
+  padding: 0.2em 0.4em;
+}
+
+html[data-theme="cats"] .curriculum-content pre {
+  background-color: #4d3e3a; /* Darker brown for code blocks */
+  border: 2px solid rgb(var(--cat-secondary));
+  border-radius: 8px;
+}
+
+html[data-theme="cats"] .curriculum-content pre code {
+  background-color: transparent;
+  color: rgb(var(--cat-background));
+}
+
+html[data-theme="cats"] .curriculum-content blockquote {
+  border-left-color: rgb(var(--cat-primary));
+  background-color: rgba(var(--cat-secondary), 0.1);
+  color: #5a4640;
+}
+
+html[data-theme="cats"] .curriculum-content table th {
+    background-color: rgba(var(--cat-secondary), 0.2);
+    color: rgb(var(--cat-primary));
+    border-bottom-color: rgba(var(--cat-primary), 0.3);
+}
+
+html[data-theme="cats"] .curriculum-content table td {
+    border-bottom-color: rgba(var(--cat-secondary), 0.5);
+}
+
+html[data-theme="cats"] .curriculum-content table tr:nth-child(even) {
+    background-color: rgba(var(--cat-background), 0.3);
+}
+
+html[data-theme="cats"] .curriculum-content li::marker {
+  color: rgb(var(--cat-primary));
+}
+
+/* --- End CurriculumViewer Styles --- */ 
