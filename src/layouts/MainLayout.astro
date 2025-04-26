@@ -55,13 +55,7 @@ const { title } = Astro.props;
     <main class="flex-grow pt-12 relative z-10">
       <NotificationContainer client:load />
       <div class="container p-10">
-        {
-          /* Remove conditional rendering of SkinSelector
-          isLoggedIn.value && role.value === "student" && (
-            <SkinSelector client:load />
-          )
-          */
-        }
+    
         <slot />
       </div>
     </main>
