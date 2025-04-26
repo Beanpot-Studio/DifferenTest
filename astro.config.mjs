@@ -29,9 +29,6 @@ export default defineConfig({
       cors: true,
       allowedHosts: ['localhost'],
     },
-    envDir: '.',
-    site: 'https://beanpot-studio.github.io/',
-    base: 'DifferenTest',
   },
   env: {
     schema: {
@@ -44,6 +41,8 @@ export default defineConfig({
       PUBLIC_FIREBASE_MESSAGING_SENDER_ID: envField.string({ context: "client", access: "public" }),
       PUBLIC_FIREBASE_APP_ID: envField.string({ context: "client", access: "public" }),
       PUBLIC_GEMINI_API_KEY: envField.string({ context: "client", access: "public" }),
+      PUBLIC_BASE_URL: envField.string({ context: "client", access: "public" }),
+
     }
   }
 });
