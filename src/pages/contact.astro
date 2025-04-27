@@ -1,6 +1,7 @@
 ---
 // src/pages/contact.astro
 import MainLayout from "../layouts/MainLayout.astro";
+import { useNotification } from "../composables/useNotification";
 
 const pageTitle = "Contact Us";
 ---
@@ -12,8 +13,8 @@ const pageTitle = "Contact Us";
   >
     <h1 class="text-3xl font-bold p-6">{pageTitle}</h1>
     <p class="text-gray-600 p-6">
-      Have questions or feedback? Looking for pricing information? Fill out the form below, and we'll get back to
-      you as soon as possible.
+      Have questions or feedback? Looking for pricing information? Fill out the
+      form below, and we'll get back to you as soon as possible.
     </p>
 
     <form id="contact-form" class="space-y-6">
@@ -101,6 +102,9 @@ const pageTitle = "Contact Us";
 </MainLayout>
 
 <script>
+  import { useNotification } from "../composables/useNotification";
+
+  const { showSuccess, showError } = useNotification();
   const contactForm = document.getElementById(
     "contact-form"
   ) as HTMLFormElement;
@@ -140,13 +144,19 @@ const pageTitle = "Contact Us";
 
         let result;
         try {
-          result = await response.json();
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            result = await response.json();
+          } else {
+            throw new Error("Server returned non-JSON response");
+          }
         } catch (e) {
-          console.error("Error parsing JSON response:", e);
+          console.error("Error parsing response:", e);
           throw new Error("Invalid response from server");
         }
 
         if (response.ok) {
+          showSuccess("Message sent successfully! We'll get back to you soon.");
           formStatus.textContent =
             "Message sent successfully! We'll get back to you soon.";
           formStatus.className = "mt-4 text-center text-sm text-green-600";
@@ -156,6 +166,7 @@ const pageTitle = "Contact Us";
         }
       } catch (error) {
         console.error("Form submission error:", error);
+        showError(error.message);
         formStatus.textContent = `Error: ${error.message}`;
         formStatus.className = "mt-4 text-center text-sm text-red-600";
       } finally {
