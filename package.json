@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@astrojs/node": "^9.2.1",
     "@astrojs/sitemap": "^1.1.0",
     "@astrojs/tailwind": "^6.0.2",
     "@astrojs/vue": "^5.0.9",
