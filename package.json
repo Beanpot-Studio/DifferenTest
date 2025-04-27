@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev --config astro.config.dev.mjs",
     "build": "astro build",
-    "test": "playwright test"
+    "test": "playwright test",
+    "preview": "astro preview"
   },
   "keywords": [],
   "author": "",
