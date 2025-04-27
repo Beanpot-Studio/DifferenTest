@@ -2,19 +2,15 @@
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
 import NotificationContainer from "../components/NotificationContainer.vue";
-// import SkinSelector from "../components/SkinSelector.vue";
 import "../styles/global.css";
 import { useAuth } from "../stores/auth";
 
 // Import a helper to get initial theme *without* Vue reactivity for SSR
 const getInitialThemeSSR = (): string => {
-  // Can't access localStorage on server, so default or use a cookie/header if set
-  // For simplicity, defaulting here. A more robust solution might read a cookie.
   return "default";
 };
 
 const initialTheme = getInitialThemeSSR();
-const { user, role, isLoggedIn } = useAuth(); // Get user role if needed for selector
 
 interface Props {
   title: string;
@@ -36,7 +32,7 @@ const { title, metaTags = [] } = Astro.props;
     <link
       rel="icon"
       type="image/svg+xml"
-      href={`${import.meta.env.PUBLIC_BASE_URL || ""}/favicon.svg`}
+      href="/favicon.svg"
     />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | DifferenTest</title>
@@ -68,17 +64,14 @@ const { title, metaTags = [] } = Astro.props;
 
     <div class="absolute w-full top-5 max-h-12 z-0">
       <img
-        src={`${import.meta.env.PUBLIC_BASE_URL || ""}/wave.svg`}
+        src="/wave.svg"
         alt="Wave"
         class="w-full h-full object-cover"
       />
     </div>
 
     <script>
-      // Remove the global useSkin() call from here
-      // import { useSkin } from "../composables/useSkin";
-      // useSkin();
-
+     
       import { useAuth } from "../stores/auth";
       const { initialize, cleanup } = useAuth();
 

@@ -40,12 +40,6 @@ export default {
     return {
       currentYear: new Date().getFullYear()
     };
-  },
-  setup() {
-
-    return {
-      baseUrl
-    };
   }
 };
 </script>

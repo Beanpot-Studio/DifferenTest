@@ -76,7 +76,7 @@
                     </template>
                     <template v-else>
                       <div class="flex items-center">
-                        <IconService name="badge" size="6" class="text-yellow-500 mr-1" />
+                        <IconService name="star" size="6" class="text-yellow-500 mr-1" />
                         <span class="text-gray-900">Badge Earned</span>
                       </div>
                     </template>
