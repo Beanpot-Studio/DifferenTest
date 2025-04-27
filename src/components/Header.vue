@@ -2,7 +2,7 @@
   <header class="relative z-50 text-white">
     <div class=" mx-auto px-4 py-3 flex bg-gradient-to-r from-primary-700 to-primary-950 justify-between items-center">
       <div class="flex items-center">
-        <a :href="baseUrl" class="text-2xl text-white font-bold">DifferenTest</a>
+        <a :href="baseUrl" class="text-2xl text-white font-bold"><img src="/logo.png" alt="DifferenTest" class="w-64"></a>
       </div>
     
       <div class="flex items-center space-x-4">
