@@ -33,12 +33,7 @@
               </span>
             </div>
             <p class="text-gray-700 mb-2">{{ badge.metadata?.badgeDescription }}</p>
-            <div class="flex flex-wrap gap-2 mt-2">
-              <button @click="shareOnTwitter(badge)" class="px-2 py-1 bg-blue-400 text-white rounded hover:bg-blue-500 text-xs">Share on Twitter</button>
-              <button @click="shareOnLinkedIn(badge)" class="px-2 py-1 bg-blue-700 text-white rounded hover:bg-blue-800 text-xs">Share on LinkedIn</button>
-              <button @click="shareOnFacebook(badge)" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Share on Facebook</button>
-              <button @click="copyLink(badge)" class="px-2 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-xs">Copy Link</button>
-            </div>
+           
             <a
                 :href="`/badges/${badge.id}`"
                 target="_blank"
@@ -98,36 +93,8 @@ export default {
       });
     };
 
-    // Social sharing methods
-    const getShareUrl = (badge) => {
-      // Use badge.image if it's a valid public URL, otherwise fallback to /badges/{badge.id}
-      if (badge.image && /^https?:\/\//.test(badge.image)) {
-        return badge.image;
-      }
-      return `${window.location.origin}/badges/${badge.id}`;
-    };
-    const shareOnTwitter = (badge) => {
-      const text = encodeURIComponent(`I just earned the '${badge.metadata?.title}' badge! 🎉 Check it out: ${getShareUrl(badge)}`);
-      window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-    };
-    const shareOnLinkedIn = (badge) => {
-      const url = encodeURIComponent(getShareUrl(badge));
-      const title = encodeURIComponent(badge.metadata?.title || 'Achievement Badge');
-      const summary = encodeURIComponent(badge.metadata?.description || 'I earned a badge!');
-      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`, '_blank');
-    };
-    const shareOnFacebook = (badge) => {
-      const url = encodeURIComponent(getShareUrl(badge));
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
-    };
-    const copyLink = async (badge) => {
-      try {
-        await navigator.clipboard.writeText(getShareUrl(badge));
-        alert('Link copied to clipboard!');
-      } catch {
-        alert('Failed to copy link');
-      }
-    };
+    
+    
 
     onMounted(loadBadges);
 
@@ -136,10 +103,7 @@ export default {
       loading,
       error,
       formatDate,
-      shareOnTwitter,
-      shareOnLinkedIn,
-      shareOnFacebook,
-      copyLink
+      
     };
   }
 };
