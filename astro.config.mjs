@@ -9,6 +9,9 @@ export default defineConfig({
   adapter: node({
     mode: 'standalone'
   }),
+  experimental: {
+    session: true
+  },
   integrations: [
     tailwind(),
     vue(),
