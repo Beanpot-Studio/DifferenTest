@@ -160,7 +160,7 @@
                       </button>
                       <a
                         v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
-                        :href="`${baseUrl}/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
+                        :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="text-blue-600 hover:text-blue-800"
@@ -264,7 +264,7 @@
                         </button>
                         <a
                           v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
-                          :href="`${baseUrl}/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
+                          :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
                           target="_blank"
                           rel="noopener noreferrer"
                           class="text-blue-600 hover:text-blue-800"
@@ -1165,9 +1165,7 @@ export default {
       }
     };
 
-    const baseUrl = computed(() => {
-      return import.meta.env.PUBLIC_BASE_URL || '/'
-    })
+    
 
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
@@ -1240,8 +1238,7 @@ export default {
       claimBadge,
       isMintingBadge,
       isEnrolled,
-      loadQuizzes,
-      baseUrl
+      loadQuizzes
     };
   }
 };

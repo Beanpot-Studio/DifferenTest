@@ -40,24 +40,22 @@ export default {
   setup(props) {
     const sizeValue = computed(() => Number(props.size));
     
-    const baseUrl = computed(() => {
-      return import.meta.env.PUBLIC_BASE_URL || '/';
-    });
+    
     
     const animationSrc = computed(() => {
       switch (props.type) {
         case 'loading':
-          return `${baseUrl.value}/animations/loading.lottie`;
+          return '/animations/loading.lottie';
         case 'lock':
-          return `${baseUrl.value}/animations/lock.lottie`;
+          return '/animations/lock.lottie';
         case 'confetti':
-          return `${baseUrl.value}/animations/confetti.lottie`;
+          return '/animations/confetti.lottie';
         case 'lost':
-          return `${baseUrl.value}/animations/lost.lottie`;
+          return '/animations/lost.lottie';
         case 'learning':
-          return `${baseUrl.value}/animations/learning.lottie`;
+          return '/animations/learning.lottie';
         default:
-          return `${baseUrl.value}/animations/loading.lottie`;
+          return '/animations/loading.lottie';
       }
     });
 
