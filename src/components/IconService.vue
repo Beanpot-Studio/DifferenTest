@@ -58,7 +58,7 @@ export default {
       default: 5,
       validator: (value) => {
         const num = Number(value);
-        return [3, 4, 5, 6, 8, 12].includes(num);
+        return [3, 4, 5, 6, 8, 10, 12, 16, 20, 24].includes(num);
       }
     },
     color: {
