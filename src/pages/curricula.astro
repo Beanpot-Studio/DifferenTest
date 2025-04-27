@@ -12,29 +12,87 @@ const publicClasses = await FirebaseService.getPublicClasses();
 <MainLayout title="Curriculum">
   <main class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Open Classes</h1>
-    <div class="grid grid-cols-1 gap-6">
+    <div class="space-y-4">
       {
         publicClasses.map((classData) => (
-          <div class="bg-white rounded-lg shadow-md p-6">
-            <CurriculumCard
-              client:load
-              curriculum={{
-                id: classData.id,
-                title: classData.name,
-                teacherName: classData.teacherName,
-                teacherId: classData.teacherId,
-                code: classData.code,
-                quizzes: classData.quizzes.map((quiz) => ({
-                  ...quiz,
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <button
+              class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              aria-expanded="false"
+              aria-controls={`class-content-${classData.id}`}
+            >
+              <div class="flex-1">
+                <h2 class="text-xl font-semibold text-gray-900">
+                  {classData.name}
+                </h2>
+                <p class="text-sm text-gray-600 mt-1">
+                  Teacher: {classData.teacherName}
+                </p>
+              </div>
+              <svg
+                class="w-6 h-6 text-gray-500 transform transition-transform duration-200"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            <div
+              id={`class-content-${classData.id}`}
+              class="hidden px-6 py-4 border-t border-gray-200"
+            >
+              <CurriculumCard
+                client:load
+                curriculum={{
+                  id: classData.id,
+                  title: classData.name,
+                  teacherName: classData.teacherName,
                   teacherId: classData.teacherId,
-                  link: `${baseUrl}/classes/${classData.id}/quiz/${quiz.id}`,
-                })),
-              }}
-              basePath={`${baseUrl}/classes`}
-            />
+                  code: classData.code,
+                  quizzes: classData.quizzes.map((quiz) => ({
+                    ...quiz,
+                    teacherId: classData.teacherId,
+                    link: `${baseUrl}/classes/${classData.id}/quiz/${quiz.id}`,
+                  })),
+                }}
+                basePath={`${baseUrl}/classes`}
+              />
+            </div>
           </div>
         ))
       }
     </div>
   </main>
 </MainLayout>
+
+<script>
+  // Add click handlers for the collapsible panels
+  document.querySelectorAll("button[aria-expanded]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const isExpanded = button.getAttribute("aria-expanded") === "true";
+      const content = document.getElementById(
+        button.getAttribute("aria-controls")!
+      );
+      const icon = button.querySelector("svg");
+
+      // Toggle expanded state
+      button.setAttribute("aria-expanded", (!isExpanded).toString());
+
+      // Toggle content visibility
+      if (content) {
+        content.classList.toggle("hidden");
+      }
+
+      // Rotate icon
+      if (icon) {
+        icon.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
+      }
+    });
+  });
+</script>
