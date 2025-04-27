@@ -232,6 +232,7 @@
           <!-- Class Progress -->
           <div class="mt-4">
             <h4 class="font-lg font-bold mb-2">Attempted Quizzes</h4>
+            
           
             <div v-if="!classItem.quizzes?.length" class="text-gray-500 text-sm">
               No quizzes available yet.
@@ -289,20 +290,19 @@
     </div>
 
     <!-- Quiz Modal -->
-    <BaseModal
-      v-if="selectedQuiz"
-      :is-open="isQuizModalOpen"
-      @close="closeQuizModal"
-      :title="selectedQuiz.title"
-    >
-      <QuizInterface
-        v-if="selectedQuiz"
-        :quiz-id="selectedQuiz.id"
-        :class-id="selectedClass?.id"
-        :is-embedded="false"
-        @quiz-completed="handleQuizCompleted"
-      />
-    </BaseModal>
+    <div v-if="showQuizModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <button @click="closeQuizModal" class="text-gray-500 hover:text-gray-700">
+            <IconService name="close" size="6" />
+          </button>
+        </div>
+        <QuizInterface 
+          :quiz-id="selectedQuiz?.id"
+          :class-id="selectedClassId"
+        />
+      </div>
+    </div>
 
     <!-- Review Modal -->
     <div v-if="showReviewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -461,6 +461,7 @@ export default {
     const currentClassId = ref(null);
     const selectedQuiz = ref(null);
     const selectedClass = ref(null);
+    const selectedClassId = ref(null);
     const isQuizModalOpen = ref(false);
     const answers = ref([]);
     const quizCompleted = ref(false);
@@ -616,25 +617,34 @@ export default {
       
       try {
         const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
+        
+        // Initialize the attempts structure
         quizAttempts.value = {};
         quizAttemptsWithBadges.value = {};
         
         // Get all badges for this user
         const badges = await FirebaseService.getUserBadges(user.value.uid);
+        
         const badgeMap = new Map(badges.map(badge => [badge.metadata.quizId, {
           hasBadge: true,
           badgeId: badge.id,
           verificationUrl: badge.metadata.verificationUrl,
           metadata: badge.metadata
         }]));
-        
+
+        // Group attempts by classId and quizId
         attempts.forEach(attempt => {
+          // Initialize classId object if it doesn't exist
           if (!quizAttempts.value[attempt.classId]) {
             quizAttempts.value[attempt.classId] = {};
           }
+          
+          // Initialize quizId array if it doesn't exist
           if (!quizAttempts.value[attempt.classId][attempt.quizId]) {
             quizAttempts.value[attempt.classId][attempt.quizId] = [];
           }
+          
+          // Add the attempt to the array
           quizAttempts.value[attempt.classId][attempt.quizId].push(attempt);
           
           // If score is 100, check if badge exists
@@ -649,19 +659,42 @@ export default {
             };
           }
         });
+
       } catch (error) {
         console.error('Error loading quiz attempts:', error);
       }
     };
 
     const getQuizAttempt = (classId, quizId) => {
+      
+      const attempts = quizAttempts.value[classId]?.[quizId];
+
+      if (!attempts || attempts.length === 0) {
+        return null;
+      }
+
+      // Sort attempts by timestamp to get the most recent one
+      const sortedAttempts = [...attempts].sort((a, b) => {
+        const timeA = a.timestamp?.toDate?.() || new Date(0);
+        const timeB = b.timestamp?.toDate?.() || new Date(0);
+        return timeB - timeA; // Sort in descending order (most recent first)
+      });
+
+
+      // Get the most recent attempt
+      const mostRecentAttempt = sortedAttempts[0];
+
+      // Check if there's a badge for this quiz
       const attemptWithBadge = quizAttemptsWithBadges.value[classId]?.[quizId];
       if (attemptWithBadge) {
-        return attemptWithBadge;
+        return {
+          ...mostRecentAttempt,
+          hasBadge: attemptWithBadge.hasBadge,
+          badgeId: attemptWithBadge.badgeId
+        };
       }
-      
-      const regularAttempts = quizAttempts.value[classId]?.[quizId];
-      return quizAttemptsWithBadges.value[classId]?.[quizId] || quizAttempts.value[classId]?.[quizId]?.[0];
+
+      return mostRecentAttempt;
     };
 
     // Watch for both user and initialization changes
@@ -697,57 +730,10 @@ export default {
       }
     };
 
-    const startQuiz = async (classId, quiz) => {
-      if (!user.value) return;
-
-      const enrollment = enrolledClasses.value.find(e => e.id === classId);
-      if (enrollment?.enrollmentStatus !== 'accepted') {
-        showError('Your enrollment request is still pending or has been rejected. Please wait for the teacher to accept your request.');
-        return;
-      }
-
-      try {
-        const quizData = await FirebaseService.getQuiz(quiz.id);
-        if (!quizData) {
-          showError('Quiz not found.');
-          return;
-        }
-
-        const classData = classes.value.find(c => c.id === classId);
-        const previousAttempt = getQuizAttempt(classId, quiz.id);
-        const isRetake = !!previousAttempt;
-
-        // Create activity record for quiz start
-        await FirebaseService.createActivity({
-          type: 'quiz_started',
-          classId: classId,
-          className: classData?.name || 'Unknown Class',
-          studentId: user.value.uid,
-          studentName: user.value.displayName || 'Student',
-          teacherId: classData?.teacherId,
-          quizId: quiz.id,
-          quizTitle: quizData.title,
-          timestamp: new Date(),
-          isRetake: isRetake,
-          previousScore: previousAttempt ? previousAttempt.correctAnswers : null,
-          activityDescription: isRetake 
-            ? `Retaking "${quizData.title}" quiz in ${classData?.name || 'Unknown Class'}`
-            : `Starting "${quizData.title}" quiz in ${classData?.name || 'Unknown Class'}`
-        });
-
-        selectedClass.value = classData;
-        selectedQuiz.value = {
-          id: quiz.id,
-          title: quizData.title,
-          questions: quizData.questions,
-          classId: classId
-        };
-        isQuizModalOpen.value = true;
-
-      } catch (error) {
-        console.error('Error starting quiz:', error);
-        showError('Failed to start quiz. Please try again.');
-      }
+    const startQuiz = (classId, quiz) => {
+      selectedClassId.value = classId;
+      selectedQuiz.value = quiz;
+      showQuizModal.value = true;
     };
 
     const calculateQuizScore = () => {
@@ -993,10 +979,16 @@ export default {
       startQuiz(currentClassId.value, currentQuiz.value);
     };
 
-    const closeQuizModal = () => {
-      isQuizModalOpen.value = false;
+    const closeQuizModal = async () => {
+      showQuizModal.value = false;
       selectedQuiz.value = null;
-      selectedClass.value = null;
+      selectedClassId.value = null;
+      
+      // Refresh both quiz attempts and classes
+      await Promise.all([
+        loadQuizAttempts(),
+        loadClasses()
+      ]);
     };
 
     const closeReviewModal = () => {

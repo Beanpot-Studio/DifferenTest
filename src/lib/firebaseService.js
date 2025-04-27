@@ -347,20 +347,33 @@ class FirebaseService {
           collection(db, 'quizAttempts'),
           where('userId', '==', userId),
           where('quizId', '==', quizId),
+          orderBy('timestamp', 'desc'),
+          limit(1)
         );
       } else {
         q = query(
           collection(db, 'quizAttempts'),
           where('userId', '==', userId),
+          orderBy('timestamp', 'desc')
         );
       }
 
       const snapshot = await getDocs(q);
+      const attempts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          ...data,
+          timestamp: data.timestamp?.toDate?.() || new Date()
+        };
+      });
 
-      return snapshot.docs.map(doc => ({ 
-        id: doc.id, 
-        ...doc.data()
-      }));
+      // If quizId is provided, return the most recent attempt
+      if (quizId) {
+        return attempts[0] || null;
+      }
+
+      return attempts;
     } catch (error) {
       console.error('Error getting quiz attempts:', error);
       throw error;
@@ -377,33 +390,50 @@ class FirebaseService {
 
   static async submitQuizAttempt(attemptData) {
     try {
-      if (!attemptData.userId || !attemptData.quizId || !attemptData.classId) {
+      if (!attemptData.userId || !attemptData.quizId) {
         throw new Error('Missing required fields for quiz attempt');
       }
 
-      // Create the quiz attempt
+      // Get quiz details first to ensure we have the classId
+      const quizDoc = await getDoc(doc(db, 'quizzes', attemptData.quizId));
+      if (!quizDoc.exists()) {
+        throw new Error('Quiz not found');
+      }
+      const quizData = quizDoc.data();
+      
+      // Get classId from quiz data
+      const classId = quizData.classId;
+      if (!classId) {
+        throw new Error('Quiz has no associated class');
+      }
+
+      // Create the quiz attempt with all required fields
       const attemptRef = await addDoc(collection(db, 'quizAttempts'), {
-        ...attemptData,
+        userId: attemptData.userId,
+        quizId: attemptData.quizId,
+        classId: classId,
+        score: attemptData.score || 0,
+        correctAnswers: attemptData.correctAnswers || 0,
+        questionCount: attemptData.questionCount || 0,
+        timeSpent: attemptData.timeSpent || 0,
+        questions: attemptData.questions || [],
+        quizTitle: quizData.title || 'Unknown Quiz',
         timestamp: serverTimestamp()
       });
 
-      // Get class and quiz details for activity record
-      const [classDoc, quizDoc] = await Promise.all([
-        getDoc(doc(db, 'classes', attemptData.classId)),
-        getDoc(doc(db, 'quizzes', attemptData.quizId))
+      // Get class and student details for activity record
+      const [classDoc, studentDoc] = await Promise.all([
+        getDoc(doc(db, 'classes', classId)),
+        getDoc(doc(db, 'users', attemptData.userId))
       ]);
 
       const classData = classDoc.exists() ? classDoc.data() : null;
-      const quizData = quizDoc.exists() ? quizDoc.data() : null;
-
-      // Get student details
-      const studentDoc = await getDoc(doc(db, 'users', attemptData.userId));
       const studentData = studentDoc.exists() ? studentDoc.data() : null;
 
       // Create activity record with only defined fields
       const activityData = {
         type: 'quiz_completed',
-        classId: attemptData.classId,
+        classId: classId,
         className: classData?.name || 'Unknown Class',
         studentId: attemptData.userId,
         studentName: studentData?.name || 'Student',
@@ -1352,52 +1382,57 @@ class FirebaseService {
   static async getUserQuizHistory(userId) {
     try {
       if (!userId) {
-        throw new Error('User ID is required to fetch quiz history');
+        throw new Error('User ID is required');
       }
 
-      const q = query(
+      // Get all quiz attempts for the user
+      const attemptsQuery = query(
         collection(db, 'quizAttempts'),
         where('userId', '==', userId),
         orderBy('timestamp', 'desc')
       );
       
-      const snapshot = await getDocs(q);
-      const attempts = [];
+      const attemptsSnapshot = await getDocs(attemptsQuery);
       
-      for (const snapDoc of snapshot.docs) {
-        const attemptData = snapDoc.data();
-        
-        // Get quiz details
-        const quizDoc = await getDoc(doc(db, 'quizzes', attemptData.quizId));
-        const quizData = quizDoc.data();
-        
-        // Get class details
-        const classDoc = await getDoc(doc(db, 'classes', attemptData.classId));
-        const classData = classDoc.data();
-        
-        attempts.push({
-          id: snapDoc.id,
-          quizId: attemptData.quizId,
-          quizTitle: quizData?.title || 'Unknown Quiz',
-          classId: attemptData.classId,
-          className: classData?.name || 'Unknown Class',
-          score: attemptData.score,
-          correctAnswers: attemptData.correctAnswers,
-          questionCount: attemptData.questionCount,
-          submittedAt: attemptData.timestamp?.toDate(),
-          timeSpent: attemptData.timeSpent,
-          questionResults: attemptData.questionResults?.map(result => ({
-            questionText: result.questionText,
-            selectedOption: result.selectedOption,
-            isCorrect: result.isCorrect,
-            correctIndex: result.correctIndex
-          })) || []
-        });
+      if (attemptsSnapshot.empty) {
+        return [];
       }
-      
-      return attempts;
+
+      const attempts = attemptsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          submittedAt: data.timestamp?.toDate?.() || new Date(),
+          questions: data.questions || [],
+          score: data.score || 0,
+          quizTitle: data.quizTitle || 'Unknown Quiz',
+          className: data.className || 'Unknown Class'
+        };
+      });
+
+      // Get class names for each attempt
+      const attemptsWithClassNames = await Promise.all(
+        attempts.map(async (attempt) => {
+          try {
+            if (!attempt.classId) {
+              return attempt;
+            }
+            const classDoc = await getDoc(doc(db, 'classes', attempt.classId));
+            return {
+              ...attempt,
+              className: classDoc.exists() ? classDoc.data().name : 'Unknown Class'
+            };
+          } catch (error) {
+            console.error('Error getting class name:', error);
+            return attempt;
+          }
+        })
+      );
+
+      return attemptsWithClassNames;
     } catch (error) {
-      console.error('Error getting user history:', error);
+      console.error('Error getting user quiz history:', error);
       throw error;
     }
   }

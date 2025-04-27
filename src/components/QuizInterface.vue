@@ -31,24 +31,51 @@
       </div>
       
       <div v-if="!quizCompleted">
-        <div v-for="(question, index) in quiz.questions" :key="index" class="mb-6">
-          <p class="font-medium mb-2">{{ index + 1 }}. {{ question.text }}</p>
+        <!-- Pagination Controls -->
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center space-x-2">
+            <button
+              @click="currentPage--"
+              :disabled="currentPage === 1"
+              class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IconService name="chevron-left" size="5" />
+            </button>
+            <span class="text-sm text-gray-700">Question {{ currentPage }} of {{ totalPages }}</span>
+            <button
+              @click="currentPage++"
+              :disabled="currentPage === totalPages"
+              class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IconService name="chevron-right" size="5" />
+            </button>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">
+              {{ answeredQuestions }} of {{ quiz.questions.length }} answered
+            </span>
+          </div>
+        </div>
+
+        <!-- Current Question -->
+        <div class="mb-6">
+          <p class="font-medium mb-2">{{ currentPage }}. {{ currentQuestion.text }}</p>
           <div class="space-y-2">
             <div
-              v-for="(option, optionIndex) in question.options"
+              v-for="(option, optionIndex) in currentQuestion.options"
               :key="optionIndex"
               class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
               :class="{
-                'bg-primary-50 border-primary-200': selectedAnswers[index] === optionIndex,
-                'border-gray-200': selectedAnswers[index] !== optionIndex
+                'bg-primary-50 border-primary-200': selectedAnswers[currentQuestionIndex] === optionIndex,
+                'border-gray-200': selectedAnswers[currentQuestionIndex] !== optionIndex
               }"
-              @click="selectAnswer(index, optionIndex)"
+              @click="selectAnswer(currentQuestionIndex, optionIndex)"
             >
               <input
                 type="radio"
-                :name="'question-' + index"
+                :name="'question-' + currentQuestionIndex"
                 :value="optionIndex"
-                v-model="selectedAnswers[index]"
+                v-model="selectedAnswers[currentQuestionIndex]"
                 class="mr-3"
               />
               <span>{{ option.text }}</span>
@@ -56,8 +83,23 @@
           </div>
         </div>
         
-        <div class="flex justify-end mt-6">
+        <div class="flex justify-between mt-6">
           <button
+            v-if="currentPage > 1"
+            @click="currentPage--"
+            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+          >
+            Previous
+          </button>
+          <button
+            v-if="currentPage < totalPages"
+            @click="currentPage++"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Next
+          </button>
+          <button
+            v-if="currentPage === totalPages"
             @click="submitQuiz"
             class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             :disabled="!canSubmit"
@@ -184,6 +226,8 @@ export default {
     const explanations = ref({});
     const expandedQuestions = ref({});
     const showConfetti = ref(false);
+    const currentPage = ref(1);
+    const questionsPerPage = 1; // Show one question at a time
 
     // Add watch for role changes
     watch(role, (newRole) => {
@@ -198,6 +242,31 @@ export default {
     const canSubmit = computed(() => {
       return selectedAnswers.value.length === quiz.value?.questions.length &&
         !selectedAnswers.value.includes(undefined);
+    });
+
+    const totalPages = computed(() => {
+      return quiz.value?.questions.length || 0;
+    });
+
+    const currentQuestionIndex = computed(() => {
+      return currentPage.value - 1;
+    });
+
+    const currentQuestion = computed(() => {
+      return quiz.value?.questions[currentQuestionIndex.value] || null;
+    });
+
+    const answeredQuestions = computed(() => {
+      return selectedAnswers.value.filter(answer => answer !== undefined).length;
+    });
+
+    // Watch for page changes to ensure we don't go out of bounds
+    watch(currentPage, (newPage) => {
+      if (newPage < 1) {
+        currentPage.value = 1;
+      } else if (newPage > totalPages.value) {
+        currentPage.value = totalPages.value;
+      }
     });
 
     const loadQuiz = async () => {
@@ -281,36 +350,24 @@ export default {
         try {
           const attemptData = {
             userId: user.value.uid,
-            classId: props.classId,
             quizId: quiz.value.id,
-            quizTitle: quiz.value.title,
             score: score.value,
-            answers: selectedAnswers.value,
-            timestamp: new Date(),
-            questionCount: quiz.value.questions.length,
             correctAnswers: correctCount,
-            questionResults: results.value,
+            questionCount: quiz.value.questions.length,
             timeSpent: Date.now() - quizStartTime.value,
-            isEmbedded: props.isEmbedded
+            questions: quiz.value.questions.map((q, index) => ({
+              ...q,
+              selectedAnswer: selectedAnswers.value[index]
+            }))
           };
           
+          // Use submitQuizAttempt instead of createQuizAttempt
           await FirebaseService.submitQuizAttempt(attemptData);
           
-          // Add quiz completion activity
-          await FirebaseService.createActivity({
-            userId: user.value.uid,
-            type: 'quiz_completed',
-            classId: props.classId,
-            quizId: quiz.value.id,
-            quizTitle: quiz.value.title,
-            score: score.value,
-            timestamp: new Date(),
-            correctAnswers: correctCount,
-            totalQuestions: quiz.value.questions.length,
-            timeSpent: Date.now() - quizStartTime.value,
-            isEmbedded: props.isEmbedded
-          });
-          showSuccess('Success', `Quiz completed! Score: ${score.value}%`, 'success');
+          // Dispatch quiz completed event
+          window.dispatchEvent(new CustomEvent('quizCompleted'));
+
+          showSuccess(`Quiz completed! Score: ${score.value}%`);
         } catch (error) {
           console.error('Error submitting quiz:', error);
           showError('Failed to submit quiz. Please try again.');
@@ -376,7 +433,12 @@ export default {
       getExplanation,
       showConfetti,
       user,
-      role
+      role,
+      currentPage,
+      totalPages,
+      currentQuestionIndex,
+      currentQuestion,
+      answeredQuestions
     };
   }
 };

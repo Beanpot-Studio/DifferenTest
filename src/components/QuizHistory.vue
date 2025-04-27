@@ -33,22 +33,6 @@
               </span>
             </div>
           </div>
-
-          <div class="space-y-2">
-            <div v-for="(question, index) in attempt.questions" :key="index" class="border-t pt-2">
-              <p class="font-medium">{{ question.text }}</p>
-              <div class="mt-1">
-                <p class="text-sm" :class="question.isCorrect ? 'text-green-600' : 'text-red-600'">
-                  Your answer: {{ question.selectedAnswer }}
-                </p>
-                <p v-if="!question.isCorrect" class="text-sm text-gray-600">
-                  Correct answer: {{ question.correctAnswer }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-         
         </div>
       </div>
     </div>

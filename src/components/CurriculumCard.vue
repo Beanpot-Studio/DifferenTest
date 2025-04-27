@@ -30,7 +30,7 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="quiz in curriculum.quizzes" :key="quiz.id">
+              <tr v-for="quiz in paginatedQuizzes" :key="quiz.id">
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                   <img :src="quiz.badgeImage" class="w-10 h-10" />
                 </td>
@@ -97,6 +97,32 @@
             </tbody>
           </table>
         </div>
+        
+        <!-- Pagination Controls -->
+        <div class="mt-4 flex items-center justify-between">
+          <div class="flex items-center">
+            <span class="text-sm text-gray-700">
+              Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ totalQuizzes }} quizzes
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button
+              @click="currentPage--"
+              :disabled="currentPage === 1"
+              class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IconService name="chevron-left" size="5" />
+            </button>
+            <span class="text-sm text-gray-700">Page {{ currentPage }} of {{ totalPages }}</span>
+            <button
+              @click="currentPage++"
+              :disabled="currentPage === totalPages"
+              class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <IconService name="chevron-right" size="5" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -161,6 +187,34 @@ const isStudent = computed(() => {
 
 const baseUrl = computed(() => {
   return import.meta.env.PUBLIC_BASE_URL || '/';
+});
+
+const currentPage = ref(1);
+const quizzesPerPage = 5;
+
+const totalPages = computed(() => {
+  return Math.ceil(props.curriculum.quizzes.length / quizzesPerPage);
+});
+
+const startIndex = computed(() => {
+  return (currentPage.value - 1) * quizzesPerPage;
+});
+
+const endIndex = computed(() => {
+  return Math.min(startIndex.value + quizzesPerPage, props.curriculum.quizzes.length);
+});
+
+const paginatedQuizzes = computed(() => {
+  return props.curriculum.quizzes.slice(startIndex.value, endIndex.value);
+});
+
+// Watch for page changes to ensure we don't go out of bounds
+watch(currentPage, (newPage) => {
+  if (newPage < 1) {
+    currentPage.value = 1;
+  } else if (newPage > totalPages.value) {
+    currentPage.value = totalPages.value;
+  }
 });
 
 const loadQuizAttempts = async () => {
