@@ -69,7 +69,6 @@ const { title, metaTags = [] } = Astro.props;
     <div class="absolute w-full top-5 max-h-12 z-0">
       <img
         src={`${import.meta.env.PUBLIC_BASE_URL || ""}/wave.svg`}
-        src={`${Astro.url.origin}/${import.meta.env.PUBLIC_BASE_URL || ""}/wave.svg`}
         alt="Wave"
         class="w-full h-full object-cover"
       />

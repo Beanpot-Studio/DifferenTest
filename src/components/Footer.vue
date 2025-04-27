@@ -10,7 +10,7 @@
           <h3 class="text-lg font-bold mb-4">Quick Links</h3>
           <ul class="flex flex-wrap gap-4">
             <li><a :href="baseUrl" class="text-secondary-300 hover:text-white transition">Home</a></li>
-            <li><a :href="`${baseUrl}/pricing`" class="text-secondary-300 hover:text-white transition">Pricing</a></li>
+            <li><a href="/pricing" class="text-secondary-300 hover:text-white transition">Pricing</a></li>
             <li><a :href="`${baseUrl}/contact`" class="text-secondary-300 hover:text-white transition">Contact</a></li>
             <li><a :href="`${baseUrl}/help`" class="text-secondary-300 hover:text-white transition">Support</a></li>
           </ul>
