@@ -1,7 +1,7 @@
 <template>
   <footer class="bg-primary-900 text-white py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div>
           <h3 class="text-lg font-bold mb-4">DifferenTest</h3>
           <p>Differentiated assessments and micro-credentials, transformed.</p>
