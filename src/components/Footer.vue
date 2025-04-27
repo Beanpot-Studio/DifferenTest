@@ -9,25 +9,18 @@
         <div>
           <h3 class="text-lg font-bold mb-4">Quick Links</h3>
           <ul class="flex flex-wrap gap-4">
-            <li><a :href="baseUrl" class="text-secondary-300 hover:text-white transition">Home</a></li>
+            <li><a href="/" class="text-secondary-300 hover:text-white transition">Home</a></li>
             <li><a href="/pricing" class="text-secondary-300 hover:text-white transition">Pricing</a></li>
-            <li><a :href="`${baseUrl}/contact`" class="text-secondary-300 hover:text-white transition">Contact</a></li>
-            <li><a :href="`${baseUrl}/help`" class="text-secondary-300 hover:text-white transition">Support</a></li>
+            <li><a href="/contact" class="text-secondary-300 hover:text-white transition">Contact</a></li>
+            <li><a href="/help" class="text-secondary-300 hover:text-white transition">Support</a></li>
           </ul>
         </div>
-        <div>
-          <h3 class="text-lg font-bold mb-4">Resources</h3>
-          <ul class="flex flex-wrap gap-4">
-            <li><a :href="`${baseUrl}/about`" class="text-secondary-300 hover:text-white transition">About</a></li>
-            <li><a :href="`${baseUrl}/docs`" class="text-secondary-300 hover:text-white transition">Documentation</a></li>
-            <li><a :href="`${baseUrl}/tutorials`" class="text-secondary-300 hover:text-white transition">Tutorials</a></li>
-          </ul>
-        </div>
+       
         <div>
           <h3 class="text-lg font-bold mb-4">Legal</h3>
           <ul class="flex flex-wrap gap-4">
-            <li><a :href="`${baseUrl}/privacy`" class="text-secondary-300 hover:text-white transition">Privacy Policy</a></li>
-            <li><a :href="`${baseUrl}/terms`" class="text-secondary-300 hover:text-white transition">Terms of Service</a></li>
+            <li><a href="/privacy" class="text-secondary-300 hover:text-white transition">Privacy Policy</a></li>
+            <li><a href="/terms" class="text-secondary-300 hover:text-white transition">Terms of Service</a></li>
           </ul>
         </div>
       </div>
@@ -49,9 +42,6 @@ export default {
     };
   },
   setup() {
-    const baseUrl = computed(() => {
-      return import.meta.env.PUBLIC_BASE_URL || '/';
-    });
 
     return {
       baseUrl
