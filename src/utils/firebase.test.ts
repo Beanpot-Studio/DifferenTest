@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
 import { loginUser } from './firebase'
 
@@ -9,22 +9,29 @@ vi.mock('firebase/auth', () => ({
 }))
 
 describe('Firebase Utils', () => {
-  it('loginUser calls Firebase auth with correct parameters', async () => {
-    const mockSignIn = vi.mocked(signInWithEmailAndPassword)
-    mockSignIn.mockResolvedValueOnce({ user: { uid: '123' } } as any)
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
-    await loginUser('test@example.com', 'password123')
+  it('successfully logs in a user', async () => {
+    const mockUser = { uid: '123', email: 'test@example.com' }
+    const mockSignIn = vi.mocked(signInWithEmailAndPassword)
+    mockSignIn.mockResolvedValueOnce({ user: mockUser } as any)
+
+    const user = await loginUser('test@example.com', 'password123')
 
     expect(mockSignIn).toHaveBeenCalledWith(
       expect.anything(),
       'test@example.com',
       'password123'
     )
+    expect(user).toEqual(mockUser)
   })
 
   it('handles login errors', async () => {
     const mockSignIn = vi.mocked(signInWithEmailAndPassword)
-    mockSignIn.mockRejectedValueOnce(new Error('Invalid credentials'))
+    const error = new Error('Invalid credentials')
+    mockSignIn.mockRejectedValueOnce(error)
 
     await expect(loginUser('test@example.com', 'wrong')).rejects.toThrow(
       'Invalid credentials'
