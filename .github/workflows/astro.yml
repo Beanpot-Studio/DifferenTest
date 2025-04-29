@@ -78,9 +78,6 @@ jobs:
           PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
           PUBLIC_GEMINI_API_KEY: ${{ secrets.PUBLIC_GEMINI_API_KEY }}
           PUBLIC_BASE_URL: ${{ secrets.PUBLIC_BASE_URL }}
-          PUBLIC_MAILGUN_API_KEY: ${{ secrets.PUBLIC_MAILGUN_API_KEY }}
-          PUBLIC_MAILGUN_DOMAIN: ${{ secrets.PUBLIC_MAILGUN_DOMAIN }}
-          PUBLIC_MAILGUN_CONTACT_EMAIL: ${{ secrets.PUBLIC_MAILGUN_CONTACT_EMAIL }}
         run: |
           ${{ steps.detect-package-manager.outputs.runner }} astro build \
             --site "${{ steps.pages.outputs.origin }}" \
