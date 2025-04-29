@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/vue'
-import Counter from './Counter.vue'
+import Counter from '../Counter.vue'
 
 describe('Counter Component', () => {
   it('renders with initial count of 0', () => {

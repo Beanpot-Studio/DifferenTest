@@ -298,8 +298,10 @@
           </button>
         </div>
         <QuizInterface 
-          :quiz-id="selectedQuiz?.id"
+          v-if="selectedQuiz && selectedQuiz.id && selectedClassId"
+          :quiz-id="selectedQuiz.id"
           :class-id="selectedClassId"
+          @quiz-completed="handleQuizCompleted"
         />
       </div>
     </div>
@@ -314,7 +316,11 @@
           <IconService name="x" size="4" />
         </button>
 
-        <div v-if="reviewData?.quiz">
+        <div v-if="loading" class="text-center py-4">
+          <BaseAnimation type="loading" :loop="true" />
+        </div>
+
+        <div v-else-if="reviewData?.quiz">
           <h3 class="text-xl font-bold mb-4">Review: {{ reviewData.quiz.title }}</h3>
           
           <div class="mb-6 p-4 bg-gray-50 rounded-lg">
@@ -381,17 +387,10 @@
               <span v-else>🏆</span>
               <span>{{ isMintingBadge ? 'Claiming Badge...' : 'Claim Badge' }}</span>
             </button>
-            <button
-              v-if="reviewData.attempt.score < 100"
-              @click="startQuiz(reviewData.class.id, reviewData.quiz)"
-              class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            >
-              Retake Quiz
-            </button>
           </div>
         </div>
-        <div v-else-if="loading" class="text-center py-4">
-          <BaseAnimation type="loading" :loop="true" />
+        <div v-else class="text-center py-4 text-gray-500">
+          No review data available
         </div>
       </div>
     </div>
@@ -477,6 +476,7 @@ export default {
     const pendingClasses = ref([]);
     const openClasses = ref([]);
     const reviewData = ref(null);
+    const isMintingBadge = ref(false);
     const tabs = [
       { id: 'activities', name: 'Activities' },
       { id: 'history', name: 'Quiz History' },
@@ -730,10 +730,31 @@ export default {
       }
     };
 
-    const startQuiz = (classId, quiz) => {
-      selectedClassId.value = classId;
-      selectedQuiz.value = quiz;
-      showQuizModal.value = true;
+    const startQuiz = async (classId, quiz) => {
+      try {
+        loading.value = true;
+        
+        // If quiz is just an ID, fetch the full quiz data
+        if (typeof quiz === 'string') {
+          quiz = await FirebaseService.getQuiz(quiz);
+        }
+        
+        if (!quiz) {
+          showError('Quiz not found');
+          loading.value = false;
+          return;
+        }
+        
+        selectedClassId.value = classId;
+        selectedQuiz.value = quiz;
+        showQuizModal.value = true;
+        
+      } catch (error) {
+        console.error('Error starting quiz:', error);
+        showError('Failed to start quiz');
+      } finally {
+        loading.value = false;
+      }
     };
 
     const calculateQuizScore = () => {
@@ -875,29 +896,21 @@ export default {
         loading.value = true;
         showReviewModal.value = true;
         
-        // Get the quiz attempt
-        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
-        if (!attempts || attempts.length === 0) {
+        // Get the most recent quiz attempt
+        const attempt = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
+        
+        if (!attempt) {
           showError('No quiz attempt found to review');
-          showReviewModal.value = false;
+          loading.value = false;
           return;
         }
         
-        // Sort attempts by timestamp to get the latest one
-        const sortedAttempts = attempts.sort((a, b) => {
-          const timeA = a.timestamp?.toDate?.() || new Date(0);
-          const timeB = b.timestamp?.toDate?.() || new Date(0);
-          return timeB - timeA;
-        });
-        
-        // Get the most recent attempt
-        const attempt = sortedAttempts[0];
-        
         // Get quiz details
         const quizData = await FirebaseService.getQuiz(quizId);
+        
         if (!quizData) {
           showError('Quiz not found');
-          showReviewModal.value = false;
+          loading.value = false;
           return;
         }
         
@@ -906,9 +919,10 @@ export default {
         if (!classData) {
           classData = openClasses.value.find(c => c.id === classId);
         }
+        
         if (!classData) {
           showError('Class not found');
-          showReviewModal.value = false;
+          loading.value = false;
           return;
         }
 
@@ -936,7 +950,7 @@ export default {
             correctAnswers: attempt.correctAnswers,
             totalQuestions: attempt.questionCount,
             timeSpent: attempt.timeSpent,
-            submittedAt: attempt.timestamp?.toDate()
+            submittedAt: attempt.timestamp
           },
           class: {
             id: classId,
@@ -945,10 +959,10 @@ export default {
           hasBadge
         };
         
+        
       } catch (error) {
         console.error('Error loading quiz review:', error);
         showError('Failed to load quiz review');
-        showReviewModal.value = false;
       } finally {
         loading.value = false;
       }
@@ -1090,8 +1104,6 @@ export default {
         loading.value = false;
       }
     };
-
-    const isMintingBadge = ref(false);
 
     const claimBadge = async () => {
       try {
@@ -1238,7 +1250,9 @@ export default {
       claimBadge,
       isMintingBadge,
       isEnrolled,
-      loadQuizzes
+      loadQuizzes,
+      selectedClassId,
+      currentClassId
     };
   }
 };

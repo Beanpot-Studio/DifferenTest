@@ -1,9 +1,8 @@
 ---
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import Header from "../components/ui/Header.vue";
+import Footer from "../components/ui/Footer.vue";
 import NotificationContainer from "../components/NotificationContainer.vue";
 import "../styles/global.css";
-import { useAuth } from "../stores/auth";
 
 // Import a helper to get initial theme *without* Vue reactivity for SSR
 const getInitialThemeSSR = (): string => {

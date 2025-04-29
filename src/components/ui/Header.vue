@@ -50,10 +50,10 @@
 
 <script>
 import { ref, onUnmounted, computed } from 'vue';
-import UserNavigation from './UserNavigation.vue';
-import LoginModal from './LoginModal.vue';
-import RegisterModal from './RegisterModal.vue';
-import { useAuth } from '../stores/auth';
+import UserNavigation from '../UserNavigation.vue';
+import LoginModal from '../LoginModal.vue';
+import RegisterModal from '../RegisterModal.vue';
+import { useAuth } from '../../stores/auth';
 
 export default {
   name: 'Header',

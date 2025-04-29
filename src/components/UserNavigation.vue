@@ -21,7 +21,6 @@
             <span v-if="userName">{{ userName }}</span>
             <span v-else class="text-gray-300">{{ userEmail }}</span>
           </span>
-          <span class="text-gray-400 text-xs">({{ userRole }})</span>
         </a>
       </div>
 
@@ -34,17 +33,11 @@
     </div>
     
     <div v-else class="space-x-2">
-      <button id="login-button"
-        @click="$emit('login')" 
+      <button
+        @click="$emit('register')" 
         class="px-4 py-1.5 text-sm rounded-lg bg-primary-700 hover:bg-primary-300 transition"
       >
-        Log In
-      </button>
-      <button id="register-button"
-        @click="$emit('register')" 
-        class="px-4 py-1.5 text-sm border border-white rounded-lg hover:bg-white hover:text-primary-600 transition"
-      >
-        Sign Up
+        Sign Up / Login
       </button>
     </div>
   </div>

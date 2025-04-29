@@ -5,7 +5,7 @@
         @click="showRegisterModal = true"
         class="inline-block bg-white text-primary-600 font-bold py-3 px-8 rounded-lg hover:bg-primary-50 transition"
       >
-        Sign Up Now
+        Get Started
       </button>
       <button
         @click="scrollToAbout"

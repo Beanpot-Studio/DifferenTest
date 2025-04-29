@@ -4,7 +4,7 @@ import { loginUser } from './firebase'
 
 // Mock Firebase auth
 vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(),
+  getAuth: vi.fn(() => ({})),
   signInWithEmailAndPassword: vi.fn(),
 }))
 
@@ -21,7 +21,7 @@ describe('Firebase Utils', () => {
     const user = await loginUser('test@example.com', 'password123')
 
     expect(mockSignIn).toHaveBeenCalledWith(
-      expect.anything(),
+      expect.any(Object),
       'test@example.com',
       'password123'
     )

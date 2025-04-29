@@ -3,13 +3,13 @@ import { config } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Mock Firebase
-jest.mock('firebase/app', () => ({
+vi.mock('firebase/app', () => ({
   initializeApp: jest.fn(),
   getApps: jest.fn(() => []),
   getApp: jest.fn(),
 }))
 
-jest.mock('firebase/auth', () => ({
+vi.mock('firebase/auth', () => ({
   getAuth: jest.fn(),
   signInWithEmailAndPassword: jest.fn(),
   createUserWithEmailAndPassword: jest.fn(),
@@ -17,7 +17,7 @@ jest.mock('firebase/auth', () => ({
   onAuthStateChanged: jest.fn(),
 }))
 
-jest.mock('firebase/firestore', () => ({
+vi.mock('firebase/firestore', () => ({
   getFirestore: jest.fn(),
   collection: jest.fn(),
   doc: jest.fn(),
@@ -32,16 +32,21 @@ jest.mock('firebase/firestore', () => ({
   getDocs: jest.fn(),
 }))
 
-// Configure Vue Test Utils
-config.global.stubs = {
-  'router-link': true,
-  'router-view': true,
-}
-
 // Create a mock router
 const router = createRouter({
   history: createWebHistory(),
-  routes: [],
+  routes: [
+    {
+      path: '/',
+      name: 'home',
+      component: { template: '<div>Home</div>' }
+    }
+  ],
 })
 
-config.global.plugins = [router] 
+// Configure Vue Test Utils
+config.global.plugins = [router]
+config.global.stubs = {
+  'router-link': true,
+  'router-view': true,
+} 
