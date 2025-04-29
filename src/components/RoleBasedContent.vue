@@ -6,7 +6,7 @@
     </div>
     
     <!-- Not logged in state -->
-    <div v-else-if="!isLoggedIn" class="p-6 bg-secondary-100 rounded-lg">
+    <div v-else-if="!isLoggedIn" data-testid="not-logged-in-content" class="p-6 bg-secondary-100 rounded-lg">
       <div class="text-center">
         <h3 class="mt-2 text-xl font-medium text-secondary-900">Sorry, you don't have access</h3>
         <p class="mt-1 text-secondary-500">Please login</p>
@@ -85,6 +85,7 @@ export default {
   },
   setup(props) {
     const { isLoggedIn, role, loading, initialized, initialize } = useAuth();
+    
     const showLoginModal = ref(false);
     const showRegisterModal = ref(false);
     
