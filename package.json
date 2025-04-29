@@ -29,9 +29,7 @@
     "marked": "^15.0.8",
     "tailwindcss": "^3.4.17",
     "vue": "^3.5.13",
-    "vue-router": "^4.3.0",
-    "mailgun.js": "^10.0.0",
-    "@astrojs/node": "^9.2.1"
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.1",

@@ -1,35 +1,38 @@
 import '@testing-library/jest-dom'
 import { config } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
+import { vi } from 'vitest'
 
 // Mock Firebase
 vi.mock('firebase/app', () => ({
-  initializeApp: jest.fn(),
-  getApps: jest.fn(() => []),
-  getApp: jest.fn(),
+  initializeApp: vi.fn(),
+  getApps: vi.fn(() => []),
+  getApp: vi.fn(),
 }))
 
 vi.mock('firebase/auth', () => ({
-  getAuth: jest.fn(),
-  signInWithEmailAndPassword: jest.fn(),
-  createUserWithEmailAndPassword: jest.fn(),
-  signOut: jest.fn(),
-  onAuthStateChanged: jest.fn(),
+  getAuth: vi.fn(() => ({ 
+    currentUser: null,
+  })),
+  signInWithEmailAndPassword: vi.fn(),
+  createUserWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  onAuthStateChanged: vi.fn(),
 }))
 
 vi.mock('firebase/firestore', () => ({
-  getFirestore: jest.fn(),
-  collection: jest.fn(),
-  doc: jest.fn(),
-  getDoc: jest.fn(),
-  setDoc: jest.fn(),
-  updateDoc: jest.fn(),
-  deleteDoc: jest.fn(),
-  query: jest.fn(),
-  where: jest.fn(),
-  orderBy: jest.fn(),
-  limit: jest.fn(),
-  getDocs: jest.fn(),
+  getFirestore: vi.fn(),
+  collection: vi.fn(),
+  doc: vi.fn(),
+  getDoc: vi.fn(),
+  setDoc: vi.fn(),
+  updateDoc: vi.fn(),
+  deleteDoc: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  limit: vi.fn(),
+  getDocs: vi.fn(),
 }))
 
 // Create a mock router

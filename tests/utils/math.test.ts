@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { add, subtract } from './math'
+import { add, subtract } from '@/utils/math'
 
 describe('Math Utils', () => {
   describe('add', () => {

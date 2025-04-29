@@ -34,8 +34,10 @@ async function logout() {
     await signOut(auth);
     clearAuthState();
     window.location.href = import.meta.env.PUBLIC_BASE_URL || '/';
-  } catch (error) {
-    error.value = error.message;
+    return { success: true };
+  } catch (err) {
+    error.value = err.message;
+    return { success: false, error: err.message };
   }
 }
 
