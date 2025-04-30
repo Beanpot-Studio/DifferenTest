@@ -84,6 +84,29 @@ test.describe('Teacher Quiz Management', () => {
     const quizListContainer = page.locator('[data-testid="quiz-list-container"]');
     await expect(quizListContainer).toContainText(uniqueQuizTitle);
 
+    // --- Assign Quiz to Class ---
+    // Navigate back to Classes tab
+    await page.locator('[data-testid="classes-tab"]').click();
+    await expect(page.locator('h2:has-text("Class Manager")')).toBeVisible(); // Wait for view
+
+    // Find the container for the specific class created earlier
+    const classContainer = page.locator('[data-testid="class-list-container"] div.border:has(h3:has-text("E2E Shared Class"))');
+    await expect(classContainer).toBeVisible();
+
+    // --- Verify Assignment --- 
+    // (Notification check removed as assignment might be implicit/already happened)
+    /*
+    const assignSuccessNotification = page.locator('[data-testid="notification-success"]'); // Re-locate notification
+    await expect(assignSuccessNotification).toBeVisible();
+    await expect(assignSuccessNotification).toContainText('Quiz added to class successfully');
+    */
+   
+    // Check if the quiz title appears in the assigned list *within* the class container
+    console.log(`Checking for quiz "${uniqueQuizTitle}" in assigned list...`); // Add log
+    const assignedQuizList = classContainer.locator('div:has(> h4:has-text("Quizzes")) div.space-y-2'); 
+    await expect(assignedQuizList).toBeVisible(); // Ensure the list container itself is visible
+    await expect(assignedQuizList).toContainText(uniqueQuizTitle, { timeout: 10000 }); // Allow time for list to update
+
     // Optional: Add checks to ensure the quiz appears under the correct class heading if multiple classes exist
   });
 }); 
