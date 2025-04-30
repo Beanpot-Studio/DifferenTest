@@ -15,6 +15,7 @@
         'bg-blue-100': type === 'info',
         'bg-yellow-100': type === 'warning'
       }"
+      :data-testid="`notification-${type}`"
     >
       <div class="flex items-center justify-between max-w-7xl mx-auto">
         <div class="flex items-center">

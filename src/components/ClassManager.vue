@@ -14,6 +14,7 @@
             type="text"
             class="w-full p-2 border rounded-lg"
             placeholder="Enter class name"
+            data-testid="class-name-input"
           />
         </div>
         <div class="mb-4 rounded bg-gray-50 p-4">
@@ -22,6 +23,7 @@
               type="checkbox"
               v-model="newClass.isPublic"
               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              data-testid="class-public-checkbox"
             />
             <span class="text-sm font-medium text-gray-700">Make this class public</span>
           </label>
@@ -36,6 +38,7 @@
           <select
             v-model="newClass.skinId"
             class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+            data-testid="class-skin-select"
           >
             <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
               {{ skin.name }} ({{ skin.ageRange }})
@@ -45,6 +48,7 @@
         <button
           @click="createClass"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          data-testid="create-class-button"
         >
           Create Class
         </button>
@@ -57,7 +61,7 @@
       <div v-if="classes.length === 0" class="text-gray-500 text-center py-4">
         No classes created yet.
       </div>
-      <div v-else class="space-y-6">
+      <div v-else class="space-y-6" data-testid="class-list-container">
         <div v-for="classItem in classes" :key="classItem.id" class="border rounded-lg p-4">
           <div class="flex justify-between items-start">
             <div>
@@ -95,7 +99,7 @@
             <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
               No quizzes in this class yet.
             </div>
-            <div v-else class="space-y-2">
+            <div v-else class="space-y-2" :data-testid="`assigned-quiz-list-${classItem.id}`">
               <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
                 <div class="flex justify-between items-start">
                   <div>
@@ -127,6 +131,7 @@
               v-model="selectedQuiz"
               class="w-full p-2 border rounded-lg"
               @change="addQuizToClass(classItem.id)"
+              :data-testid="`add-quiz-select-${classItem.id}`"
             >
               <option value="">Select a quiz to add</option>
               <option v-for="quiz in availableQuizzes" :key="quiz.id" :value="quiz.id">

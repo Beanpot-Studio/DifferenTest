@@ -1,7 +1,8 @@
 // Firebase configuration and initialization
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Firebase configuration object
 const firebaseConfig = {
@@ -17,5 +18,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { app, auth, db };
+// Connect to emulators in development/test mode
+// Assumes import.meta.env.DEV is true during local dev/testing with Astro/Vite
+// Adjust the condition if you use a different environment variable for tests
+if (import.meta.env.DEV) {
+  try {
+    console.log('Connecting to Firebase Emulators...');
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    connectFirestoreEmulator(db, "localhost", 8080);
+    connectStorageEmulator(storage, "localhost", 9199);
+    console.log('Connected to Firebase Emulators.');
+  } catch (error) {
+    console.error('Error connecting to Firebase Emulators:', error);
+  }
+}
+
+export { app, auth, db, storage };

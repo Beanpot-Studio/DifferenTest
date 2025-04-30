@@ -36,6 +36,7 @@
       <button
         @click="$emit('register')" 
         class="px-4 py-1.5 text-sm rounded-lg bg-primary-700 hover:bg-primary-300 transition"
+        data-testid="login-register-button"
       >
         Sign Up / Login
       </button>

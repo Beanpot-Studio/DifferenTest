@@ -12,13 +12,14 @@
         <button
           @click="createQuiz"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          data-testid="create-quiz-button"
         >
           Create Quiz
         </button>
       </div>
       
       <!-- Quiz List -->
-      <div v-if="classesWithQuizzes.length > 0" class="space-y-8">
+      <div v-if="classesWithQuizzes.length > 0" class="space-y-8" data-testid="quiz-list-container">
         <div v-for="classItem in classesWithQuizzes" :key="classItem.id" class="space-y-4">
           <h3 class="text-xl font-semibold text-gray-900">{{ classItem.name }}</h3>
           <div class="space-y-2">
@@ -67,7 +68,7 @@
     </div>
 
     <!-- Create Quiz Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-quiz-modal">
       <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <h2 class="text-2xl font-bold mb-4">Create New Quiz</h2>
         
@@ -77,6 +78,7 @@
             <select
               v-model="newQuiz.classId"
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              data-testid="quiz-class-select"
             >
               <option value="">Select a Class</option>
               <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
@@ -91,6 +93,7 @@
               v-model="newQuiz.title"
               type="text"
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              data-testid="quiz-title-input"
             />
           </div>
 
@@ -102,6 +105,7 @@
               min="1"
               max="10"
               class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              data-testid="quiz-question-count-input"
             />
             <p class="mt-1 text-sm text-gray-500">Choose between 1-10 questions</p>
           </div>
@@ -115,6 +119,7 @@
                 accept=".txt,.md"
                 @change="handleLessonPlanUpload"
                 class="hidden"
+                data-testid="quiz-lesson-plan-input"
               />
               <button
                 @click="lessonPlanInput.click()"
@@ -184,6 +189,7 @@
             <button
               @click="saveNewQuiz"
               class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              data-testid="quiz-save-button"
             >
               Create Quiz
             </button>

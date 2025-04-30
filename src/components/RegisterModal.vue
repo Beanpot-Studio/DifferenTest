@@ -23,6 +23,7 @@
             id="name" 
             class="w-full text-secondary-700 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500"
             required
+            data-testid="register-name-input"
           />
         </div>
 
@@ -60,6 +61,7 @@
                 value="student" 
                 class="mr-2 text-secondary-700"
                 required
+                data-testid="role-student-radio"
               />
               Student
             </label>
@@ -69,6 +71,7 @@
                 v-model="role" 
                 value="teacher" 
                 class="mr-2 text-secondary-700"
+                data-testid="role-teacher-radio"
               />
               Teacher
             </label>
@@ -79,6 +82,7 @@
           type="submit" 
           class="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500 transition"
           :disabled="loading"
+          data-testid="register-submit-button"
         >
           {{ loading ? 'Creating account...' : 'Sign Up' }}
         </button>
@@ -87,6 +91,7 @@
       <div class="mt-4 text-center">
         <p class="text-primary-600 underline cursor-pointer"
           @click.prevent="switchToLogin" 
+          data-testid="switch-to-login-link"
           >
             Already have an account? Log in →
         </p>
