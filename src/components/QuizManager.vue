@@ -1,5 +1,19 @@
 <template>
   <div class="space-y-6">
+    <div class="flex justify-between items-center">
+      <h2 class="text-2xl font-bold">Quiz Manager</h2>
+
+      <button
+            @click="createQuiz"
+            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            data-testid="create-quiz-button"
+          >
+            Create Quiz
+          </button>
+    </div>
+
+    <h3 class="text-gray-500 text-sm">Create quizzes for your classes. Paste in a lesson plan to generate editable questions. Premium users can create step-by-step lessons and quizzes for use with custom skins.</h3>
+
     <!-- Loading state -->
     <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
       <BaseAnimation type="loading" :loop="true" />
@@ -7,16 +21,7 @@
 
     <!-- Quiz List -->
     <div class="bg-white rounded-lg shadow-md p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">Quiz Manager</h2>
-        <button
-          @click="createQuiz"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-          data-testid="create-quiz-button"
-        >
-          Create Quiz
-        </button>
-      </div>
+      
       
       <!-- Quiz List -->
       <div v-if="classesWithQuizzes.length > 0" class="space-y-8" data-testid="quiz-list-container">
@@ -110,28 +115,100 @@
             <p class="mt-1 text-sm text-gray-500">Choose between 1-10 questions</p>
           </div>
 
+          <!-- Lesson Plan Input Type Selection -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Lesson Plan</label>
-            <div class="mt-1 flex items-center space-x-4">
-              <input
-                ref="lessonPlanInput"
-                type="file"
-                accept=".txt,.md"
-                @change="handleLessonPlanUpload"
-                class="hidden"
-                data-testid="quiz-lesson-plan-input"
-              />
-              <button
-                @click="lessonPlanInput.click()"
-                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                {{ lessonPlanName || 'Upload Lesson Plan (txt or md)' }}
-              </button>
+            <label class="block text-sm font-medium text-gray-700">Lesson Content</label>
+            <div class="mt-2 space-y-2">
+              <label class="inline-flex items-center">
+                <input 
+                  type="radio" 
+                  v-model="newQuiz.lessonType" 
+                  value="full" 
+                  class="form-radio text-primary-600" 
+                  data-testid="lesson-type-full"
+                />
+                <span class="ml-2">Paste Full Lesson</span>
+              </label>
+              <label class="inline-flex items-center ml-6">
+                <input 
+                  type="radio" 
+                  v-model="newQuiz.lessonType" 
+                  value="steps" 
+                  class="form-radio text-primary-600"
+                  :disabled="!isPaidUser"
+                  data-testid="lesson-type-steps"
+                />
+                <span class="ml-2">Build Step-by-Step (Premium)</span>
+                 <IconService v-if="!isPaidUser" name="lock" size="4" class="ml-1 text-yellow-500" tooltip="Upgrade to Premium to use Step-by-Step lessons." />
+              </label>
+               <p v-if="!isPaidUser && newQuiz.lessonType === 'steps'" class="mt-1 text-sm text-yellow-600">
+                 Upgrade to Premium to create step-by-step lessons. Selecting this option will revert to 'Paste Full Lesson' on save unless you upgrade.
+               </p>
             </div>
           </div>
+          
+          <!-- Full Lesson Plan Text Area -->
+          <div v-if="newQuiz.lessonType === 'full'">
+             <label class="block text-sm font-medium text-gray-700">Lesson Plan Content</label>
+             <textarea
+               v-model="newQuiz.lessonPlan"
+               rows="8"
+               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+               placeholder="Paste your full lesson plan here..."
+               data-testid="quiz-lesson-plan-textarea"
+             ></textarea>
+             <button
+                 @click="generateQuestionsFromLesson"
+                 :disabled="!newQuiz.lessonPlan || loading"
+                 class="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                 data-testid="generate-questions-button"
+               >
+                 {{ loading ? 'Generating...' : 'Generate Questions' }}
+             </button>
+           </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Badge Image</label>
+          <!-- Step-by-Step Lesson Builder (Premium) -->
+           <div v-if="newQuiz.lessonType === 'steps' && isPaidUser">
+             <label class="block text-sm font-medium text-gray-700">Lesson Steps</label>
+             <div v-for="(step, index) in newQuiz.lessonSteps" :key="index" class="mt-2 border p-3 rounded-md space-y-2">
+               <div class="flex justify-between items-center">
+                  <label class="text-sm font-medium text-gray-600">Step {{ index + 1 }}</label>
+                   <button
+                     v-if="newQuiz.lessonSteps.length > 1"
+                     @click="removeLessonStep(index)"
+                     class="text-red-500 hover:text-red-700 text-sm"
+                     title="Remove Step"
+                   >
+                    <IconService name="trash" size="4" /> Remove
+                   </button>
+               </div>
+                <textarea
+                  v-model="newQuiz.lessonSteps[index]"
+                  rows="5"
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  :placeholder="`Enter content for step ${ index + 1 }...`"
+                  :data-testid="`lesson-step-input-${index}`"
+                ></textarea>
+              </div>
+             <button
+               @click="addLessonStep"
+               class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
+             >
+               + Add Step
+             </button>
+              <button
+                 @click="generateQuestionsFromLesson"
+                 :disabled="!lessonStepsContent || loading"
+                 class="mt-2 ml-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                 data-testid="generate-questions-button-steps"
+               >
+                 {{ loading ? 'Generating...' : 'Generate Questions' }}
+             </button>
+           </div>
+
+          <!-- Badge Image Upload - Conditionally shown -->
+          <div v-if="isPaidUser">
+            <label class="block text-sm font-medium text-gray-700">Badge Image (Premium)</label>
             <div class="mt-1 flex items-center space-x-4">
               <input
                 ref="newBadgeImageInput"
@@ -139,6 +216,7 @@
                 accept="image/*"
                 @change="handleNewBadgeImageUpload"
                 class="hidden"
+                data-testid="quiz-badge-image-input"
               />
               <button
                 @click="newBadgeImageInput.click()"
@@ -147,6 +225,16 @@
                 {{ newBadgeImageName || 'Upload Badge Image' }}
               </button>
             </div>
+          </div>
+          <!-- Message for non-paid users -->
+          <div v-else>
+              <label class="block text-sm font-medium text-gray-700">Badge Image</label>
+              <p class="mt-1 text-sm text-gray-500">Default badge will be used. Upgrade to Premium to upload custom badges.</p>
+              <img 
+                  src="https://res.cloudinary.com/front-end-foxes/image/upload/v1745952718/differentest-lesson-images/grlih7sjws2vfu5as7dx.png" 
+                  alt="Default Badge" 
+                  class="mt-2 w-10 h-10 rounded-full object-cover"
+                />
           </div>
 
           <!-- Generated Questions Preview -->
@@ -305,7 +393,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
 import BaseAnimation from './BaseAnimation.vue';
@@ -342,16 +430,26 @@ export default {
       classId: '',
       title: '',
       badgeImage: null,
-      lessonPlan: null,
+      lessonPlan: '',
+      lessonType: 'full',
+      lessonSteps: [''],
       questions: [],
       questionCount: 5
     });
     const newBadgeImageFile = ref(null);
     const newBadgeImageName = ref('');
     const newBadgeImageInput = ref(null);
-    const lessonPlanFile = ref(null);
-    const lessonPlanName = ref('');
-    const lessonPlanInput = ref(null);
+
+    // Computed property for paid status
+    const isPaidUser = computed(() => user.value?.paid === true);
+
+    // Computed property to get combined content from steps
+    const lessonStepsContent = computed(() => {
+      return newQuiz.value.lessonSteps.join('\\n\\n---\\n\\n'); // Combine steps with a separator
+    });
+
+    // Default badge URL
+    const defaultBadgeUrl = "https://res.cloudinary.com/front-end-foxes/image/upload/v1745952718/differentest-lesson-images/grlih7sjws2vfu5as7dx.png";
 
     const loadQuizzes = async () => {
       if (!user.value) return;
@@ -515,14 +613,14 @@ export default {
         classId: '',
         title: '',
         badgeImage: null,
-        lessonPlan: null,
+        lessonPlan: '',
+        lessonType: 'full',
+        lessonSteps: [''],
         questions: [],
         questionCount: 5
       };
       newBadgeImageFile.value = null;
       newBadgeImageName.value = '';
-      lessonPlanFile.value = null;
-      lessonPlanName.value = '';
       showCreateModal.value = true;
     };
 
@@ -534,61 +632,122 @@ export default {
       }
     };
 
-    const handleLessonPlanUpload = async (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        if (!file.name.endsWith('.txt') && !file.name.endsWith('.md')) {
-          showError('Please upload a .txt or .md file');
-          return;
-        }
-        lessonPlanFile.value = file;
-        lessonPlanName.value = file.name;
-        
-        try {
-          loading.value = true;
-          const lessonPlanContent = await readFileAsText(file);
-          if (!lessonPlanContent) {
-            throw new Error('Failed to read lesson plan file');
-          }
-          
-          // Store the lesson plan content in the ref
-          newQuiz.value.lessonPlan = lessonPlanContent;
+    // Function to add a new lesson step
+    const addLessonStep = () => {
+      newQuiz.value.lessonSteps.push('');
+    };
 
-          // Generate questions from lesson plan
-          const generatedQuiz = await FirebaseService.generateQuiz(lessonPlanContent, newQuiz.value.questionCount);
-          newQuiz.value.questions = generatedQuiz.questions;
-          showSuccess('Questions generated successfully!');
-        } catch (error) {
-          console.error('Error generating questions:', error);
-          showError('Failed to generate questions: ' + error.message);
-        } finally {
-          loading.value = false;
-        }
+    // Function to remove a lesson step
+    const removeLessonStep = (index) => {
+      if (newQuiz.value.lessonSteps.length > 1) {
+        newQuiz.value.lessonSteps.splice(index, 1);
+      } else {
+        showError("You must have at least one lesson step.");
       }
     };
 
+    // Function to generate questions (used by both full lesson and steps)
+    const generateQuestionsFromLesson = async () => {
+        let contentToProcess = '';
+        if (newQuiz.value.lessonType === 'full') {
+            contentToProcess = newQuiz.value.lessonPlan;
+        } else if (newQuiz.value.lessonType === 'steps' && isPaidUser.value) {
+            // Filter out empty steps before joining
+            const nonEmptySteps = newQuiz.value.lessonSteps.filter(step => step.trim() !== '');
+            if (nonEmptySteps.length === 0) {
+                 showError('Please add content to at least one lesson step.');
+                 return;
+            }
+            contentToProcess = nonEmptySteps.join('\\n\\n---\\n\\n'); // Combine steps
+        } else {
+            showError('Invalid lesson type or not authorized.');
+            return;
+        }
+
+        if (!contentToProcess || contentToProcess.trim().length === 0) {
+            showError('Please provide lesson content before generating questions.');
+            return;
+        }
+
+        try {
+            loading.value = true;
+            const generatedQuiz = await FirebaseService.generateQuiz(contentToProcess, newQuiz.value.questionCount);
+            newQuiz.value.questions = generatedQuiz.questions;
+            showSuccess('Questions generated successfully!');
+        } catch (error) {
+            console.error('Error generating questions:', error);
+            showError('Failed to generate questions: ' + error.message);
+        } finally {
+            loading.value = false;
+        }
+    };
+
     const saveNewQuiz = async () => {
-      if (!newQuiz.value.classId || !newQuiz.value.title || !newQuiz.value.questions) {
-        showError('Please fill in all required fields and generate questions');
+      // Basic validation
+      if (!newQuiz.value.classId || !newQuiz.value.title) {
+        showError('Please select a class and enter a title');
         return;
       }
+      if (!newQuiz.value.questions || newQuiz.value.questions.length === 0) {
+         showError('Please generate questions for the quiz.');
+         return;
+      }
+
+      // Handle non-paid users selecting 'steps' - revert to 'full'
+       if (!isPaidUser.value && newQuiz.value.lessonType === 'steps') {
+           newQuiz.value.lessonType = 'full';
+           // Optionally clear steps if needed, but generateQuestions should handle content source
+           // newQuiz.value.lessonSteps = ['']; 
+           showError("Step-by-step lessons are a Premium feature. Saving as a full lesson."); // Inform user
+       }
+
+      // Content Validation based on type
+       let finalLessonPlan = null;
+       let finalLessonSteps = [];
+
+       if (newQuiz.value.lessonType === 'full') {
+         if (!newQuiz.value.lessonPlan || newQuiz.value.lessonPlan.trim() === '') {
+           showError('Please enter the full lesson content.');
+           return;
+         }
+         finalLessonPlan = newQuiz.value.lessonPlan.trim();
+       } else if (newQuiz.value.lessonType === 'steps') {
+         finalLessonSteps = newQuiz.value.lessonSteps.map(step => step.trim()).filter(step => step !== '');
+         if (finalLessonSteps.length === 0) {
+           showError('Please add content to at least one lesson step.');
+           return;
+         }
+       } else {
+          showError('Invalid lesson type selected.'); // Should not happen
+          return;
+       }
+
 
       try {
         loading.value = true;
         
-        // Handle badge image upload if provided
         let badgeImageUrl = null;
-        if (newBadgeImageFile.value) {
+
+        // Handle badge image upload only if user is paid and file is provided
+        if (isPaidUser.value && newBadgeImageFile.value) {
           badgeImageUrl = await uploadToCloudinary(newBadgeImageFile.value);
           if (!badgeImageUrl) {
             throw new Error('Failed to upload badge image');
           }
+        } else if (!isPaidUser.value) {
+            // Set default badge for non-paid users
+            badgeImageUrl = defaultBadgeUrl;
         }
 
         // Create quiz data
         const quizData = {
-          ...newQuiz.value,
+          classId: newQuiz.value.classId,
+          title: newQuiz.value.title,
           badgeImage: badgeImageUrl,
+          lessonType: newQuiz.value.lessonType,
+          lessonPlan: finalLessonPlan, // Use validated content
+          lessonSteps: finalLessonSteps, // Use validated content
+          questions: newQuiz.value.questions,
           teacherId: user.value.uid,
           createdAt: new Date(),
           updatedAt: new Date()
@@ -603,14 +762,14 @@ export default {
           classId: '',
           title: '',
           badgeImage: null,
-          lessonPlan: null,
+          lessonPlan: '',
+          lessonType: 'full',
+          lessonSteps: [''],
           questions: [],
           questionCount: 5
         };
         newBadgeImageFile.value = null;
         newBadgeImageName.value = '';
-        lessonPlanFile.value = null;
-        lessonPlanName.value = '';
         
         // Refresh the list
         loadQuizzes();
@@ -660,10 +819,11 @@ export default {
       handleNewBadgeImageUpload,
       classes,
       loadClasses,
-      lessonPlanFile,
-      lessonPlanName,
-      lessonPlanInput,
-      handleLessonPlanUpload,
+      lessonStepsContent,
+      isPaidUser,
+      addLessonStep,
+      removeLessonStep,
+      generateQuestionsFromLesson,
       saveNewQuiz,
       readFileAsText
     };

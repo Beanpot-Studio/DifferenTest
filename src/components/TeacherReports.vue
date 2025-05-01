@@ -1,97 +1,140 @@
 <template>
   <div class="space-y-6">
     <h2 class="text-2xl font-bold mb-4">Quiz Analysis Reports</h2>
-    
-    <!-- Class Selection -->
-    <div class="mb-8">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
-      <select 
-        v-model="selectedClass" 
-        @change="loadQuizzes"
-        class="w-full md:w-1/3 p-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-      >
-        <option value="">All Classes</option>
-        <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
-          {{ classItem.name }}
-        </option>
-      </select>
+    <h3 class="text-gray-500 text-sm">View and analyze quiz results for your classes. You can also view trends around students' answers and correct answers for each question.</h3>
+    <!-- Tabs -->
+    <div class="border-b border-gray-200 mb-6">
+      <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+        <button
+          @click="activeTab = 'standard'"
+          :class="[
+            activeTab === 'standard'
+              ? 'border-primary-500 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+          ]"
+        >
+          Standard Reports
+        </button>
+        <button
+          v-if="isPaidUser"
+          @click="activeTab = 'premium'"
+          :class="[
+            activeTab === 'premium'
+              ? 'border-primary-500 text-primary-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+            'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+          ]"
+        >
+          Premium Reports
+        </button>
+      </nav>
     </div>
 
-    <!-- Quiz Selection -->
-    <div class="mb-8">
-      <label class="block text-sm font-medium text-gray-700 mb-2">Select Quiz</label>
-      <select 
-        v-model="selectedQuiz" 
-        @change="loadReport"
-        class="w-full md:w-1/3 p-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
-      >
-        <option value="">Select a Quiz</option>
-        <option v-for="quiz in quizzes" :key="quiz.id" :value="quiz.id">
-          {{ quiz.title }}
-        </option>
-      </select>
-    </div>
+    <!-- Standard Reports Tab Content -->
+    <div v-show="activeTab === 'standard'" class="space-y-6">
+      <!-- Class Selection -->
+      <div class="mb-8">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
+        <select 
+          v-model="selectedClass" 
+          @change="loadQuizzes"
+          class="w-full md:w-1/3 p-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="">All Classes</option>
+          <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
+            {{ classItem.name }}
+          </option>
+        </select>
+      </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
-      <BaseAnimation type="loading" :loop="true" />
-    </div>
+      <!-- Quiz Selection -->
+      <div class="mb-8">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Select Quiz</label>
+        <select 
+          v-model="selectedQuiz" 
+          @change="loadReport"
+          class="w-full md:w-1/3 p-2 border rounded-lg focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="">Select a Quiz</option>
+          <option v-for="quiz in quizzes" :key="quiz.id" :value="quiz.id">
+            {{ quiz.title }}
+          </option>
+        </select>
+      </div>
 
-    <!-- Report Content -->
-    <div v-else-if="selectedQuiz && reportData" class="space-y-8">
-      <!-- Question Difficulty Chart -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold mb-4">Question Difficulty Analysis</h3>
-        <div class="h-64">
-          <canvas ref="difficultyChart"></canvas>
+      <!-- Loading State -->
+      <div v-if="loading" class="min-h-[400px] flex flex-col items-center justify-center p-6">
+        <BaseAnimation type="loading" :loop="true" />
+      </div>
+
+      <!-- Report Content -->
+      <div v-else-if="selectedQuiz && reportData" class="space-y-8">
+        <!-- Question Difficulty Chart -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold mb-4">Question Difficulty Analysis</h3>
+          <div class="h-64">
+            <canvas ref="difficultyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Class Performance Chart -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold mb-4">Class Performance</h3>
+          <div class="h-64">
+            <canvas ref="classChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Question Details Table -->
+        <div class="bg-white rounded-lg shadow-md p-6 overflow-y-auto">
+          <h3 class="text-lg font-semibold mb-4">Question Details</h3>
+          <table class="min-w-full divide-y divide-gray-200 ">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Question</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correct Rate</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Most Common Wrong Answer</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="(question, index) in reportData.questions" :key="index">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ question.text }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ question.correctRate }}%
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm" :class="question.mostCommonWrongAnswer === 'N/A' ? 'text-green-600' : 'text-red-600'">
+                  {{ question.mostCommonWrongAnswer }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Class Performance Chart -->
-      <div class="bg-white rounded-lg shadow-md p-6">
-        <h3 class="text-lg font-semibold mb-4">Class Performance</h3>
-        <div class="h-64">
-          <canvas ref="classChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Question Details Table -->
-      <div class="bg-white rounded-lg shadow-md p-6 overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-4">Question Details</h3>
-        <table class="min-w-full divide-y divide-gray-200 ">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Question</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correct Rate</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Most Common Wrong Answer</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="(question, index) in reportData.questions" :key="index">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ question.text }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ question.correctRate }}%
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm" :class="question.mostCommonWrongAnswer === 'N/A' ? 'text-green-600' : 'text-red-600'">
-                {{ question.mostCommonWrongAnswer }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- No Data Message -->
+      <div v-else-if="!loading" class="text-center text-gray-500 py-8">
+        Select a quiz to view its analysis report
       </div>
     </div>
 
-    <!-- No Data Message -->
-    <div v-else-if="!loading" class="text-center text-gray-500 py-8">
-      Select a quiz to view its analysis report
+    <!-- Premium Reports Tab Content -->
+    <div v-if="isPaidUser" v-show="activeTab === 'premium'" class="space-y-6">
+      <h3 class="text-xl font-semibold">Premium Features</h3>
+      <p class="text-gray-600">Advanced reporting and analytics will be available here for paid users.</p>
+      <!-- TODO: Implement premium report features -->
+      <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md">
+        <p class="font-bold">Coming Soon!</p>
+        <p>Exciting premium reports are under development.</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick, computed } from 'vue';
 import { useAuth } from '../stores/auth';
 import BaseAnimation from './BaseAnimation.vue';
 import FirebaseService from '../lib/firebaseService';
@@ -114,6 +157,9 @@ export default {
     const classChart = ref(null);
     let difficultyChartInstance = null;
     let classChartInstance = null;
+    const activeTab = ref('standard');
+
+    const isPaidUser = computed(() => user.value?.paid === true);
 
     const loadClasses = async () => {
       if (!user.value) return;
@@ -401,7 +447,9 @@ export default {
       selectedQuiz,
       reportData,
       difficultyChart,
-      classChart
+      classChart,
+      activeTab,
+      isPaidUser
     };
   }
 };

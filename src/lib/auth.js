@@ -24,6 +24,7 @@ export const registerUser = async (email, password, role, name) => {
       email: user.email,
       name: name,
       role: role, // 'teacher' or 'student'
+      paid: false, // Default paid status to false
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp()
     });

@@ -2,17 +2,28 @@
   <div class="bg-white rounded-lg shadow-md p-6">
     <!-- Lesson Plan Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ lessonPlan.title }}</h1>
-      <p class="text-gray-600 mb-4">{{ lessonPlan.description }}</p>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ lessonPlan.title || 'Lesson Plan' }}</h1>
       <div class="flex items-center text-sm text-gray-500">
-        <span class="mr-4">Created by: {{ lessonPlan.teacherName }}</span>
-        <span>{{ new Date(lessonPlan.createdAt).toLocaleDateString() }}</span>
+        <span v-if="lessonPlan.createdAt">{{ new Date(lessonPlan.createdAt.toDate ? lessonPlan.createdAt.toDate() : lessonPlan.createdAt).toLocaleDateString() }}</span>
       </div>
     </div>
 
     <!-- Lesson Content -->
     <div class="prose max-w-none mb-8">
-      <div v-html="lessonPlan.content"></div>
+      <div v-if="lessonPlan.lessonType === 'full' && lessonPlan.lessonPlan">
+        <div v-html="lessonPlan.lessonPlan"></div>
+      </div>
+
+      <div v-else-if="lessonPlan.lessonType === 'steps' && lessonPlan.lessonSteps && lessonPlan.lessonSteps.length > 0">
+        <div v-for="(step, index) in lessonPlan.lessonSteps" :key="index" class="lesson-step border-l-4 border-primary-200 pl-4 mb-6">
+          <h4 class="text-lg font-semibold mb-2 text-primary-700">Step {{ index + 1 }}</h4>
+          <div v-html="step"></div>
+        </div>
+      </div>
+
+      <div v-else>
+        <p class="text-gray-500 italic">No lesson content available for this quiz.</p>
+      </div>
     </div>
 
     <!-- Quizzes Section -->
@@ -104,5 +115,15 @@ export default {
   margin-bottom: 1.7142857em;
   border-radius: 0.375rem;
   padding: 0.8571429em 1.1428571em;
+}
+
+.lesson-step {
+  background-color: #f9fafb;
+  padding: 1rem 1rem 0.5rem 1.5rem;
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.lesson-step h4 {
+  margin-top: 0;
 }
 </style> 

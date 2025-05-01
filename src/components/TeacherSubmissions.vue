@@ -1,6 +1,7 @@
 <template>
   <div class="space-y-6">
     <h2 class="text-2xl font-bold mb-4">Submissions Manager</h2>
+    <h3 class="text-gray-500 text-sm">View and review student submissions for your quizzes. You can also view trends around students' answers and correct answers for each question.</h3>
     <div class="bg-white rounded-lg shadow-md p-6">
     <!-- Class Selection -->
     <div class="mb-8">

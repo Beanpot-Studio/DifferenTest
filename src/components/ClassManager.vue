@@ -1,6 +1,7 @@
 <template>
   <div class="space-y-6">
     <h2 class="text-2xl font-bold mb-4">Class Manager</h2>
+    <h3 class="text-gray-500 text-sm">Create a class and manage a student roster. You can create private classes by invitation only for enrolled students, or host an open class where you don't have to manage enrollment. Custom skins for classes are available for premium users.</h3>
     <!-- Create New Class -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Create New Class</h2>
@@ -31,20 +32,25 @@
             Public classes can be discovered and joined by any student.
           </p>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Skin
-          </label>
-          <select
-            v-model="newClass.skinId"
-            class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
-            data-testid="class-skin-select"
-          >
-            <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
-              {{ skin.name }} ({{ skin.ageRange }})
-            </option>
-          </select>
-        </div>
+        <!-- Wrap skin selector in v-if="hasMounted" -->
+        <template v-if="hasMounted">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Skin
+            </label>
+            <select
+              v-model="newClass.skinId"
+              class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+              data-testid="class-skin-select"
+              :disabled="!isPaidUser"
+            >
+              <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
+                {{ skin.name }} ({{ skin.ageRange }})
+              </option>
+            </select>
+            <p v-if="!isPaidUser" class="mt-1 text-sm text-gray-500">Default skin will be used. Upgrade to Premium to choose custom skins.</p>
+          </div>
+        </template>
         <button
           @click="createClass"
           class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
@@ -182,19 +188,24 @@
               </button>
             </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Skin
-            </label>
-            <select
-              v-model="editingClass.skinId"
-              class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
-            >
-              <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
-                {{ skin.name }} ({{ skin.ageRange }})
-              </option>
-            </select>
-          </div>
+          <!-- Wrap skin selector in v-if="hasMounted" -->
+          <template v-if="hasMounted">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Skin
+              </label>
+              <select
+                v-model="editingClass.skinId"
+                class="w-full p-2 border rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                :disabled="!isPaidUser"
+              >
+                <option v-for="skin in availableSkins" :key="skin.id" :value="skin.id">
+                  {{ skin.name }} ({{ skin.ageRange }})
+                </option>
+              </select>
+              <p v-if="!isPaidUser" class="mt-1 text-sm text-gray-500">Default skin will be used. Upgrade to Premium to choose custom skins.</p>
+            </div>
+          </template>
         </div>
         <div class="flex justify-end space-x-4 mt-6">
           <button
@@ -216,7 +227,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuth } from '../stores/auth';
 import ClassRoster from './ClassRoster.vue';
 import { useNotification } from '../composables/useNotification';
@@ -246,6 +257,10 @@ export default {
     const { showSuccess, showError } = useNotification();
     const loading = ref(false);
     const showCreateClassModal = ref(true);
+    const hasMounted = ref(false);
+
+    // Computed property for paid status
+    const isPaidUser = computed(() => user.value?.paid === true);
 
     const createClass = async () => {
       if (!user.value) return;
@@ -262,7 +277,7 @@ export default {
           name: newClass.value.name.trim(),
           code: newClass.value.code,
           isPublic: newClass.value.isPublic,
-          skinId: newClass.value.skinId,
+          skinId: isPaidUser.value ? newClass.value.skinId : 'default',
           teacherId: user.value.uid,
           teacherName: user.value.displayName || 'Unknown Teacher',
           createdAt: new Date(),
@@ -383,7 +398,7 @@ export default {
         const updateData = {
           name: editingClass.value.name.trim(),
           isPublic: editingClass.value.isPublic || false,
-          skinId: editingClass.value.skinId || 'default',
+          skinId: isPaidUser.value ? (editingClass.value.skinId || 'default') : 'default',
           updatedAt: new Date()
         };
         await FirebaseService.updateClass(editingClass.value.id, updateData);
@@ -472,9 +487,21 @@ export default {
     };
 
     onMounted(() => {
+      hasMounted.value = true;
+      console.log('ClassManager onMounted: user.value =', user.value);
+      console.log('ClassManager onMounted: isPaidUser.value =', isPaidUser.value);
       fetchClasses();
       fetchQuizzes();
     });
+
+    // Optional: Watcher for debugging state changes
+    watch(user, (newUser) => {
+      console.log('ClassManager user watcher: newUser =', newUser);
+      console.log('ClassManager user watcher: isPaidUser now =', newUser?.paid === true);
+    }, { deep: true });
+
+    console.log('ClassManager setup: user.value =', user.value);
+    console.log('ClassManager setup: isPaidUser.value =', isPaidUser.value);
 
     return {
       classes,
@@ -495,7 +522,9 @@ export default {
       showError,
       loading,
       showCreateClassModal,
-      availableSkins
+      availableSkins,
+      isPaidUser,
+      hasMounted
     };
   }
 };

@@ -1,0 +1,117 @@
+---
+// Removed Layout import
+// import Layout from "../../../../layouts/MainLayout.astro";
+import SteppedLessonQuiz from "../../../../components/SteppedLessonQuiz.vue"; // Import the new component
+import FirebaseService from "../../../../lib/firebaseService";
+// Removed useAuth import as it's likely not needed directly on this static page if Layout is gone
+// import { useAuth } from "../../../../stores/auth";
+
+// Define Interfaces for stricter typing
+interface QuizData {
+  id: string;
+  title: string;
+  lessonPlan?: string; // Markdown content
+  lessonType?: "full" | "steps"; // Add lessonType
+  lessonSteps?: string[]; // Add lessonSteps
+  classId: string; // Make classId required now for path generation
+  [key: string]: any; // Allow other properties
+}
+
+interface PageProps {
+  quiz: QuizData;
+}
+
+export async function getStaticPaths() {
+  const paths: Array<{
+    params: { id: string; quizId: string }; // id is classId here
+    props: PageProps;
+  }> = [];
+
+  console.log(
+    "getStaticPaths (lesson route): Starting path generation from ALL quizzes..."
+  );
+
+  // Fetch ALL quizzes directly
+  // Ensure this function returns quizzes with their classId populated
+  const allQuizzes: QuizData[] = await FirebaseService.getAllQuizzes(); // <--- MODIFIED SERVICE CALL
+
+  if (!Array.isArray(allQuizzes)) {
+    console.error(
+      "getStaticPaths ERROR (lesson route): getAllQuizzes did not return an array"
+    );
+    return [];
+  }
+  console.log(
+    `getStaticPaths (lesson route): Found ${allQuizzes.length} total quizzes.`
+  );
+
+  // Loop through ALL quizzes now
+  for (const quiz of allQuizzes) {
+    // Validate necessary fields for path generation
+    if (!quiz || !quiz.id || !quiz.classId || !quiz.title) {
+      console.warn(
+        `getStaticPaths (lesson route): Skipping quiz ${quiz?.id || "(no id)"}. Missing required fields (id, classId, title):`,
+        quiz
+      );
+      continue;
+    }
+
+    console.log(
+      `getStaticPaths (lesson route): >>> Generating path for class ${quiz.classId}, quiz ${quiz.id}`
+    );
+
+    paths.push({
+      params: {
+        id: quiz.classId, // Use classId for the [id] parameter
+        quizId: quiz.id,
+      },
+      props: {
+        // classData removed
+        quiz, // Pass the full quiz data
+      },
+    });
+  }
+  console.log(
+    `getStaticPaths (lesson route): Finished. Generated ${paths.length} paths.`
+  );
+  return paths;
+}
+
+// Use the defined interface for Astro.props
+const { quiz } = Astro.props as PageProps;
+const { id, quizId } = Astro.params; // id is the classId, quizId is the quizId
+
+// Removed skin logic and auth initialization
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{quiz.title} - Lesson</title>
+    {
+      /* Add any essential minimal styles here if needed, or link a specific stylesheet */
+    }
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+      }
+      .lesson-container {
+        padding: 1rem;
+        max-width: 800px;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="lesson-container">
+      {/* Render the new SteppedLessonQuiz component */}
+      <SteppedLessonQuiz client:load quiz={quiz} classId={id} />
+    </div>
+    {/* Removed skin application script */}
+  </body>
+</html>

@@ -107,12 +107,13 @@ async function fetchUserRole(uid) {
     if (userDoc.exists()) {
       const userData = userDoc.data();
       role.value = userData.role;
-      // Update the user object with the name and role from Firestore
+      // Update the user object with the name, role, and paid status from Firestore
       if (user.value) {
         user.value = {
           ...user.value,
           name: userData.name,
-          role: userData.role
+          role: userData.role,
+          paid: userData.paid || false // Include paid status, default to false if undefined
         };
       }
     }

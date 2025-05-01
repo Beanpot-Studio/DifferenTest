@@ -255,13 +255,26 @@ class FirebaseService {
     if (!quizDoc.exists()) {
       return null;
     }
-    const data = quizDoc.data();
-    return {
-      id: quizDoc.id,
-      title: data.title || 'Untitled Quiz',
-      lessonPlan: data.lessonPlan || '',
-      ...data, 
-    };
+    // Ensure classId is included if it exists
+    return { id: quizDoc.id, ...quizDoc.data() }; 
+  }
+  
+  static async getAllQuizzes() {
+      try {
+          const q = query(
+              collection(db, 'quizzes'),
+              orderBy('createdAt', 'desc') // Optional: order by date or title
+          );
+          const snapshot = await getDocs(q);
+          // Ensure classId is included when mapping
+          return snapshot.docs.map(doc => ({ 
+              id: doc.id, 
+              ...doc.data() 
+          }));
+      } catch (error) {
+          console.error('Error getting all quizzes:', error);
+          throw error;
+      }
   }
 
   static async getQuizzesByClass(classId) {
