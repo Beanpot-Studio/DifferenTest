@@ -54,8 +54,18 @@
                 <button
                   @click="editQuiz(quiz)"
                   class="text-primary-600 hover:text-primary-800 font-medium"
+                  title="Edit quiz"
                 >
                   <IconService name="edit" size="6" />
+                </button>
+                <button
+                  @click="printQuizPdf(quiz)"
+                  :disabled="printingQuizId === quiz.id"
+                  class="text-gray-600 hover:text-gray-800 p-1 disabled:opacity-50"
+                  title="Print Quiz PDF"
+                >
+                  <IconService v-if="printingQuizId !== quiz.id" name="printer" size="6" />
+                  <BaseAnimation v-else type="loading-dots" :loop="true" />
                 </button>
                 <button
                   @click="deleteQuiz(quiz.id)"
@@ -439,6 +449,7 @@ export default {
     const newBadgeImageFile = ref(null);
     const newBadgeImageName = ref('');
     const newBadgeImageInput = ref(null);
+    const printingQuizId = ref(null);
 
     // Computed property for paid status
     const isPaidUser = computed(() => user.value?.paid === true);
@@ -682,6 +693,99 @@ export default {
         }
     };
 
+    // Function to generate and print PDF
+    const printQuizPdf = async (quiz) => {
+      if (!quiz) return;
+
+      // --- Dynamic Import --- 
+      let html2pdf;
+      try {
+        const module = await import('html2pdf.js');
+        html2pdf = module.default; // Access the default export
+      } catch (importError) {
+        console.error("Failed to load html2pdf.js dynamically:", importError);
+        showError("Could not load the PDF generation library. Please refresh and try again.");
+        return; // Stop execution if import fails
+      }
+      // --- End Dynamic Import ---
+
+      printingQuizId.value = quiz.id;
+      try {
+        // 1. Create HTML content
+        let lessonContentHtml = '';
+        if (quiz.lessonType === 'steps' && quiz.lessonSteps && quiz.lessonSteps.length > 0) {
+          lessonContentHtml = '<h2>Lesson Steps</h2><ol>' +
+            quiz.lessonSteps.map(step => `<li>${step.replace(/\n/g, '<br/>')}</li>`).join('') +
+            '</ol>';
+        } else if (quiz.lessonPlan) {
+          lessonContentHtml = `<h2>Lesson Plan</h2><p>${quiz.lessonPlan.replace(/\n/g, '<br/>')}</p>`;
+        }
+
+        let quizContentHtml = '';
+        if (quiz.questions && quiz.questions.length > 0) {
+          quizContentHtml = '<h2>Quiz Questions</h2><ol>' +
+            quiz.questions.map((q, index) => {
+              let optionsHtml = '<ul style="list-style: none; padding-left: 0;">' +
+                q.options.map((opt, optIndex) => {
+                  const symbol = '○';
+                  return `<li style="margin-bottom: 5px;">${symbol} ${opt.text}</li>`;
+                }).join('') +
+                '</ul>';
+              return `<li><p><strong>${q.text}</strong></p>${optionsHtml}</li>`;
+            }).join('') +
+            '</ol>';
+        }
+
+        const fullHtml = `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <title>Quiz: ${quiz.title}</title>
+              <style>
+                  body { font-family: sans-serif; line-height: 1.6; padding: 20px; }
+                  h1, h2 { border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px; }
+                  h1 { font-size: 1.8em; }
+                  h2 { font-size: 1.4em; margin-top: 30px; }
+                  ol { padding-left: 20px; margin-bottom: 15px; }
+                  ul { padding-left: 0; list-style: none; margin-top: 5px; }
+                  li { margin-bottom: 10px; }
+                  p { margin: 5px 0; }
+                  strong { font-weight: bold; }
+                  /* Add more styles as needed */
+              </style>
+          </head>
+          <body>
+              <h1>Quiz: ${quiz.title}</h1>
+              <p><em>Class: ${quiz.className || 'N/A'}</em></p>
+              ${lessonContentHtml}
+              <hr style="margin: 30px 0;" />
+              ${quizContentHtml}
+          </body>
+          </html>
+        `;
+
+        // 2. Configure html2pdf
+        const options = {
+          margin:       1,
+          filename:     `${quiz.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_quiz.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // 3. Generate PDF
+        await html2pdf().from(fullHtml).set(options).save();
+        showSuccess('PDF generated successfully!');
+
+      } catch (err) {
+        console.error('Error generating PDF:', err);
+        showError('Failed to generate PDF. Please try again.');
+      } finally {
+        printingQuizId.value = null; // Reset printing state
+      }
+    };
+
     const saveNewQuiz = async () => {
       // Basic validation
       if (!newQuiz.value.classId || !newQuiz.value.title) {
@@ -825,7 +929,9 @@ export default {
       removeLessonStep,
       generateQuestionsFromLesson,
       saveNewQuiz,
-      readFileAsText
+      readFileAsText,
+      printingQuizId,
+      printQuizPdf
     };
   }
 };
