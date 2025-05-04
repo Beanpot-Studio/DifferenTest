@@ -38,10 +38,10 @@ const formatDate = (timestamp) => {
   });
 };
 
-const pageTitle = `Badge: ${badge.metadata.badgeName}`;
+const pageTitle = `I've earned a badge: ${badge.metadata.badgeName}`;
 const pageDescription =
   badge.metadata.badgeDescription ||
-  `Achievement badge earned by ${badge.metadata.recipientName || "a student"}`;
+  `Achievement badge earned by ${badge.metadata.recipientName || "a student using the DifferenTest platform. Try it at DifferenTest.club"}`;
 const pageImage = badge.metadata.badgeImage;
 const pageUrl = Astro.url.href; // Get the current page URL
 
@@ -57,6 +57,8 @@ const linkedInShareBaseUrl = "https://www.linkedin.com/sharing/share-offsite/";
     { property: "og:image", content: pageImage },
     { property: "og:url", content: pageUrl },
     { property: "og:type", content: "website" },
+    { property: "og:image:width", content: "500" },
+    { property: "og:image:height", content: "500" },
     // Add Twitter card tags for better sharing on Twitter
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: pageTitle },
@@ -213,7 +215,7 @@ const linkedInShareBaseUrl = "https://www.linkedin.com/sharing/share-offsite/";
   const badgeName = badge.metadata?.badgeName || "Achievement Badge";
   const badgeDesc = badge.metadata?.badgeDescription || "I earned a badge!";
   const twitterText = encodeURIComponent(
-    `I just earned the '${badgeName}' badge! 🎉 Check it out: ${shareUrl}`
+    `I just earned the '${badgeName}' badge on the DifferenTest platform! 🎉 Earn your own at DifferenTest.club. ${shareUrl}`
   );
 
   if (linkedInButton) {

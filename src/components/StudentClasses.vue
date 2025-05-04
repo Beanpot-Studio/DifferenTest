@@ -343,18 +343,18 @@
           <BaseAnimation type="loading" :loop="true" />
         </div>
 
-        <div v-else-if="reviewData?.quiz">
-          <h3 class="text-xl font-bold mb-4">Review: {{ reviewData.quiz.title }}</h3>
+        <div v-else-if="reviewData?.quiz" class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-green-50 to-teal-100">
+          <h3 class="text-xl font-bold mb-4 text-gray-900">Review: {{ reviewData.quiz.title }}</h3>
           
-          <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div class="mb-6 p-4 bg-white/80 rounded-lg shadow-inner">
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <p class="text-sm text-gray-600">Score</p>
-                <p class="text-2xl font-bold">{{ reviewData.attempt.score }}%</p>
+                <p class="text-2xl font-bold text-teal-700">{{ reviewData.attempt.score }}%</p>
               </div>
               <div>
                 <p class="text-sm text-gray-600">Time Spent</p>
-                <p class="text-2xl font-bold">{{ Math.floor(reviewData.attempt.timeSpent / 1000) }}s</p>
+                <p class="text-2xl font-bold text-teal-700">{{ Math.floor(reviewData.attempt.timeSpent / 1000) }}s</p>
               </div>
             </div>
           </div>

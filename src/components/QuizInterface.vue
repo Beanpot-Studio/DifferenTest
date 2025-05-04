@@ -29,10 +29,10 @@
       <p class="text-gray-500">This quiz is only available to students.</p>
     </div>
     
-    <div v-else-if="quiz">
+    <div v-else-if="quizData">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">{{ quiz.title }}</h3>
-        <span class="text-sm text-gray-500">{{ quiz.questions.length }} questions</span>
+        <h3 class="text-lg font-semibold">{{ quizData.title }}</h3>
+        <span class="text-sm text-gray-500">{{ quizData.questions.length }} questions</span>
       </div>
       
       <div v-if="!quizCompleted">
@@ -57,7 +57,7 @@
           </div>
           <div class="flex items-center space-x-2">
             <span class="text-sm text-gray-500">
-              {{ answeredQuestions }} of {{ quiz.questions.length }} answered
+              {{ answeredQuestions }} of {{ quizData.questions.length }} answered
             </span>
           </div>
         </div>
@@ -223,7 +223,7 @@ export default {
   setup(props) {
     const { user, role } = useAuth();
     const { showSuccess, showError } = useNotification();
-    const quiz = ref(null);
+    const quizData = ref(null);
     const loading = ref(true);
     const error = ref(null);
     const selectedAnswers = ref([]);
@@ -248,12 +248,12 @@ export default {
     const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
     const canSubmit = computed(() => {
-      return selectedAnswers.value.length === quiz.value?.questions.length &&
+      return selectedAnswers.value.length === quizData.value?.questions.length &&
         !selectedAnswers.value.includes(undefined);
     });
 
     const totalPages = computed(() => {
-      return quiz.value?.questions.length || 0;
+      return quizData.value?.questions.length || 0;
     });
 
     const currentQuestionIndex = computed(() => {
@@ -261,7 +261,7 @@ export default {
     });
 
     const currentQuestion = computed(() => {
-      return quiz.value?.questions[currentQuestionIndex.value] || null;
+      return quizData.value?.questions[currentQuestionIndex.value] || null;
     });
 
     const answeredQuestions = computed(() => {
@@ -285,27 +285,27 @@ export default {
 
         const quizId = props.quizId.trim();
 
-        const quizData = await FirebaseService.getQuiz(quizId);
-        if (!quizData) {
+        const fetchedQuizData = await FirebaseService.getQuiz(quizId);
+        if (!fetchedQuizData) {
           throw new Error(`Quiz with ID ${quizId} not found`);
         }
 
-
-        if (!quizData.questions || !Array.isArray(quizData.questions) || quizData.questions.length === 0) {
+        if (!fetchedQuizData.questions || !Array.isArray(fetchedQuizData.questions) || fetchedQuizData.questions.length === 0) {
           throw new Error('Quiz has no questions');
         }
 
-        // Validate each question has required fields
-        quizData.questions.forEach((question, index) => {
+        // Validate each question
+        fetchedQuizData.questions.forEach((question, index) => {
           if (!question.text || !question.options || !Array.isArray(question.options) || question.options.length === 0) {
             throw new Error(`Question ${index + 1} is missing required fields`);
           }
         });
 
-        quiz.value = {
+        // Assign to quizData ref
+        quizData.value = {
           id: quizId,
-          ...quizData,
-          questions: quizData.questions.map((q, index) => ({
+          ...fetchedQuizData,
+          questions: fetchedQuizData.questions.map((q, index) => ({
             ...q,
             id: index + 1,
             selectedAnswer: null,
@@ -313,7 +313,7 @@ export default {
           }))
         };
 
-        selectedAnswers.value = new Array(quiz.value.questions.length).fill(undefined);
+        selectedAnswers.value = new Array(quizData.value.questions.length).fill(undefined);
         quizStartTime.value = Date.now();
       } catch (error) {
         console.error('Error loading quiz:', error);
@@ -331,7 +331,7 @@ export default {
       if (!canSubmit.value) return;
 
       let correctCount = 0;
-      results.value = quiz.value.questions.map((question, index) => {
+      results.value = quizData.value.questions.map((question, index) => {
         const isCorrect = selectedAnswers.value[index] === question.correctIndex;
         if (isCorrect) correctCount++;
         
@@ -343,7 +343,7 @@ export default {
         };
       });
 
-      score.value = Math.round((correctCount / quiz.value.questions.length) * 100);
+      score.value = Math.round((correctCount / quizData.value.questions.length) * 100);
       quizCompleted.value = true;
       
       // Show confetti for perfect score
@@ -358,12 +358,12 @@ export default {
         try {
           const attemptData = {
             userId: user.value.uid,
-            quizId: quiz.value.id,
+            quizId: quizData.value.id,
             score: score.value,
             correctAnswers: correctCount,
-            questionCount: quiz.value.questions.length,
+            questionCount: quizData.value.questions.length,
             timeSpent: Date.now() - quizStartTime.value,
-            questions: quiz.value.questions.map((q, index) => ({
+            questions: quizData.value.questions.map((q, index) => ({
               ...q,
               selectedAnswer: selectedAnswers.value[index]
             }))
@@ -386,7 +386,7 @@ export default {
     };
 
     const resetQuiz = () => {
-      selectedAnswers.value = new Array(quiz.value.questions.length).fill(undefined);
+      selectedAnswers.value = new Array(quizData.value.questions.length).fill(undefined);
       quizCompleted.value = false;
       score.value = 0;
       results.value = [];
@@ -395,10 +395,10 @@ export default {
     };
 
     const getExplanation = async (questionIndex) => {
-      if (!quiz.value) return;
+      if (!quizData.value) return;
       
       try {
-        const question = quiz.value.questions[questionIndex];
+        const question = quizData.value.questions[questionIndex];
         const prompt = `Explain in simple, concise language why the correct answer is right for the question: "${question.text}". 
         Focus on the key concept being tested. Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
         
@@ -424,7 +424,7 @@ export default {
     onMounted(loadQuiz);
 
     return {
-      quiz,
+      quizData,
       loading,
       error,
       selectedAnswers,
