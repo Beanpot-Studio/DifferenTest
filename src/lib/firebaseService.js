@@ -12,7 +12,14 @@ import {
   addDoc,
   serverTimestamp,
   increment,
-  limit
+  limit,
+  getFirestore,
+  writeBatch,
+  FieldValue,
+  arrayUnion,
+  arrayRemove,
+  deleteField,
+  runTransaction
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -619,11 +626,23 @@ class FirebaseService {
 
   // Article Operations
   static async updateArticleRating(articleId, isHelpful) {
+    if (!articleId) {
+      console.error("updateArticleRating called with invalid articleId:", articleId);
+      throw new Error("Invalid article ID provided.");
+    }
     const articleRef = doc(db, 'help_articles', articleId);
-    await updateDoc(articleRef, {
-      helpful: increment(isHelpful ? 1 : 0),
-      notHelpful: increment(isHelpful ? 0 : 1)
-    });
+    const ratingField = isHelpful ? 'helpful' : 'notHelpful';
+
+    try {
+      // Use setDoc with merge: true to create or update
+      await setDoc(articleRef, {
+        [ratingField]: increment(1)
+      }, { merge: true });
+      console.log(`Rating updated for article ${articleId}. Field: ${ratingField}`);
+    } catch (error) {
+      console.error(`Error updating rating for article ${articleId}:`, error);
+      throw error; // Re-throw the error to be caught by the caller if needed
+    }
   }
 
   // Message Operations

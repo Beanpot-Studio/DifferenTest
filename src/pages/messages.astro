@@ -1,7 +1,7 @@
 ---
 import MainLayout from "../layouts/MainLayout.astro";
 import RoleBasedContent from "../components/RoleBasedContent.vue";
-import MessageCenter from "../components/MessageCenter.vue";
+//import MessageCenter from "../components/MessageCenter.vue";
 ---
 
 <MainLayout title="Messages">
@@ -12,7 +12,7 @@ import MessageCenter from "../components/MessageCenter.vue";
 
     <div class="bg-white rounded-lg shadow-md p-6">
       <RoleBasedContent client:only :required-roles="['student', 'teacher']">
-        <MessageCenter client:load />
+        <!--<MessageCenter client:load />-->
       </RoleBasedContent>
     </div>
   </div>

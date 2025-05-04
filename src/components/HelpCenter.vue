@@ -16,13 +16,13 @@
     <!-- Filtered Results -->
     <div v-if="filteredArticles.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
        <div v-for="article in filteredArticles" :key="article.id" 
-             class="border rounded-lg p-6 hover:shadow-md transition cursor-pointer flex flex-col justify-between" 
+             class="border rounded-lg p-8 hover:shadow-md transition cursor-pointer flex flex-col justify-between" 
              @click="selectArticle(article)">
           <div>
-            <h3 class="text-lg font-semibold mb-2">{{ article.title }}</h3>
-            <p class="text-gray-600 text-sm mb-4">{{ article.preview }}</p>
+            <h3 class="text-lg font-semibold mb-3">{{ article.title }}</h3>
+            <p class="text-gray-600 text-sm mb-6">{{ article.preview }}</p>
           </div>
-          <span class="text-xs text-gray-400">Category: {{ article.category }}</span>
+          <span class="text-xs text-gray-400 mt-auto">Category: {{ article.category }}</span>
         </div>
     </div>
      <div v-else-if="searchQuery" class="text-center text-gray-500 py-6">
@@ -36,13 +36,13 @@
         <h2 class="text-2xl font-bold mb-4">Getting Started</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           <div v-for="article in gettingStartedArticles" :key="article.id" 
-              class="border rounded-lg p-6 hover:shadow-md transition cursor-pointer flex flex-col justify-between"
+              class="border rounded-lg p-8 hover:shadow-md transition cursor-pointer flex flex-col justify-between"
               @click="selectArticle(article)">
             <div>
-              <h3 class="text-lg font-semibold mb-2">{{ article.title }}</h3>
-              <p class="text-gray-600 text-sm mb-4">{{ article.preview }}</p>
+              <h3 class="text-lg font-semibold mb-3">{{ article.title }}</h3>
+              <p class="text-gray-600 text-sm mb-6">{{ article.preview }}</p>
             </div>
-             <span class="text-xs text-gray-400">Category: Getting Started</span>
+             <span class="text-xs text-gray-400 mt-auto">Category: Getting Started</span>
           </div>
         </div>
       </div>
@@ -52,13 +52,13 @@
         <h2 class="text-2xl font-bold mb-4">For Students</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="article in studentArticles" :key="article.id" 
-              class="border rounded-lg p-6 hover:shadow-md transition cursor-pointer flex flex-col justify-between"
+              class="border rounded-lg p-8 hover:shadow-md transition cursor-pointer flex flex-col justify-between"
               @click="selectArticle(article)">
              <div>
-              <h3 class="text-lg font-semibold mb-2">{{ article.title }}</h3>
-              <p class="text-gray-600 text-sm mb-4">{{ article.preview }}</p>
+              <h3 class="text-lg font-semibold mb-3">{{ article.title }}</h3>
+              <p class="text-gray-600 text-sm mb-6">{{ article.preview }}</p>
             </div>
-             <span class="text-xs text-gray-400">Category: For Students</span>
+             <span class="text-xs text-gray-400 mt-auto">Category: For Students</span>
           </div>
         </div>
       </div>
@@ -68,13 +68,13 @@
         <h2 class="text-2xl font-bold mb-4">For Teachers</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="article in teacherArticles" :key="article.id" 
-              class="border rounded-lg p-6 hover:shadow-md transition cursor-pointer flex flex-col justify-between"
+              class="border rounded-lg p-8 hover:shadow-md transition cursor-pointer flex flex-col justify-between"
               @click="selectArticle(article)">
              <div>
-              <h3 class="text-lg font-semibold mb-2">{{ article.title }}</h3>
-              <p class="text-gray-600 text-sm mb-4">{{ article.preview }}</p>
+              <h3 class="text-lg font-semibold mb-3">{{ article.title }}</h3>
+              <p class="text-gray-600 text-sm mb-6">{{ article.preview }}</p>
             </div>
-            <span class="text-xs text-gray-400">Category: For Teachers</span>
+            <span class="text-xs text-gray-400 mt-auto">Category: For Teachers</span>
           </div>
         </div>
       </div>
@@ -136,7 +136,7 @@ export default {
     const allArticles = ref([
       // == Getting Started ==
       {
-        id: 'welcome',
+        id: 'welcome-all',
         category: 'Getting Started',
         title: 'Welcome to DifferenTest',
         preview: 'An overview of the platform and its main capabilities.',
@@ -144,7 +144,7 @@ export default {
           <h2>Welcome to DifferenTest!</h2>
           <p>DifferenTest is designed to make learning more personalized and engaging. Teachers can easily create classes, upload lesson materials, generate quizzes, and track student progress. Students can join classes, access lessons, take quizzes, and see their results instantly.</p>
           <h3>Main Areas:</h3>
-          <ul>
+          <ul class="list-disc list-inside">
             <li><strong>Teacher Portal:</strong> Manage classes, quizzes, lesson plans, view submissions, and reports.</li>
             <li><strong>Student Portal:</strong> View assigned classes, take quizzes, review history, and see earned badges.</li>
             <li><strong>Public Curricula:</strong> Explore publicly available classes and quizzes.</li>
@@ -153,33 +153,31 @@ export default {
         `
       },
       {
-        id: 'account-setup',
+        id: 'account-setup-all',
         category: 'Getting Started',
         title: 'Setting Up Your Account',
         preview: 'How to register, log in, and choose your role.',
         content: `
-          <h2>Setting Up Your Account</h2>
           <p>Follow these steps to get started:</p>
-          <ol>
+          <ul class="list-disc list-inside">
             <li>Click the <strong>Login / Register</strong> button in the header.</li>
             <li>Select the <strong>Register</strong> option.</li>
             <li>Enter your name, email, and create a password.</li>
             <li>Select your role: <strong>Teacher</strong> or <strong>Student</strong>. This determines which portal you access.</li>
             <li>Click Register. You should be logged in automatically.</li>
             <li>You can log out and log back in using the navigation menu in the header.</li>
-          </ol>
+          </ul>
         `
       },
       // == For Students ==
       {
-        id: 'student-dashboard',
+        id: 'dashboard-students',
         category: 'For Students',
         title: 'Navigating the Student Portal',
         preview: 'Understand the sections of your student dashboard.',
         content: `
-          <h2>Navigating the Student Portal</h2>
           <p>Your student portal is your main hub. You\'ll find several sections:</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li><strong>My Classes:</strong> Shows classes you are enrolled in. Click a class to see assignments.</li>
             <li><strong>Available Classes:</strong> Browse public classes or use a code provided by your teacher to join private ones.</li>
             <li><strong>Quiz History:</strong> Review your past quiz attempts, scores, and answers. Retake a quiz to get 100% and earn your badge!</li>
@@ -189,34 +187,32 @@ export default {
         `
       },
       {
-        id: 'join-class',
+        id: 'join-class-students',
         category: 'For Students',
         title: 'Finding & Joining Classes',
         preview: 'How to find public classes or join a private class using a code.',
         content: `
-          <h2>Finding & Joining Classes</h2>
           <p>There are two main ways to join a class:</p>
           <h3>1. Browsing Public Classes</h3>
-          <ul>
+          <ul class="list-disc list-inside">
             <li>Go to the <strong>Open Curricula Classes</strong> section from the top nav.</li>
             <li>Browse the list of public classes. Login as a student to take a quiz and track your progress.</li>
           </ul>
           <h3>2. Joining a class with your teacher's approval (for Private Classes)</h3>
-          <ul>
-            <li>Your teacher will provide you with a link in your inbox, or you can search for the class in the Student Portal.</li>
+          <ul class="list-disc list-inside">
+            <li>Your teacher will provide you with a code to join a class which you can use to join the class in the Student Portal.</li>
             <li>Click <strong>Request to Join</strong> to join a class. Your teacher will need to approve your request.</li>
           </ul>
         `
       },
       {
-        id: 'take-quiz',
+        id: 'take-quiz-students',
         category: 'For Students',
         title: 'Taking a Quiz',
         preview: 'Step-by-step guide to taking quizzes assigned by your teacher.',
         content: `
-          <h2>Taking a Quiz</h2>
           <p>Once enrolled in a class, you can take assigned quizzes:</p>
-          <ol>
+          <ul class="list-disc list-inside">
             <li>Go to the <strong>My Classes</strong> section in your Student Portal.</li>
             <li>Select the class containing the quiz.</li>
             <li>Find the quiz listed under the class assignments or lesson plan.</li>
@@ -225,19 +221,18 @@ export default {
             <li>Select your answer for each question.</li>
             <li>When finished, click the <strong>Submit</strong> button.</li>
             <li>Your results are shown immediately.</li>
-          </ol>
+          </ul>
           <p>Some quizzes may have associated lesson plan content visible before or during the quiz.</p>
         `
       },
       {
-        id: 'view-results',
+        id: 'view-results-students',
         category: 'For Students',
         title: 'Viewing Your Results & History',
         preview: 'Learn how to access your quiz scores and review past attempts.',
         content: `
-          <h2>Viewing Your Results & History</h2>
           <p>You can review your performance in the <strong>Quiz History</strong> section of your portal:</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li>Find the quiz attempt you want to review.</li>
             <li>You\'ll see your score, the date taken, and the time spent.</li>
             <li>Click on an attempt for more details including helpful hints for any incorrect answers.</li>
@@ -245,14 +240,13 @@ export default {
         `
       },
       {
-        id: 'student-badges',
+        id: 'badges-students',
         category: 'For Students',
         title: 'Understanding Badges',
         preview: 'Learn about achievement badges and how to earn them.',
         content: `
-          <h2>Understanding Badges</h2>
           <p>Earn sharable digital badgesby achieving 100% scores on quizzes</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li>When you get a perfect score on a badged quiz, you will see a notification about earning a badge if your teacher has enabled badging.</li>
             <li>You can view all your earned badges in the <strong>Badges</strong> section of your Student Portal.</li>
             <li>Badges are a fun way to showcase your mastery of a topic. Make sure to share them with your friends and on social media.</li>
@@ -260,14 +254,13 @@ export default {
         `
       },
        {
-        id: 'student-skins',
+        id: 'reviewing-retaking-quiz-students',
         category: 'For Students',
-        title: 'Retaking a Quiz',
+        title: 'Reviewing and Retaking a Quiz',
         preview: 'Retake quizzes to earn a higher score.',
         content: `
-          <h2>Reviewing and Retaking a Quiz</h2>
           <p>If you don't get a perfect score on your first attempt, you can retake the quiz as many times as you want.</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li>Use the Review button to review your answers and see a helper box to help you understand any incorrect answers.</li>
             <li>Take the quiz again to earn a higher score and get your badge.</li>
           </ul>
@@ -275,14 +268,13 @@ export default {
       },
       // == For Teachers ==
       {
-        id: 'teacher-dashboard',
+        id: 'dashboard-teachers',
         category: 'For Teachers',
         title: 'Navigating the Teacher Portal',
         preview: 'An overview of the tools available in your teacher dashboard.',
         content: `
-          <h2>Navigating the Teacher Portal</h2>
           <p>The Teacher Portal is your command center. Key sections include:</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li><strong>Dashboard/Stats:</strong> Quick overview of your classes, quizzes, and recent submissions.</li>
             <li><strong>Class Manager:</strong> Create new open and privateclasses, edit existing ones, manage student enrollments (roster), and assign quizzes.</li>
             <li><strong>Quiz Manager:</strong> Create new quizzes (manually or generated from content), edit questions and options, and manage quiz settings.</li>
@@ -293,23 +285,22 @@ export default {
         `
       },
        {
-        id: 'create-class',
+        id: 'create-class-teachers',
         category: 'For Teachers',
         title: 'Creating & Managing Classes',
         preview: 'How to set up new classes, manage settings, and view rosters.',
         content: `
-          <h2>Creating & Managing Classes</h2>
           <p>Use the <strong>Class Manager</strong> section:</p>
           <h3>Creating a Class</h3>
-          <ol>
+          <ul class="list-disc list-inside">
             <li>Click the "Create New Class" button or use the form provided.</li>
             <li>Enter a <strong>Class Name</strong>.</li>
             <li>Decide if the class should be <strong>Public</strong> (discoverable by all students) or private (requires code to join).</li>
              <li>For paid subscribers, select a <strong>Skin</strong> (visual theme) for the class, like \'Default\' or \'Playful Cats\'. This affects how students see lessons and quizzes in this class.</li>
             <li>Click Create. A unique <strong>Class Code</strong> will be generated for private classes - share this with your students.</li>
-          </ol>
+          </ul>
           <h3>Managing Existing Classes</h3>
-          <ul>
+          <ul class="list-disc list-inside">
             <li><strong>Edit:</strong> Change the class name, public status, or skin.</li>
             <li><strong>Delete:</strong> Permanently remove the class and associated data (use with caution!).</li>
             <li><strong>View Roster:</strong> See enrolled students and manage enrollment requests (Accept/Reject).</li>
@@ -318,15 +309,14 @@ export default {
         `
       },
       {
-        id: 'create-quiz-teacher',
+        id: 'create-quiz-teachers',
         category: 'For Teachers',
         title: 'Creating & Managing Quizzes',
         preview: 'How to create quizzes manually or generate them from lesson plans.',
         content: `
-          <h2>Creating & Managing Quizzes</h2>
           <p>Use the <strong>Quiz Manager</strong> section:</p>
           <h3>Creating a New Quiz</h3>
-          <ol>
+          <ul class="list-disc list-inside">
             <li>Click "Create Quiz".</li>
             <li>Select the <strong>Class</strong> this quiz belongs to.</li>
             <li>Enter a <strong>Title</strong> for the quiz.</li>
@@ -336,23 +326,22 @@ export default {
             <li>Click "Generate Questions" for automatic question generation using AI or add questions manually. You can always edit anything the AI suggests in the quiz generation process.</li>
              <li>Review/edit generated questions and answers.</li>
             <li>Click <strong>Create Quiz</strong> to save.</li>
-          </ol>
+          </ul>
           <h3>Managing Existing Quizzes</h3>
-          <ul>
+          <ul class="list-disc list-inside">
             <li><strong>Edit:</strong> Modify the title, badge image, questions, options, and correct answers.</li>
             <li><strong>Delete:</strong> Permanently remove the quiz and its attempts.</li>
           </ul>
         `
       },
        {
-        id: 'edit-lesson-plan',
+        id: 'edit-lesson-plan-teachers',
         category: 'For Teachers',
         title: 'Editing Lesson Plans',
         preview: 'How to modify the lesson plan content associated with a quiz.',
         content: `
-          <h2>Editing Lesson Plans</h2>
           <p>Lesson plans are often associated directly with quizzes in this system.</p>
-          <ol>
+          <ul class="list-disc list-inside">
             <li>Go to the <strong>Lesson Plan Manager</strong> (or sometimes the Quiz Manager).</li>
             <li>Find the quiz/lesson you want to edit.</li>
             <li>Click the <strong>Edit</strong> icon.</li>
@@ -360,19 +349,18 @@ export default {
             <li>Click the Edit icon within the modal to enable the text area.</li>
             <li>Make your changes to the markdown content. You can also upload images and copy their markdown links.</li>
             <li>Click <strong>Save Changes</strong>.</li>
-          </ol>
+          </ul>
            <p>The updated lesson plan content will be shown to students when they view this quiz/assignment.</p>
         `
       },
        {
-        id: 'teacher-submissions',
+        id: 'submissions-teachers',
         category: 'For Teachers',
         title: 'Viewing Student Submissions',
         preview: 'How to review quiz attempts submitted by your students.',
         content: `
-          <h2>Viewing Student Submissions</h2>
           <p>You can track student quiz attempts in the <strong>Submissions</strong> section of your Teacher Portal.</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li>View a list of recent submissions across all your classes.</li>
             <li>Filter submissions by class or specific quiz.</li>
             <li>See student names, quiz titles, scores, and submission times.</li>
@@ -381,14 +369,13 @@ export default {
         `
       },
        {
-        id: 'teacher-badges',
+        id: 'badges-teachers',
         category: 'For Teachers',
-        title: 'Using Badges',
+        title: 'Managing Badges',
         preview: 'How to enable and manage achievement badges for your quizzes.',
         content: `
-          <h2>Using Badges</h2>
           <p>Badges can motivate students by rewarding perfect scores.</p>
-          <ul>
+          <ul class="list-disc list-inside">
             <li>When creating or editing a quiz in the <strong>Quiz Manager</strong>, standard badge images are enabled by default. You can disable this in the quiz if you prefer.</li>
             <li>If badges are enabled, students who score 100% on that quiz will automatically be awarded a badge with a shareable certificate.</li>
             <li>Students can view their earned badges in their portal.</li>
@@ -477,3 +464,16 @@ export default {
   }
 };
 </script> 
+
+<style scoped>
+/* Target elements within the dynamically rendered article content */
+.prose h2 {
+  margin-bottom: 1rem; /* Adjust as needed */
+}
+
+.prose h3 {
+  margin-bottom: 0.75rem; /* Adjust as needed */
+}
+
+
+</style> 

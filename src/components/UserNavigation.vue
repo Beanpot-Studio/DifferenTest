@@ -2,14 +2,14 @@
   <div>
     <div v-if="isLoggedIn" class="flex items-center space-x-4">
       <div class="flex items-center space-x-2">
-        <!-- Messages Button -->
+        <!-- Messages Button 
         <a 
           href="/messages" 
           class="p-2 rounded-lg hover:bg-primary-300 transition text-white"
           title="Messages"
         >
           <IconService name="message" size="4" />
-        </a>
+        </a>-->
 
         <!-- Profile Button -->
         <a 
