@@ -67,34 +67,38 @@
       <div v-if="classes.length === 0" class="text-gray-500 text-center py-4">
         No classes created yet.
       </div>
-      <div v-else class="space-y-6" data-testid="class-list-container">
-        <div v-for="classItem in classes" :key="classItem.id" class="border rounded-lg p-4">
-          <div class="flex justify-between items-start">
+      <div v-else class="space-y-4">
+        <div 
+          v-for="classItem in classes" 
+          :key="classItem.id"
+          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+        >
+          <div class="flex justify-between items-start mb-3">
             <div>
               <div class="flex items-center gap-2">
                 <IconService v-if="!classItem.isPublic" name="lock" color="text-red-600" size="4" tooltip="This class is private, open only to enrolled students" />
                 <IconService v-if="classItem.isPublic" name="open-lock" color="text-green-600" size="4" tooltip="This class is public, open to all students" />
-                <h3 class="text-lg font-semibold mt-2">{{ classItem.name }}</h3>
+                <h3 class="text-xl font-bold text-gray-800">{{ classItem.name }}</h3>
               </div>
+              <p class="text-sm text-gray-600 mt-1">Code: <code class="font-mono bg-gray-200 px-1.5 py-0.5 rounded">{{ classItem.code }}</code></p>
               <p class="text-sm text-gray-500">
                 Created: {{ formatDate(classItem.createdAt) }}
               </p>
-              
             </div>
             <div class="flex space-x-2">
               <button
                 @click="editClass(classItem)"
-                class="text-primary-600 hover:text-primary-800 p-1"
-                title="Edit class"
+                class="text-blue-600 hover:text-blue-800"
+                title="Edit Class"
               >
-              <IconService name="edit" size="6" />
+                <IconService name="edit" size="6" />
               </button>
               <button
                 @click="deleteClass(classItem.id)"
-                class="text-red-600 hover:text-red-800 p-1"
-                title="Delete class"
+                class="text-red-500 hover:text-red-700"
+                title="Delete Class"
               >
-              <IconService name="trash" size="6" />
+                <IconService name="trash" size="6" />
               </button>
             </div>
           </div>
@@ -106,15 +110,15 @@
               No quizzes in this class yet.
             </div>
             <div v-else class="space-y-2" :data-testid="`assigned-quiz-list-${classItem.id}`">
-              <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
+              <div 
+                v-for="quiz in classItem.quizzes" 
+                :key="quiz.id" 
+                class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
+              >
                 <div class="flex justify-between items-start">
-                  <div>
-                    <button 
-                      @click="$emit('select-quiz', quiz.id)"
-                      class="text-primary-600 hover:text-primary-800 font-medium"
+                  <div class="text-lg font-bold text-gray-900 text-left"
                     >
                       {{ quiz.title }}
-                    </button>
                     
                   </div>
                   <div class="flex space-x-2">
@@ -123,7 +127,7 @@
                       class="text-red-600 hover:text-red-800 p-1"
                       title="Remove from class"
                     >
-                    <IconService name="trash" size="6" />
+                      <IconService name="trash" size="5" />
                     </button>
                   </div>
                 </div>

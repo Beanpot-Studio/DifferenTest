@@ -16,14 +16,22 @@
     <!-- Lesson Plans List -->
     <div v-else class="space-y-8">
       <!-- Outer loop -->
-      <div v-for="classItem in classesWithLessonPlans" :key="classItem.id" class="space-y-4">
-        <h3 class="text-xl font-semibold text-gray-900">{{ classItem.name }}</h3>
+      <div 
+        v-for="classItem in classesWithLessonPlans" 
+        :key="classItem.id" 
+        class="space-y-4 p-6 rounded-lg shadow-md bg-gradient-to-br from-purple-50 to-indigo-50"
+      >
+        <div class="flex items-center gap-2">
+          <IconService v-if="!classItem.isPublic" name="lock" color="text-red-600" size="5" tooltip="This class is private" />
+          <IconService v-if="classItem.isPublic" name="open-lock" color="text-green-600" size="5" tooltip="This class is public" />
+          <h3 class="text-xl font-semibold text-gray-900">{{ classItem.name }}</h3>
+        </div>
         <div class="space-y-2">
           <!-- Inner loop for quizzes -->
           <div
             v-for="quiz in classItem.quizzes"
             :key="quiz.id"
-            class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg"
+            class="flex items-center justify-between p-3 rounded-lg shadow bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
           >
             <div>
               <div class="flex items-center space-x-2">
@@ -31,21 +39,17 @@
                 <a 
                   v-if="classItem.isPublic" 
                   :href="`/classes/${classItem.id}/quiz/${quiz.id}`"
-                  class="text-lg font-bold text-primary-600 hover:text-primary-800" 
+                  class="text-lg font-bold text-gray-900 hover:text-gray-950 underline"
                   :title="`View Public Quiz: ${quiz.title}`"
                 >
-                <IconService name="open-lock" size="4" class="inline-block ml-1 text-green-600" />
-
                   {{ quiz.title }}
                 </a>
                 <a 
                   v-else 
                   :href="`/lesson/${classItem.id}/quiz/${quiz.id}`" 
-                  class="text-lg font-bold text-primary-600 hover:text-primary-800" 
+                  class="text-lg font-bold text-gray-900 hover:text-gray-950 underline"
                   :title="`View Lesson/Quiz: ${quiz.title}`"
                 >
-                <IconService name="lock" size="4" class="inline-block ml-1 text-red-600" />
-
                   {{ quiz.title }}
                 </a>
               </div>
@@ -53,7 +57,7 @@
             <div class="flex space-x-2">
               <button
                 @click="() => { editLessonPlan(quiz); }"
-                class="text-primary-600 hover:text-primary-800 font-medium"
+                class="text-blue-600 hover:text-blue-800 font-medium"
                 title="Edit Lesson Plan"
               >
                  <IconService name="edit" size="6" />

@@ -25,13 +25,21 @@
       
       <!-- Quiz List -->
       <div v-if="classesWithQuizzes.length > 0" class="space-y-8" data-testid="quiz-list-container">
-        <div v-for="classItem in classesWithQuizzes" :key="classItem.id" class="space-y-4">
-          <h3 class="text-xl font-semibold text-gray-900">{{ classItem.name }}</h3>
+        <div 
+          v-for="classItem in classesWithQuizzes" 
+          :key="classItem.id" 
+          class="space-y-4 p-6 rounded-lg shadow-md bg-gradient-to-br from-purple-50 to-indigo-50"
+        >
+          <div class="flex items-center gap-2">
+            <IconService v-if="!classItem.isPublic" name="lock" color="text-red-600" size="5" tooltip="This class is private" />
+            <IconService v-if="classItem.isPublic" name="open-lock" color="text-green-600" size="5" tooltip="This class is public" />
+            <h3 class="text-xl font-semibold text-gray-900">{{ classItem.name }}</h3>
+          </div>
           <div class="space-y-2">
             <div
               v-for="quiz in classItem.quizzes"
               :key="quiz.id"
-              class="border flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg"
+              class="flex items-center justify-between p-4 rounded-lg shadow-md bg-gradient-to-br from-green-50 to-teal-100 text-gray-800"
             >
               <div>
                 <div class="flex items-center space-x-2">
@@ -48,12 +56,12 @@
                     </div>
                   </div>
                 </div>
-                <p class="text-sm text-gray-500">{{ quiz.questions?.length || 0 }} questions</p>
+                <p class="text-sm text-gray-600">{{ quiz.questions?.length || 0 }} questions</p>
               </div>
               <div class="flex space-x-2">
                 <button
                   @click="editQuiz(quiz)"
-                  class="text-primary-600 hover:text-primary-800 font-medium"
+                  class="text-blue-600 hover:text-blue-800 font-medium"
                   title="Edit quiz"
                 >
                   <IconService name="edit" size="6" />
@@ -61,7 +69,7 @@
                 <button
                   @click="printQuizPdf(quiz)"
                   :disabled="printingQuizId === quiz.id"
-                  class="text-gray-600 hover:text-gray-800 p-1 disabled:opacity-50"
+                  class="text-teal-700 hover:text-teal-900 p-1 disabled:opacity-50"
                   title="Print Quiz PDF"
                 >
                   <IconService v-if="printingQuizId !== quiz.id" name="printer" size="6" />

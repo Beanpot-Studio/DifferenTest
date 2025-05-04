@@ -1,5 +1,10 @@
 <template>
-  <div class="my-6 p-4 border rounded-lg bg-white shadow-sm">
+  <div 
+    v-if="quizData && quizData.questions && quizData.questions.length > 0" 
+    class="max-w-2xl mx-auto p-6 rounded-lg shadow-xl bg-gradient-to-br from-green-50 to-teal-100 text-gray-800"
+  >
+    <h2 class="text-2xl font-bold mb-4 text-center text-gray-900">{{ quizData.title }}</h2>
+
     <div v-if="loading" class="flex justify-center items-center py-8">
       <BaseAnimation type="loading" :size="50" />
     </div>
@@ -94,14 +99,14 @@
           <button
             v-if="currentPage < totalPages"
             @click="currentPage++"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            class="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
           >
             Next
           </button>
           <button
             v-if="currentPage === totalPages"
             @click="submitQuiz"
-            class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             :disabled="!canSubmit"
           >
             Submit Quiz
@@ -173,7 +178,7 @@
         <button
           v-if="score < 100"
           @click="resetQuiz"
-          class="mt-6 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          class="mt-6 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
         >
           Try Again
         </button>
@@ -181,6 +186,9 @@
       </div>
     </div>
     
+  </div>
+  <div v-else-if="!loading && (!quizData || !quizData.questions || quizData.questions.length === 0)" class="text-center text-gray-500 py-8">
+    <p>Quiz data is not available or the quiz has no questions.</p>
   </div>
 </template>
 

@@ -9,7 +9,7 @@
 
     <!-- Quick Stats Section -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="rounded-lg shadow-md p-6 bg-gradient-to-br from-purple-50 to-indigo-50">
         <div class="flex items-center space-x-4">
           <div class="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
             <IconService name="class" :size="6" class="text-primary-600" />
@@ -20,7 +20,7 @@
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="rounded-lg shadow-md p-6 bg-gradient-to-br from-green-50 to-teal-100">
         <div class="flex items-center space-x-4">
           <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
             <IconService name="quiz" :size="6" class="text-green-600" />
@@ -31,7 +31,7 @@
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="rounded-lg shadow-md p-6 bg-gradient-to-br from-yellow-50 to-amber-100">
         <div class="flex items-center space-x-4">
           <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
             <IconService name="edit" :size="6" class="text-yellow-600" />

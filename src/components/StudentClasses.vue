@@ -20,12 +20,16 @@
       
       <!-- Search Results -->
       <div v-if="searchResults.length > 0" class="mt-4 space-y-4">
-        <div v-for="classItem in searchResults" :key="classItem.id" class="border rounded-lg p-4">
+        <div 
+          v-for="classItem in searchResults" 
+          :key="classItem.id" 
+          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+        >
           <div class="flex justify-between items-start">
             <div>
-              <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
-              <p class="text-sm text-gray-600">Teacher: {{ classItem.teacherName }}</p>
-              <p class="text-sm text-gray-600">Class Code: {{ classItem.code }}</p>
+              <h3 class="text-lg font-semibold text-gray-800">{{ classItem.name }}</h3>
+              <p class="text-sm text-gray-700">Teacher: {{ classItem.teacherName }}</p>
+              <p class="text-sm text-gray-700">Class Code: {{ classItem.code }}</p>
             </div>
             <button
               v-if="!isEnrolled(classItem.id)"
@@ -49,7 +53,11 @@
     <div v-if="pendingClasses.length > 0" class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Pending Classes</h2>
       <div class="space-y-4">
-        <div v-for="classItem in pendingClasses" :key="classItem.id" class="border rounded-lg p-4">
+        <div 
+          v-for="classItem in pendingClasses" 
+          :key="classItem.id" 
+          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+        >
           <div class="flex justify-between items-start">
             <div>
               <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
@@ -80,7 +88,11 @@
       </div>
       
       <div v-else class="space-y-6">
-        <div v-for="classItem in enrolledClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div 
+          v-for="classItem in enrolledClasses" 
+          :key="classItem.id" 
+          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+        >
           <div class="flex justify-between items-start">
             <div>
               <div class="flex items-center ">
@@ -135,11 +147,15 @@
               No quizzes available yet.
             </div>
             <div v-else class="space-y-2">
-              <div v-for="quiz in classItem.quizzes" :key="quiz.id" class="border rounded p-3">
+              <div 
+                v-for="quiz in classItem.quizzes" 
+                :key="quiz.id" 
+                class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
+              >
                 <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="flex justify-between items-start">
                   <div>
-                    <h4 class="font-medium text-gray-900">{{ quiz.title }}</h4>
-                    <p class="text-sm text-gray-500 mt-1">
+                    <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
+                    <p class="text-sm text-gray-600 mt-1">
                       Questions: {{ quiz.questionCount || 0 }}
                     </p>
                   </div>
@@ -203,7 +219,11 @@
       </div>
       
       <div v-else class="space-y-6">
-        <div v-for="classItem in openClasses" :key="classItem.id" class="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div 
+          v-for="classItem in openClasses" 
+          :key="classItem.id" 
+          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+        >
           <div class="flex justify-between items-start">
             <div>
               <div class="flex items-center">
@@ -239,11 +259,14 @@
             </div>
             <div v-else class="space-y-2">
               <template v-for="quiz in classItem.quizzes" :key="quiz.id">
-                <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="border rounded p-3">
+                <div 
+                  v-if="getQuizAttempt(classItem.id, quiz.id)" 
+                  class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
+                >
                   <div class="flex justify-between items-start">
                     <div>
-                      <h4 class="font-medium text-gray-900">{{ quiz.title }}</h4>
-                      <p class="text-sm text-gray-500 mt-1">
+                      <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
+                      <p class="text-sm text-gray-600 mt-1">
                         Questions: {{ quiz.questionCount || 0 }}
                       </p>
                     </div>

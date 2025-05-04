@@ -19,16 +19,20 @@
     </div>
 
     <!-- Badges grid -->
-    <div v-else class="grid w-full">
-      <div v-for="badge in badges" :key="badge.id" class="bg-white border rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+    <div v-else class="space-y-4">
+      <div 
+        v-for="badge in badges" 
+        :key="badge.id" 
+        class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-yellow-50 to-amber-100 hover:shadow-xl transition-shadow duration-300"
+      >
         <div class="flex items-start space-x-4">
           <div class="flex-shrink-0">
               <img :src="badge.metadata.badgeImage" alt="Badge" class="w-24 h-24" />
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-start pt-3">
-              <h3 class="text-lg font-semibold text-gray-900">{{ badge.metadata?.title || 'Achievement' }}</h3>
-              <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-gray-800">
+              <h3 class="text-lg font-semibold text-gray-800">{{ badge.metadata?.title || 'Achievement' }}</h3>
+              <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-gray-700">
                 {{ formatDate(badge.issuanceDate) }}
               </span>
             </div>
