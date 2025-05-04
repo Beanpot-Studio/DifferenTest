@@ -92,214 +92,167 @@
 
     <!-- Create Quiz Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-quiz-modal">
-      <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 class="text-2xl font-bold mb-4">Create New Quiz</h2>
-        
-        <div class="space-y-4">
+      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4 pb-4 border-b">
+          <h3 class="text-xl font-bold">Create New Quiz</h3>
+          <button @click="showCreateModal = false" class="text-gray-500 hover:text-gray-700">
+            <IconService name="x" size="6" />
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-4 pr-2">
+          <!-- 1. Select Class (Required) -->
           <div>
-            <label class="block text-sm font-medium text-gray-700">Class</label>
-            <select
-              v-model="newQuiz.classId"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              data-testid="quiz-class-select"
-            >
-              <option value="">Select a Class</option>
-              <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
-                {{ classItem.name }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              v-model="newQuiz.title"
-              type="text"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              data-testid="quiz-title-input"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Number of Questions</label>
-            <input
-              v-model.number="newQuiz.questionCount"
-              type="number"
-              min="1"
-              max="10"
-              class="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              data-testid="quiz-question-count-input"
-            />
-            <p class="mt-1 text-sm text-gray-500">Choose between 1-10 questions</p>
-          </div>
-
-          <!-- Lesson Plan Input Type Selection -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Lesson Content</label>
-            <div class="mt-2 space-y-2">
-              <label class="inline-flex items-center">
-                <input 
-                  type="radio" 
-                  v-model="newQuiz.lessonType" 
-                  value="full" 
-                  class="form-radio text-primary-600" 
-                  data-testid="lesson-type-full"
-                />
-                <span class="ml-2">Paste Full Lesson</span>
-              </label>
-              <label class="inline-flex items-center ml-6">
-                <input 
-                  type="radio" 
-                  v-model="newQuiz.lessonType" 
-                  value="steps" 
-                  class="form-radio text-primary-600"
-                  :disabled="!isPaidUser"
-                  data-testid="lesson-type-steps"
-                />
-                <span class="ml-2">Build Step-by-Step (Premium)</span>
-                 <IconService v-if="!isPaidUser" name="lock" size="4" class="ml-1 text-yellow-500" tooltip="Upgrade to Premium to use Step-by-Step lessons." />
-              </label>
-               <p v-if="!isPaidUser && newQuiz.lessonType === 'steps'" class="mt-1 text-sm text-yellow-600">
-                 Upgrade to Premium to create step-by-step lessons. Selecting this option will revert to 'Paste Full Lesson' on save unless you upgrade.
-               </p>
-            </div>
-          </div>
-          
-          <!-- Full Lesson Plan Text Area -->
-          <div v-if="newQuiz.lessonType === 'full'">
-             <label class="block text-sm font-medium text-gray-700">Lesson Plan Content</label>
-             <textarea
-               v-model="newQuiz.lessonPlan"
-               rows="8"
-               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-               placeholder="Paste your full lesson plan here..."
-               data-testid="quiz-lesson-plan-textarea"
-             ></textarea>
-             <button
-                 @click="generateQuestionsFromLesson"
-                 :disabled="!newQuiz.lessonPlan || loading"
-                 class="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
-                 data-testid="generate-questions-button"
-               >
-                 {{ loading ? 'Generating...' : 'Generate Questions' }}
-             </button>
-           </div>
-
-          <!-- Step-by-Step Lesson Builder (Premium) -->
-           <div v-if="newQuiz.lessonType === 'steps' && isPaidUser">
-             <label class="block text-sm font-medium text-gray-700">Lesson Steps</label>
-             <div v-for="(step, index) in newQuiz.lessonSteps" :key="index" class="mt-2 border p-3 rounded-md space-y-2">
-               <div class="flex justify-between items-center">
-                  <label class="text-sm font-medium text-gray-600">Step {{ index + 1 }}</label>
-                   <button
-                     v-if="newQuiz.lessonSteps.length > 1"
-                     @click="removeLessonStep(index)"
-                     class="text-red-500 hover:text-red-700 text-sm"
-                     title="Remove Step"
-                   >
-                    <IconService name="trash" size="4" /> Remove
-                   </button>
-               </div>
-                <textarea
-                  v-model="newQuiz.lessonSteps[index]"
-                  rows="5"
-                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                  :placeholder="`Enter content for step ${ index + 1 }...`"
-                  :data-testid="`lesson-step-input-${index}`"
-                ></textarea>
-              </div>
-             <button
-               @click="addLessonStep"
-               class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
-             >
-               + Add Step
-             </button>
-              <button
-                 @click="generateQuestionsFromLesson"
-                 :disabled="!lessonStepsContent || loading"
-                 class="mt-2 ml-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
-                 data-testid="generate-questions-button-steps"
-               >
-                 {{ loading ? 'Generating...' : 'Generate Questions' }}
-             </button>
-           </div>
-
-          <!-- Badge Image Upload - Conditionally shown -->
-          <div v-if="isPaidUser">
-            <label class="block text-sm font-medium text-gray-700">Badge Image (Premium)</label>
-            <div class="mt-1 flex items-center space-x-4">
-              <input
-                ref="newBadgeImageInput"
-                type="file"
-                accept="image/*"
-                @change="handleNewBadgeImageUpload"
-                class="hidden"
-                data-testid="quiz-badge-image-input"
-              />
-              <button
-                @click="newBadgeImageInput.click()"
-                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            <label for="quiz-class" class="block text-sm font-medium text-gray-700 mb-1">1. Select Class (Required)</label>
+            <div class="relative mt-1">
+              <select 
+                id="quiz-class" 
+                v-model="newQuiz.classId" 
+                class="appearance-none block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white"
               >
-                {{ newBadgeImageName || 'Upload Badge Image' }}
-              </button>
+                <option value="" disabled>-- Select a Class --</option>
+                <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                  {{ cls.name }}
+                </option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <IconService name="chevron-down" size="5" />
+              </div>
             </div>
           </div>
-          <!-- Message for non-paid users -->
-          <div v-else>
-              <label class="block text-sm font-medium text-gray-700">Badge Image</label>
-              <p class="mt-1 text-sm text-gray-500">Default badge will be used. Upgrade to Premium to upload custom badges.</p>
-              <img 
-                  src="https://res.cloudinary.com/front-end-foxes/image/upload/v1745952718/differentest-lesson-images/grlih7sjws2vfu5as7dx.png" 
-                  alt="Default Badge" 
-                  class="mt-2 w-10 h-10 rounded-full object-cover"
-                />
+
+          <!-- 2. Quiz Title (Required) -->
+          <div>
+            <label for="quiz-title" class="block text-sm font-medium text-gray-700 mb-1">2. Quiz Title (Required)</label>
+            <input type="text" id="quiz-title" v-model="newQuiz.title" placeholder="Enter quiz title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
           </div>
 
-          <!-- Generated Questions Preview -->
-          <div v-if="loading" class="flex flex-col items-center justify-center p-6">
-            <BaseAnimation type="loading" :loop="true" />
-            <p class="mt-4 text-gray-600">Generating questions from lesson plan...</p>
+          <!-- 3. Badge Image  -->
+          <div>
+             <label class="block text-sm font-medium text-gray-700 mb-1">3. Badge Image</label>
+             <div v-if="!isPaidUser" class="text-sm text-gray-500 p-3 border rounded-md bg-gray-50">
+               Custom badge upload requires a premium subscription. A default badge will be used.
+             </div>
+            <div v-else class="mt-1 flex items-center space-x-4">
+              <img v-if="newBadgeImagePreview" :src="newBadgeImagePreview" alt="Badge Preview" class="h-16 w-16 rounded-md object-cover">
+               <span v-else class="h-16 w-16 rounded-md bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                 Preview
+               </span>
+              <label class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <span>{{ newBadgeImageName ? 'Change Image' : 'Upload Image' }}</span>
+                <input type="file" @change="handleNewBadgeImageUpload" accept="image/*" class="sr-only">
+              </label>
+              <span v-if="newBadgeImageName" class="text-sm text-gray-500 truncate">{{ newBadgeImageName }}</span>
+            </div>
           </div>
-          <div v-else-if="newQuiz.questions && newQuiz.questions.length > 0" class="space-y-4">
-            <h3 class="text-lg font-medium text-gray-900">Generated Questions</h3>
-            <div v-for="(question, index) in newQuiz.questions" :key="index" class="border rounded-lg p-4">
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Question {{ index + 1 }}</label>
-                <p class="mt-1 text-gray-900">{{ question.text }}</p>
+
+          <!-- 4. Lesson Plan & Question Generation -->
+          <div>
+             <label class="block text-sm font-medium text-gray-700 mb-1">4. Lesson Plan & Question Generation</label>
+             
+              <!-- Lesson Type Selection -->
+              <div class="mt-2 space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Lesson Format:</label>
+                 <div class="flex items-center space-x-4">
+                   <label class="inline-flex items-center">
+                     <input type="radio" v-model="newQuiz.lessonType" value="full" class="form-radio h-4 w-4 text-indigo-600 transition duration-150 ease-in-out">
+                     <span class="ml-2">Full Lesson Text</span>
+                   </label>
+                   <label class="inline-flex items-center" :class="{ 'opacity-50 cursor-not-allowed': !isPaidUser }">
+                     <input type="radio" v-model="newQuiz.lessonType" value="steps" class="form-radio h-4 w-4 text-indigo-600 transition duration-150 ease-in-out" :disabled="!isPaidUser">
+                     <span class="ml-2">Stepped Lesson</span>
+                      <IconService v-if="!isPaidUser" name="lock-closed" size="4" class="ml-1 text-yellow-500" />
+                   </label>
+                 </div>
+                 <p v-if="!isPaidUser && newQuiz.lessonType === 'steps'" class="text-xs text-red-600">Stepped lessons require a premium subscription.</p>
               </div>
+             
+             <!-- Full Lesson Text Input -->
+             <div v-if="newQuiz.lessonType === 'full'" class="mt-4">
+                <label for="lesson-plan-content" class="block text-sm font-medium text-gray-700">Lesson Content:</label>
+               <textarea id="lesson-plan-content" v-model="newQuiz.lessonPlan" rows="6" placeholder="Paste or type your lesson plan here..." class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+               <div class="mt-2">
+                 <label class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                   <span>{{ lessonPlanName ? 'Change File' : 'Upload Lesson File (.txt, .md)' }}</span>
+                   <input type="file" @change="handleLessonPlanUpload" accept=".txt,.md" class="sr-only">
+                 </label>
+                 <span v-if="lessonPlanName" class="ml-3 text-sm text-gray-500 truncate">{{ lessonPlanName }}</span>
+               </div>
+             </div>
 
-              <div class="space-y-2">
-                <div v-for="(option, optionIndex) in question.options" :key="optionIndex" class="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    :name="'correct-' + index"
-                    :checked="optionIndex === question.correctIndex"
-                    disabled
-                    class="text-primary-600"
-                  />
-                  <span :class="{ 'text-green-600 font-medium': optionIndex === question.correctIndex }">
-                    {{ option.text }}
-                  </span>
+             <!-- Stepped Lesson Builder -->
+             <div v-if="newQuiz.lessonType === 'steps' && isPaidUser" class="mt-4 border p-4 rounded-md space-y-3">
+                <label class="block text-sm font-medium text-gray-700">Lesson Steps:</label>
+               <div v-for="(step, index) in newQuiz.lessonSteps" :key="index" class="border p-3 rounded bg-gray-50 relative">
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Step {{ index + 1 }}</label>
+                 <textarea v-model="step.content" rows="3" placeholder="Step content (Markdown supported)" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                  <button @click="removeLessonStep(index)" class="absolute top-1 right-1 text-red-500 hover:text-red-700 p-1 rounded-full bg-white bg-opacity-50 hover:bg-opacity-80">
+                    <IconService name="trash" size="4" />
+                  </button>
+               </div>
+               <button @click="addLessonStep" type="button" class="mt-2 text-sm text-indigo-600 hover:text-indigo-800 flex items-center">
+                 <IconService name="plus-circle" size="5" class="mr-1" /> Add Step
+               </button>
+             </div>
+             
+             <!-- Question Generation -->
+             <div v-if="newQuiz.lessonPlan || (newQuiz.lessonType === 'steps' && newQuiz.lessonSteps?.length > 0)" class="mt-4 pt-4 border-t">
+              <label for="question-count" class="block text-sm font-medium text-gray-700">5. Generate Questions (Optional)</label>
+              <div class="mt-1 flex items-center space-x-2">
+                <input type="number" id="question-count" v-model.number="newQuiz.questionCount" min="1" max="10" class="w-20 border border-gray-300 rounded-md shadow-sm py-1 px-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                <button 
+                    @click="generateQuestionsFromLesson" 
+                    :disabled="generatingQuestions || (!newQuiz.lessonPlan && !(newQuiz.lessonType === 'steps' && newQuiz.lessonSteps.some(step => step.content?.trim()))) " 
+                    class="inline-flex items-center px-4 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                  {{ generatingQuestions ? 'Generating...' : 'Generate Questions (AI)' }}
+                </button>
+              </div>
+              <p v-if="generationError" class="text-red-600 text-sm mt-2">{{ generationError }}</p>
+            </div>
+          </div>
+
+          <!-- 6. Manually Added Questions -->
+           <div class="mt-4 pt-4 border-t">
+             <h4 class="text-sm font-medium text-gray-700 mb-2">6. Questions (Add Manually or Edit Generated)</h4>
+            <div v-if="newQuiz.questions.length === 0" class="text-sm text-gray-500 italic">
+              No questions added yet. Use the generator above or add manually.
+            </div>
+            <div v-else class="space-y-3">
+              <div v-for="(question, index) in newQuiz.questions" :key="index" class="border p-3 rounded bg-gray-50 space-y-2 relative">
+                <label class="block text-xs font-medium text-gray-600">Question {{ index + 1 }}</label>
+                <textarea v-model="question.text" rows="2" placeholder="Question text" class="block w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 sm:text-sm"></textarea>
+                <label class="block text-xs font-medium text-gray-600 mt-1">Options (Mark Correct)</label>
+                <div v-for="(option, optIndex) in question.options" :key="optIndex" class="flex items-center space-x-2">
+                  <input type="radio" :name="`correct-${index}`" :value="optIndex" :checked="question.correctIndex === optIndex" @change="question.correctIndex = optIndex" class="form-radio h-4 w-4 text-indigo-600">
+                  <input type="text" v-model="option.text" placeholder="Option text" class="flex-grow border border-gray-300 rounded-md shadow-sm py-1 px-2 sm:text-sm">
+                  <button @click="removeManualOption(index, optIndex)" class="text-red-500 hover:text-red-700 p-0.5 rounded-full bg-white bg-opacity-50 hover:bg-opacity-80">
+                    <IconService name="x" size="4" />
+                  </button>
                 </div>
+                <button @click="addManualOption(index)" type="button" class="text-xs text-indigo-600 hover:text-indigo-800 flex items-center">
+                   <IconService name="plus-circle" size="4" class="mr-1" /> Add Option
+                </button>
+                 <button @click="removeQuestion(index)" class="absolute top-1 right-1 text-red-500 hover:text-red-700 p-1 rounded-full bg-white bg-opacity-50 hover:bg-opacity-80">
+                   <IconService name="trash" size="4" />
+                 </button>
               </div>
             </div>
-          </div>
+             <button @click="addQuestion" type="button" class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 flex items-center">
+               <IconService name="plus-circle" size="5" class="mr-1" /> Add Question Manually
+             </button>
+           </div>
+        </div>
 
-          <div class="flex justify-end space-x-4 sticky bottom-0 bg-white py-4">
-            <button
-              @click="showCreateModal = false"
-              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              @click="saveNewQuiz"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-              data-testid="quiz-save-button"
-            >
-              Create Quiz
-            </button>
-          </div>
+        <!-- Modal Footer -->
+        <div class="mt-6 pt-4 border-t flex justify-end space-x-3">
+          <button 
+            @click="saveNewQuiz"
+            :disabled="!isCreateFormValid || savingQuiz" 
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+             <BaseAnimation v-if="savingQuiz" animation-name="dots" class="w-6 h-6 mr-2" />
+            {{ savingQuiz ? 'Saving...' : 'Create Quiz' }}
+          </button>
         </div>
       </div>
     </div>
@@ -411,7 +364,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
 import BaseAnimation from './BaseAnimation.vue';
@@ -458,6 +411,10 @@ export default {
     const newBadgeImageName = ref('');
     const newBadgeImageInput = ref(null);
     const printingQuizId = ref(null);
+    const lessonPlanFile = ref(null);
+    const lessonPlanName = ref('');
+    const generatingQuestions = ref(false);
+    const generationError = ref(null);
 
     // Computed property for paid status
     const isPaidUser = computed(() => user.value?.paid === true);
@@ -469,6 +426,14 @@ export default {
 
     // Default badge URL
     const defaultBadgeUrl = "https://res.cloudinary.com/front-end-foxes/image/upload/v1745952718/differentest-lesson-images/grlih7sjws2vfu5as7dx.png";
+
+    const isCreateFormValid = computed(() => {
+      return (
+        !!newQuiz.value.classId && 
+        !!newQuiz.value.title?.trim() &&
+        newQuiz.value.questions?.length > 0 // Also require questions
+      );
+    });
 
     const loadQuizzes = async () => {
       if (!user.value) return;
@@ -665,19 +630,52 @@ export default {
       }
     };
 
-    // Function to generate questions (used by both full lesson and steps)
+    const readFileAsText = (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsText(file);
+      });
+    };
+
+    const handleLessonPlanUpload = async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        lessonPlanFile.value = file;
+        lessonPlanName.value = file.name;
+        try {
+          newQuiz.value.lessonPlan = await readFileAsText(file);
+          // Clear generated questions if a new file is uploaded
+          newQuiz.value.questions = []; 
+          generationError.value = null; // Clear previous errors
+        } catch (err) {
+          console.error("Error reading lesson plan file:", err);
+          showError("Failed to read the lesson plan file.");
+          newQuiz.value.lessonPlan = ''; // Clear content on error
+          lessonPlanName.value = '';
+          lessonPlanFile.value = null;
+        }
+      } else {
+        // Handle case where user cancels file selection
+        lessonPlanFile.value = null;
+        lessonPlanName.value = '';
+        newQuiz.value.lessonPlan = ''; 
+        newQuiz.value.questions = [];
+      }
+    };
+
     const generateQuestionsFromLesson = async () => {
         let contentToProcess = '';
         if (newQuiz.value.lessonType === 'full') {
             contentToProcess = newQuiz.value.lessonPlan;
         } else if (newQuiz.value.lessonType === 'steps' && isPaidUser.value) {
-            // Filter out empty steps before joining
-            const nonEmptySteps = newQuiz.value.lessonSteps.filter(step => step.trim() !== '');
+            const nonEmptySteps = newQuiz.value.lessonSteps.filter(step => step.content?.trim() !== '');
             if (nonEmptySteps.length === 0) {
                  showError('Please add content to at least one lesson step.');
                  return;
             }
-            contentToProcess = nonEmptySteps.join('\\n\\n---\\n\\n'); // Combine steps
+            contentToProcess = nonEmptySteps.map(step => step.content).join('\n\n---\n\n'); // Combine step content
         } else {
             showError('Invalid lesson type or not authorized.');
             return;
@@ -688,20 +686,21 @@ export default {
             return;
         }
 
+        generatingQuestions.value = true; // Set loading state
+        generationError.value = null; // Clear previous error
         try {
-            loading.value = true;
             const generatedQuiz = await FirebaseService.generateQuiz(contentToProcess, newQuiz.value.questionCount);
             newQuiz.value.questions = generatedQuiz.questions;
             showSuccess('Questions generated successfully!');
         } catch (error) {
             console.error('Error generating questions:', error);
+            generationError.value = 'Failed to generate questions: ' + error.message; // Set error message
             showError('Failed to generate questions: ' + error.message);
         } finally {
-            loading.value = false;
+            generatingQuestions.value = false; // Clear loading state
         }
     };
 
-    // Function to generate and print PDF
     const printQuizPdf = async (quiz) => {
       if (!quiz) return;
 
@@ -720,14 +719,15 @@ export default {
       printingQuizId.value = quiz.id;
       try {
         // 1. Create HTML content
-        let lessonContentHtml = '';
-        if (quiz.lessonType === 'steps' && quiz.lessonSteps && quiz.lessonSteps.length > 0) {
-          lessonContentHtml = '<h2>Lesson Steps</h2><ol>' +
-            quiz.lessonSteps.map(step => `<li>${step.replace(/\n/g, '<br/>')}</li>`).join('') +
-            '</ol>';
-        } else if (quiz.lessonPlan) {
-          lessonContentHtml = `<h2>Lesson Plan</h2><p>${quiz.lessonPlan.replace(/\n/g, '<br/>')}</p>`;
-        }
+        // Remove lessonContentHtml generation
+        // let lessonContentHtml = '';
+        // if (quiz.lessonType === 'steps' && quiz.lessonSteps && quiz.lessonSteps.length > 0) {
+        //   lessonContentHtml = '<h2>Lesson Steps</h2><ol>' +
+        //     quiz.lessonSteps.map(step => `<li>${step.replace(/\n/g, '<br/>')}</li>`).join('') +
+        //     '</ol>';
+        // } else if (quiz.lessonPlan) {
+        //   lessonContentHtml = `<h2>Lesson Plan</h2><p>${quiz.lessonPlan.replace(/\n/g, '<br/>')}</p>`;
+        // }
 
         let quizContentHtml = '';
         if (quiz.questions && quiz.questions.length > 0) {
@@ -735,7 +735,7 @@ export default {
             quiz.questions.map((q, index) => {
               let optionsHtml = '<ul style="list-style: none; padding-left: 0;">' +
                 q.options.map((opt, optIndex) => {
-                  const symbol = '○';
+                  const symbol = '○'; // Use empty circle for worksheet style
                   return `<li style="margin-bottom: 5px;">${symbol} ${opt.text}</li>`;
                 }).join('') +
                 '</ul>';
@@ -766,8 +766,7 @@ export default {
           <body>
               <h1>Quiz: ${quiz.title}</h1>
               <p><em>Class: ${quiz.className || 'N/A'}</em></p>
-              ${lessonContentHtml}
-              <hr style="margin: 30px 0;" />
+              <!-- Remove lessonContentHtml and hr -->
               ${quizContentHtml}
           </body>
           </html>
@@ -787,7 +786,7 @@ export default {
         showSuccess('PDF generated successfully!');
 
       } catch (err) {
-        console.error('Error generating PDF:', err);
+        console.error('Error generating PDF:', err); 
         showError('Failed to generate PDF. Please try again.');
       } finally {
         printingQuizId.value = null; // Reset printing state
@@ -893,14 +892,39 @@ export default {
       }
     };
 
-    const readFileAsText = (file) => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (event) => resolve(event.target.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsText(file);
+    // --- Manual Question Editing --- 
+    const addQuestion = () => {
+      newQuiz.value.questions.push({
+        text: '',
+        options: [{ text: '' }, { text: '' }], // Start with two empty options
+        correctIndex: 0,
       });
     };
+
+    const removeQuestion = (index) => {
+      newQuiz.value.questions.splice(index, 1);
+    };
+
+    const addManualOption = (questionIndex) => {
+      newQuiz.value.questions[questionIndex].options.push({ text: '' });
+    };
+
+    const removeManualOption = (questionIndex, optionIndex) => {
+      // Prevent removing the last option
+      if (newQuiz.value.questions[questionIndex].options.length > 1) {
+           // Adjust correctIndex if the removed option was the correct one or before it
+           const currentCorrect = newQuiz.value.questions[questionIndex].correctIndex;
+           if (optionIndex === currentCorrect) {
+               newQuiz.value.questions[questionIndex].correctIndex = 0; // Reset to first option
+           } else if (optionIndex < currentCorrect) {
+               newQuiz.value.questions[questionIndex].correctIndex--;
+           }
+           newQuiz.value.questions[questionIndex].options.splice(optionIndex, 1);
+      } else {
+          showError("Each question must have at least one option.");
+      }
+    };
+    // -------------------------------
 
     onMounted(() => {
       loadQuizzes();
@@ -939,7 +963,17 @@ export default {
       saveNewQuiz,
       readFileAsText,
       printingQuizId,
-      printQuizPdf
+      printQuizPdf,
+      isCreateFormValid,
+      lessonPlanFile,
+      lessonPlanName,
+      handleLessonPlanUpload,
+      generatingQuestions,
+      generationError,
+      addQuestion,
+      removeQuestion,
+      addManualOption,
+      removeManualOption,
     };
   }
 };
