@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-8">
     <!-- Remove Class Search Section --> 
     <!-- 
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -77,114 +77,118 @@
     <!-- Pending Classes -->
     <div v-if="pendingClasses.length > 0" class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Pending Classes</h2>
-      <div class="space-y-4">
-        <div 
-          v-for="classItem in pendingClasses" 
-          :key="classItem.id" 
-          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
-              <p class="text-sm text-gray-600">Teacher: {{ classItem.teacherName }}</p>
-              <p class="text-sm text-gray-600">Class Code: {{ classItem.code }}</p>
+      <template v-if="hasMounted">
+        <div class="space-y-4">
+          <div 
+            v-for="classItem in pendingClasses" 
+            :key="classItem.id" 
+            class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-semibold">{{ classItem.name }}</h3>
+                <p class="text-sm text-gray-600">Teacher: {{ classItem.teacherName }}</p>
+                <p class="text-sm text-gray-600">Class Code: {{ classItem.code }}</p>
+              </div>
+              <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                Pending Approval
+              </span>
             </div>
-            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
-              Pending Approval
-            </span>
           </div>
         </div>
-      </div>
+      </template>
+      <div v-else class="text-center py-4 text-gray-400 italic">Loading pending requests...</div>
     </div>
 
     <!-- My Classes -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Enrolled Classes</h2>
-      <div v-if="loading" class="text-center py-4">
-        <BaseAnimation type="loading" :loop="true" />
-      </div>    
-      
-      <div v-else-if="error" class="text-red-600">
-        {{ error }}
-      </div>
-      
-      <div v-else-if="enrolledClasses.length === 0" class="text-gray-500 text-center py-4">
-        You are not enrolled in any classes yet.
-      </div>
-      
-      <div v-else class="space-y-6">
-        <div 
-          v-for="classItem in enrolledClasses" 
-          :key="classItem.id" 
-          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="flex items-center ">
-                <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
-                <span :class="{
-                  'bg-yellow-100 text-yellow-800': classItem.enrollmentStatus === 'pending',
-                  'bg-green-100 text-green-800': classItem.enrollmentStatus === 'accepted',
-                  'bg-red-100 text-red-800': classItem.enrollmentStatus === 'rejected',
-                  'bg-gray-100 text-gray-800': !classItem.enrollmentStatus
-                }" class="px-3 ml-5 py-1 rounded-full text-sm font-medium">
-                  {{ 
-                    classItem.enrollmentStatus === 'accepted' ? 'Enrolled' : 
-                    classItem.enrollmentStatus === 'pending' ? 'Pending Approval' :
-                    classItem.enrollmentStatus === 'rejected' ? 'Rejected' :
-                    'Not Enrolled' 
-                  }}
-                </span>
-              </div>
-              <div class="flex items-center space-x-4 mt-2">
-                <div class="flex items-center space-x-2">
-                  <IconService name="user" size="4" />
-                  <p class="text-sm font-medium text-gray-700 pt-4">
-                    Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
-                  </p>
+      <template v-if="hasMounted">
+        <div v-if="loading" class="text-center py-4">
+          <BaseAnimation type="loading" :loop="true" />
+        </div>    
+        <div v-else-if="error" class="text-red-600">
+          {{ error }}
+        </div>
+        <div v-else-if="enrolledClasses.length === 0" class="text-gray-500 text-center py-4">
+          You are not enrolled in any classes yet.
+        </div>
+        <div v-else class="space-y-6">
+          <div 
+            v-for="classItem in enrolledClasses" 
+            :key="classItem.id" 
+            class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center ">
+                  <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
+                  <span :class="{
+                    'bg-yellow-100 text-yellow-800': classItem.enrollmentStatus === 'pending',
+                    'bg-green-100 text-green-800': classItem.enrollmentStatus === 'accepted',
+                    'bg-red-100 text-red-800': classItem.enrollmentStatus === 'rejected',
+                    'bg-gray-100 text-gray-800': !classItem.enrollmentStatus
+                  }" class="px-3 ml-5 py-1 rounded-full text-sm font-medium">
+                    {{ 
+                      classItem.enrollmentStatus === 'accepted' ? 'Enrolled' : 
+                      classItem.enrollmentStatus === 'pending' ? 'Pending Approval' :
+                      classItem.enrollmentStatus === 'rejected' ? 'Rejected' :
+                      'Not Enrolled' 
+                    }}
+                  </span>
                 </div>
-                <div class="flex items-center space-x-2">
-                  <IconService name="key" size="4" />
-                  <p class="text-sm font-medium text-gray-700 pt-4">
-                    Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            <!--<button
-              @click="leaveClass(classItem.id)"
-              :disabled="classItem.enrollmentStatus !== 'accepted'"
-              :class="{
-                'bg-red-600 hover:bg-red-700': classItem.enrollmentStatus === 'accepted',
-                'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus !== 'accepted'
-              }"
-              class="px-4 py-2 text-white rounded-lg transition-colors flex items-center space-x-1"
-            >
-              <span>Leave Class</span>
-            </button>-->
-          </div>
-
-          <!-- Class Progress -->
-          <div v-if="classItem.enrollmentStatus === 'accepted'" class="mt-4">
-            <h4 class="font-lg font-bold mb-2">Quizzes</h4>
-          
-            <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
-              No quizzes available yet.
-            </div>
-            <div v-else class="space-y-2">
-              <div 
-                v-for="quiz in classItem.quizzes" 
-                :key="quiz.id" 
-                class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
-              >
-                <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="flex justify-between items-start">
-                  <div>
-                    <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
-                    <p class="text-sm text-gray-600 mt-1">
-                      Questions: {{ quiz.questionCount || 0 }}
+                <div class="flex items-center space-x-4 mt-2">
+                  <div class="flex items-center space-x-2">
+                    <IconService name="user" size="4" />
+                    <p class="text-sm font-medium text-gray-700 pt-4">
+                      Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
                     </p>
                   </div>
                   <div class="flex items-center space-x-2">
+                    <IconService name="key" size="4" />
+                    <p class="text-sm font-medium text-gray-700 pt-4">
+                      Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <!--<button
+                @click="leaveClass(classItem.id)"
+                :disabled="classItem.enrollmentStatus !== 'accepted'"
+                :class="{
+                  'bg-red-600 hover:bg-red-700': classItem.enrollmentStatus === 'accepted',
+                  'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus !== 'accepted'
+                }"
+                class="px-4 py-2 text-white rounded-lg transition-colors flex items-center space-x-1"
+              >
+                <span>Leave Class</span>
+              </button>-->
+            </div>
+
+            <!-- Class Progress -->
+            <div v-if="classItem.enrollmentStatus === 'accepted'" class="mt-4">
+              <h4 class="font-lg font-bold mb-2">Quizzes</h4>
+            
+              <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
+                No quizzes available yet.
+              </div>
+              <div v-else class="space-y-2">
+                <div 
+                  v-for="quiz in classItem.quizzes" 
+                  :key="quiz.id"
+                  class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200 flex justify-between items-start"
+                >
+                  <!-- Always show quiz title and details -->
+                  <div>
+                    <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
+                    <p class="text-sm text-gray-600 mt-1">
+                      Questions: {{ quiz.questionCount || quiz.questions?.length || 0 }}
+                    </p>
+                  </div>
+
+                  <!-- Conditionally show attempt details OR Take Quiz button -->
+                  <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="flex items-center space-x-2">
+                    <!-- Attempt Details -->
                     <span class="text-sm text-gray-500">
                       Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
                       <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
@@ -217,124 +221,144 @@
                       </button>
                     </div>
                   </div>
+                  <div v-else>
+                    <!-- Take Quiz Button for unattempted quizzes -->
+                    <button 
+                      @click="startQuiz(classItem.id, quiz)"
+                      class="text-sm px-3 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 font-medium"
+                    >
+                      Take Quiz
+                    </button>
+                  </div>
                 </div>
-  
               </div>
             </div>
-          </div>
-          <div v-else-if="classItem.enrollmentStatus === 'pending'" class="mt-4 text-yellow-600">
-            <p class="text-sm">Your enrollment request is pending approval. You will be able to access quizzes once approved.</p>
-          </div>
-          <div v-else-if="classItem.enrollmentStatus === 'rejected'" class="mt-4 text-red-600">
-            <p class="text-sm">Your enrollment request was rejected. Please contact the teacher if you believe this is an error.</p>
+            <div v-else-if="classItem.enrollmentStatus === 'pending'" class="mt-4 text-yellow-600">
+              <p class="text-sm">Your enrollment request is pending approval. You will be able to access quizzes once approved.</p>
+            </div>
+            <div v-else-if="classItem.enrollmentStatus === 'rejected'" class="mt-4 text-red-600">
+              <p class="text-sm">Your enrollment request was rejected. Please contact the teacher if you believe this is an error.</p>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- Open Classes -->
     <div v-if="openClasses?.length > 0" class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Open Classes</h2>
-      <div v-if="loading" class="text-center py-4">
-        <BaseAnimation type="loading" :loop="true" />
-      </div>    
-      
-      <div v-else-if="error" class="text-red-600">
-        {{ error }}
-      </div>
-      
-      <div v-else class="space-y-6">
-        <div 
-          v-for="classItem in openClasses" 
-          :key="classItem.id" 
-          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <div class="flex items-center">
-                <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
-                <span class="px-3 ml-5 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  Open Class
-                </span>
-              </div>
-              <div class="flex items-center space-x-4 mt-2">
-                <div class="flex items-center space-x-2">
-                  <IconService name="user" size="4" />
-                  <p class="text-sm font-medium text-gray-700 pt-4">
-                    Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
-                  </p>
+      <template v-if="hasMounted">
+        <div v-if="loading" class="text-center py-4">
+          <BaseAnimation type="loading" :loop="true" />
+        </div>    
+        <div v-else-if="error" class="text-red-600">
+          {{ error }}
+        </div>
+        <div v-else class="space-y-6">
+          <div 
+            v-for="classItem in openClasses" 
+            :key="classItem.id" 
+            class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
+          >
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center">
+                  <h3 class="text-xl font-bold text-gray-900">{{ classItem.name || 'Unnamed Class' }}</h3>
+                  <span class="px-3 ml-5 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    Open Class
+                  </span>
                 </div>
-                <div class="flex items-center space-x-2">
-                  <IconService name="key" size="4" />
-                  <p class="text-sm font-medium text-gray-700 pt-4">
-                    Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Class Progress -->
-          <div class="mt-4">
-            <h4 class="font-lg font-bold mb-2">Attempted Quizzes</h4>
-            
-          
-            <div v-if="!classItem.quizzes?.length" class="text-gray-500 text-sm">
-              No quizzes available yet.
-            </div>
-            <div v-else class="space-y-2">
-              <template v-for="quiz in classItem.quizzes" :key="quiz.id">
-                <div 
-                  v-if="getQuizAttempt(classItem.id, quiz.id)" 
-                  class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
-                >
-                  <div class="flex justify-between items-start">
-                    <div>
-                      <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
-                      <p class="text-sm text-gray-600 mt-1">
-                        Questions: {{ quiz.questionCount || 0 }}
-                      </p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-sm text-gray-500">
-                        Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
-                        <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
-                          - Review quiz and claim badge
-                        </span>
-                      </span>
-                      <div class="flex space-x-2">
-                        <button
-                          @click="reviewQuiz(classItem.id, quiz.id)"
-                          class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
-                        >
-                          <span>Review Quiz</span>
-                          <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
-                        </button>
-                        <a
-                          v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
-                          :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="text-blue-600 hover:text-blue-800"
-                        >
-                          Verify Badge
-                        </a>
-                        <button
-                          v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
-                          @click="startQuiz(classItem.id, quiz)"
-                          class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
-                        >
-                          Retake Quiz
-                        </button>
-                      </div>
-                    </div>
+                <div class="flex items-center space-x-4 mt-2">
+                  <div class="flex items-center space-x-2">
+                    <IconService name="user" size="4" />
+                    <p class="text-sm font-medium text-gray-700 pt-4">
+                      Teacher: <span class="text-primary-600">{{ classItem.teacherName || 'Unknown Teacher' }}</span>
+                    </p>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <IconService name="key" size="4" />
+                    <p class="text-sm font-medium text-gray-700 pt-4">
+                      Class Code: <span class="font-mono text-primary-600">{{ classItem.code || 'N/A' }}</span>
+                    </p>
                   </div>
                 </div>
-              </template>
+              </div>
+            </div>
+
+            <!-- Class Progress -->
+            <div class="mt-4">
+              <h4 class="font-lg font-bold mb-2">Quizzes</h4>
+              
+            
+              <div v-if="!classItem.quizzes?.length" class="text-gray-500 text-sm">
+                No quizzes available yet.
+              </div>
+              <div v-else class="space-y-2">
+                 <!-- Remove template wrapper and v-if from the quiz div -->
+                 <div 
+                    v-for="quiz in classItem.quizzes" 
+                    :key="quiz.id"
+                    class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200 flex justify-between items-start"
+                  >
+                    <!-- Always show quiz title and details -->
+                     <div>
+                        <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
+                        <p class="text-sm text-gray-600 mt-1">
+                           Questions: {{ quiz.questionCount || quiz.questions?.length || 0 }}
+                        </p>
+                      </div>
+
+                    <!-- Conditionally show attempt details OR Take Quiz button -->
+                    <div v-if="getQuizAttempt(classItem.id, quiz.id)" class="flex items-center space-x-2">
+                        <!-- Attempt Details -->
+                        <span class="text-sm text-gray-500">
+                          Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
+                          <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
+                            - Review quiz and claim badge
+                          </span>
+                        </span>
+                        <div class="flex space-x-2">
+                          <button
+                            @click="reviewQuiz(classItem.id, quiz.id)"
+                            class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                          >
+                            <span>Review Quiz</span>
+                            <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
+                          </button>
+                          <a
+                            v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
+                            :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-blue-600 hover:text-blue-800"
+                          >
+                            Verify Badge
+                          </a>
+                          <button
+                            v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
+                            @click="startQuiz(classItem.id, quiz)"
+                            class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
+                          >
+                            Retake Quiz
+                          </button>
+                        </div>
+                    </div>
+                     <div v-else>
+                        <!-- Take Quiz Button for unattempted quizzes -->
+                        <button 
+                          @click="startQuiz(classItem.id, quiz)"
+                          class="text-sm px-3 py-2 bg-primary-500 text-white rounded hover:bg-primary-600 font-medium"
+                        >
+                          Take Quiz
+                        </button>
+                    </div>
+                  </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </template>
+      <div v-else class="text-center py-4 text-gray-400 italic">Loading open classes...</div>
     </div>
 
     <!-- Quiz Modal -->
@@ -533,6 +557,9 @@ export default {
 
     // Add ref for join code
     const joinClassCode = ref('');
+    const joiningClass = ref(false);
+    const attemptToReview = ref(null);
+    const hasMounted = ref(false);
 
     // Filter classes to only show enrolled ones
     const filteredClasses = computed(() => {
@@ -612,6 +639,7 @@ export default {
         showError('Failed to load classes');
       } finally {
         loading.value = false;
+        hasMounted.value = true;
       }
     };
 
@@ -1167,7 +1195,7 @@ export default {
         );
         
         // Sort quizzes by creation time in ascending order (oldest first)
-        quizzes.value = quizzesWithClassNames.sort((a, b) => {
+        classes.value = quizzesWithClassNames.sort((a, b) => {
           const timeA = a.createdAt?.toDate?.() || new Date(0);
           const timeB = b.createdAt?.toDate?.() || new Date(0);
           return timeA - timeB;
@@ -1189,6 +1217,7 @@ export default {
 
       try {
         loading.value = true;
+        joiningClass.value = true;
         // Assuming enrollInClass can handle a class code OR class ID
         const result = await FirebaseService.enrollInClass(code, user.value.uid); 
         
@@ -1204,6 +1233,7 @@ export default {
         showError('An error occurred while trying to join the class.');
       } finally {
         loading.value = false;
+        joiningClass.value = false;
       }
     };
 
@@ -1278,7 +1308,10 @@ export default {
       selectedClassId,
       currentClassId,
       joinClassCode,
-      joinClassWithCode
+      joinClassWithCode,
+      joiningClass,
+      attemptToReview,
+      hasMounted
     };
   }
 };
