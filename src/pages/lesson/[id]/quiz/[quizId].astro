@@ -109,9 +109,8 @@ const { id, quizId } = Astro.params; // id is the classId, quizId is the quizId
   </head>
   <body>
     <div class="lesson-container">
-      {/* Render the new SteppedLessonQuiz component */}
       <SteppedLessonQuiz client:load quiz={quiz} classId={id} />
     </div>
-    {/* Removed skin application script */}
+   
   </body>
 </html>

@@ -1,6 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- Class Search -->
+    <!-- Remove Class Search Section --> 
+    <!-- 
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Find Classes</h2>
       <div class="flex gap-4">
@@ -18,7 +19,6 @@
         </button>
       </div>
       
-      <!-- Search Results -->
       <div v-if="searchResults.length > 0" class="mt-4 space-y-4">
         <div 
           v-for="classItem in searchResults" 
@@ -33,7 +33,7 @@
             </div>
             <button
               v-if="!isEnrolled(classItem.id)"
-              @click="requestToJoin(classItem.id)"
+              @click="requestToJoin(classItem)"
               class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
             >
               Request to Join
@@ -46,6 +46,31 @@
             </span>
           </div>
         </div>
+      </div>
+    </div>
+    --> 
+
+   
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-4">Join a Class</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        Enter the class code provided by your teacher to join or request access.
+      </p>
+      <div class="flex gap-4">
+        <input
+          v-model.trim="joinClassCode"
+          type="text"
+          placeholder="Enter class code..."
+          class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          @keyup.enter="joinClassWithCode" 
+        />
+        <button
+          @click="joinClassWithCode"
+          :disabled="!joinClassCode || loading"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+        >
+          Join Class
+        </button>
       </div>
     </div>
 
@@ -506,9 +531,8 @@ export default {
       { id: 'achievements', name: 'Achievements' }
     ];
 
-    // Add search query ref and filtered classes computed property
-    const searchQuery = ref('');
-    const searchResults = ref([]);
+    // Add ref for join code
+    const joinClassCode = ref('');
 
     // Filter classes to only show enrolled ones
     const filteredClasses = computed(() => {
@@ -517,50 +541,6 @@ export default {
 
     const isEnrolled = (classId) => {
       return enrolledClasses.value.some(c => c.id === classId);
-    };
-
-    const searchClasses = async () => {
-      if (!searchQuery.value.trim()) {
-        searchResults.value = [];
-        return;
-      }
-
-      try {
-        loading.value = true;
-        const { classes: foundClasses } = await FirebaseService.getClasses({
-          searchQuery: searchQuery.value,
-          includeTeacherInfo: true,
-          isPublic: false
-        });
-        
-        // Filter out classes where user is already enrolled
-        searchResults.value = foundClasses.filter(classItem => 
-          !enrolledClasses.value.some(enrolled => enrolled.id === classItem.id)
-        );
-      } catch (err) {
-        console.error('Error searching classes:', err);
-        showError('Failed to search classes');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const requestToJoin = async (classId) => {
-      if (!user.value?.uid) return;
-      
-      try {
-        const result = await FirebaseService.enrollInClass(classId, user.value.uid);
-        if (result.success) {
-          showSuccess(result.message);
-          // Refresh the search results to update the UI
-          await searchClasses();
-        } else {
-          showError(result.message);
-        }
-      } catch (err) {
-        console.error('Error requesting to join class:', err);
-        showError('Failed to send join request');
-      }
     };
 
     const loadClasses = async () => {
@@ -1200,7 +1180,32 @@ export default {
       }
     };
 
-    
+    const joinClassWithCode = async () => {
+      const code = joinClassCode.value.trim();
+      if (!code || !user.value?.uid) {
+        showError('Please enter a valid class code.');
+        return;
+      }
+
+      try {
+        loading.value = true;
+        // Assuming enrollInClass can handle a class code OR class ID
+        const result = await FirebaseService.enrollInClass(code, user.value.uid); 
+        
+        if (result.success) {
+          showSuccess(result.message || 'Successfully joined/requested class!');
+          joinClassCode.value = ''; // Clear input on success
+          await loadClasses(); // Refresh class lists
+        } else {
+          showError(result.message || 'Failed to join class. Invalid code or already enrolled?');
+        }
+      } catch (err) {
+        console.error('Error joining class with code:', err);
+        showError('An error occurred while trying to join the class.');
+      } finally {
+        loading.value = false;
+      }
+    };
 
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
@@ -1260,10 +1265,6 @@ export default {
       activeTab,
       tabs,
       filteredClasses,
-      searchQuery,
-      searchResults,
-      searchClasses,
-      requestToJoin,
       enrolledClasses,
       pendingClasses,
       openClasses,
@@ -1275,7 +1276,9 @@ export default {
       isEnrolled,
       loadQuizzes,
       selectedClassId,
-      currentClassId
+      currentClassId,
+      joinClassCode,
+      joinClassWithCode
     };
   }
 };

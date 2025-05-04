@@ -1064,73 +1064,125 @@ class FirebaseService {
     }
   }
 
-  static async enrollInClass(classId, studentId) {
+  static async enrollInClass(classIdentifier, studentId) {
     try {
-      if (!classId || !studentId) {
-        throw new Error('Class ID and Student ID are required');
+      if (!classIdentifier || !studentId) {
+        throw new Error('Class Identifier and Student ID are required');
       }
 
-      // Check if already enrolled
+      let classId = null;
+      let classData = null;
+      let classDoc = null;
+
+      // Check if identifier looks like a code (e.g., 6 uppercase alphanumeric) - adjust regex if needed
+      const isCodeFormat = /^[A-Z0-9]{6}$/.test(classIdentifier);
+
+      if (isCodeFormat) {
+        // Find class by code
+        const codeQuery = query(
+          collection(db, 'classes'),
+          where('code', '==', classIdentifier)
+        );
+        const codeSnapshot = await getDocs(codeQuery);
+        if (codeSnapshot.empty) {
+          return {
+            success: false,
+            message: 'Invalid class code',
+            status: 'error'
+          };
+        }
+        classDoc = codeSnapshot.docs[0];
+        classId = classDoc.id;
+        classData = classDoc.data();
+      } else {
+        // Assume it's a class ID
+        classId = classIdentifier;
+        const classRef = doc(db, 'classes', classId);
+        classDoc = await getDoc(classRef);
+        if (!classDoc.exists()) {
+          return {
+            success: false,
+            message: 'Class not found with the provided ID',
+            status: 'error'
+          };
+        }
+        classData = classDoc.data();
+      }
+
+      // Check if already enrolled or pending
       const enrollmentsQuery = query(
         collection(db, 'enrollments'),
         where('classId', '==', classId),
         where('studentId', '==', studentId)
       );
-      const querySnapshot = await getDocs(enrollmentsQuery);
+      const enrollmentSnapshot = await getDocs(enrollmentsQuery);
       
-      if (!querySnapshot.empty) {
-        return {
-          success: false,
-          message: 'You are already enrolled in this class',
-          status: 'error'
-        };
+      if (!enrollmentSnapshot.empty) {
+        const currentStatus = enrollmentSnapshot.docs[0].data().status;
+        if (currentStatus === 'accepted') {
+          return {
+            success: false,
+            message: 'You are already enrolled in this class',
+            status: 'enrolled'
+          };
+        } else if (currentStatus === 'pending') {
+           return {
+            success: false,
+            message: 'Your request to join this class is already pending approval',
+            status: 'pending'
+          };
+        } else if (currentStatus === 'rejected') {
+           return {
+            success: false,
+            message: 'Your previous request to join this class was rejected. Please contact the teacher.',
+            status: 'rejected'
+          };
+        }
       }
 
-      // Get class and student details for activity
-      const [classDoc, studentDoc] = await Promise.all([
-        getDoc(doc(db, 'classes', classId)),
-        getDoc(doc(db, 'users', studentId))
-      ]);
-
-      if (!classDoc.exists() || !studentDoc.exists()) {
-        throw new Error('Class or student not found');
+      // Get student details for activity log
+      const studentDoc = await getDoc(doc(db, 'users', studentId));
+      if (!studentDoc.exists()) {
+        return { success: false, message: 'Student profile not found', status: 'error' };
       }
-
-      const classData = classDoc.data();
       const studentData = studentDoc.data();
 
-      // Create enrollment
+      // Determine enrollment status based on class publicity
+      const enrollmentStatus = classData.isPublic ? 'accepted' : 'pending';
+      const activityType = classData.isPublic ? 'class_joined' : 'enrollment_request';
+      const successMessage = classData.isPublic ? 'Successfully joined public class!' : 'Enrollment request sent successfully';
+
+      // Create enrollment document
       const enrollmentData = {
         classId: classId,
         studentId: studentId,
-        status: 'pending',
-        enrolledAt: serverTimestamp()
+        status: enrollmentStatus,
+        enrolledAt: serverTimestamp() // Use enrolledAt consistently
       };
-
       const enrollmentRef = await addDoc(collection(db, 'enrollments'), enrollmentData);
 
       // Create activity record
       await addDoc(collection(db, 'activities'), {
-        type: 'enrollment_request',
+        type: activityType,
         classId: classId,
         className: classData.name,
         studentId: studentId,
         studentName: studentData.name,
         teacherId: classData.teacherId,
-        status: 'pending',
+        status: enrollmentStatus,
         timestamp: serverTimestamp()
       });
 
       return {
         success: true,
-        message: 'Enrollment request sent successfully',
-        status: 'pending'
+        message: successMessage,
+        status: enrollmentStatus
       };
     } catch (error) {
       console.error('Error enrolling in class:', error);
       return {
         success: false,
-        message: 'Failed to enroll in class',
+        message: 'Failed to enroll in class. Please check the code/ID and try again.', // More generic error
         status: 'error'
       };
     }
