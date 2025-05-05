@@ -191,31 +191,44 @@
                     <!-- Attempt Details -->
                     <span class="text-sm text-gray-500">
                       Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
-                      <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
-                        - Review quiz and claim badge
-                      </span>
                     </span>
                     <div class="flex space-x-2">
+                      <!-- Original Review Button - Conditionally change color if badge exists -->
                       <button
+                        v-if="!(getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge)"
                         @click="reviewQuiz(classItem.id, quiz.id)"
-                        class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                        class="text-sm font-medium rounded p-2 text-white flex items-center space-x-1" 
+                        :class="{
+                          'bg-amber-500 hover:bg-amber-600': getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge,
+                          'bg-green-500 hover:bg-green-600': !(getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge)
+                        }"
                       >
                         <span>Review Quiz</span>
                         <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
                       </button>
-                      <a
+                      <!-- New Review & Claim Button -->
+                      <button
+                        v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge"
+                        @click="reviewQuiz(classItem.id, quiz.id)"
+                        class="text-sm font-medium rounded bg-amber-500 p-2 text-white hover:bg-amber-600 flex items-center space-x-1"
+                      >
+                         <span>🏆 Review & Claim Badge</span>
+                      </button>
+                      <!-- Verify Badge Link -->
+                      <a 
                         v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
                         :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="text-blue-600 hover:text-blue-800"
+                        class="text-sm font-medium rounded bg-purple-500 p-2 text-white hover:bg-purple-600 flex items-center space-x-1"
                       >
-                        Verify Badge
+                        <span>View Badge</span> 
                       </a>
+                      <!-- Retake Button -->
                       <button
                         v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
                         @click="startQuiz(classItem.id, quiz)"
-                        class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
+                        class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
                       >
                         Retake Quiz
                       </button>
@@ -313,31 +326,44 @@
                         <!-- Attempt Details -->
                         <span class="text-sm text-gray-500">
                           Score: {{ getQuizAttempt(classItem.id, quiz.id).score }}%
-                          <span v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge" class="text-gray-600 ml-2">
-                            - Review quiz and claim badge
-                          </span>
                         </span>
                         <div class="flex space-x-2">
+                           <!-- Original Review Button - Conditionally change color if badge exists -->
                           <button
+                            v-if="!(getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge)"
                             @click="reviewQuiz(classItem.id, quiz.id)"
-                            class="text-sm font-medium rounded bg-green-500 p-2 text-white hover:text-gray-200 flex items-center space-x-1"
+                            class="text-sm font-medium rounded p-2 text-white flex items-center space-x-1" 
+                            :class="{
+                              'bg-amber-500 hover:bg-amber-600': getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge,
+                              'bg-green-500 hover:bg-green-600': !(getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge)
+                            }"
                           >
                             <span>Review Quiz</span>
                             <span v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge" class="ml-1">🏆</span>
                           </button>
+                          <!-- New Review & Claim Button -->
+                          <button
+                            v-if="getQuizAttempt(classItem.id, quiz.id).score === 100 && !getQuizAttempt(classItem.id, quiz.id).hasBadge"
+                            @click="reviewQuiz(classItem.id, quiz.id)"
+                            class="text-sm font-medium rounded bg-amber-400 p-2 text-white hover:bg-amber-600 flex items-center space-x-1"
+                          >
+                             <span>Review & Claim Badge 🏆</span>
+                          </button>
+                           <!-- Verify Badge Link -->
                           <a
                             v-if="getQuizAttempt(classItem.id, quiz.id)?.score === 100 && getQuizAttempt(classItem.id, quiz.id)?.hasBadge"
                             :href="`/badges/${getQuizAttempt(classItem.id, quiz.id)?.badgeId}`"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="text-blue-600 hover:text-blue-800"
+                            class="text-sm font-medium rounded bg-purple-500 p-2 text-white hover:bg-purple-600 flex items-center space-x-1"
                           >
-                            Verify Badge
+                             <span>View Badge</span> 
                           </a>
+                          <!-- Retake Button -->
                           <button
                             v-if="getQuizAttempt(classItem.id, quiz.id).score < 100"
                             @click="startQuiz(classItem.id, quiz)"
-                            class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:text-gray-200"
+                            class="text-sm font-medium rounded bg-blue-500 p-2 text-white hover:bg-blue-600"
                           >
                             Retake Quiz
                           </button>
@@ -390,11 +416,11 @@
 
         <div v-if="loading" class="text-center py-4">
           <BaseAnimation type="loading" :loop="true" />
+          <span>Loading review data...</span>
         </div>
 
         <div v-else-if="reviewData?.quiz" class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-green-50 to-teal-100">
           <h3 class="text-xl font-bold mb-4 text-gray-900">Review: {{ reviewData.quiz.title }}</h3>
-          
           <div class="mb-6 p-4 bg-white/80 rounded-lg shadow-inner">
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -420,29 +446,60 @@
                   <div 
                     v-for="(option, optionIndex) in question.options" 
                     :key="optionIndex"
+                    class="flex items-center space-x-2 p-2 rounded"
                     :class="{
-                      'text-green-600': optionIndex === question.correctIndex,
-                      'text-red-600': optionIndex === question.userAnswer && optionIndex !== question.correctIndex
+                      'bg-green-100 text-green-700 font-semibold': optionIndex === question.correctIndex,
+                      'bg-red-100 text-red-700 font-semibold': optionIndex === question.userAnswer && question.isCorrect === false
                     }"
-                    class="flex items-center space-x-2"
                   >
-                    <span v-if="optionIndex === question.correctIndex">✓</span>
-                    <span v-else-if="optionIndex === question.userAnswer">✗</span>
-                    <span v-else>&nbsp;&nbsp;</span>
+                    <!-- Refined Symbol Logic -->
+                    <span 
+                      v-if="optionIndex === question.correctIndex"
+                      class="w-4 inline-block text-center font-bold"
+                    >✓</span> 
+                    <span 
+                      v-else-if="optionIndex === question.userAnswer && question.isCorrect === false"
+                      class="w-4 inline-block text-center font-bold"
+                    >✗</span>
+                    <span 
+                      v-else
+                      class="w-4 inline-block"
+                    >&nbsp;</span>
+                    <!-- End Refined Symbol Logic -->
                     <span>{{ option.text }}</span>
                   </div>
                 </div>
               </div>
 
-              <div v-if="!question.isCorrect" class="mt-4">
+              <!-- Explanation Button/Display -->
+              <div v-if="question.isCorrect === false && typeof question.userAnswer === 'number'" class="mt-4">
                 <button
-                  @click="getExplanation(index)"
-                  class="text-primary-600 hover:text-primary-700 text-sm"
+                  @click="toggleExplanation(index)" 
+                  class="text-primary-600 hover:text-primary-700 text-sm flex items-center space-x-1"
                 >
-                  Get detailed explanation
+                  <span>{{ expandedExplanations[index] ? 'Hide' : 'Show' }} explanation</span>
+                  <!-- Replace IconService with SVG -->
+                  <svg 
+                    class="w-4 h-4 transform transition-transform" 
+                    :class="{ 'rotate-180': expandedExplanations[index] }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
                 </button>
-                <div v-if="explanations[index]" class="mt-2 p-3 bg-primary-50 rounded">
-                  {{ explanations[index] }}
+                <!-- Display area, shown only when expanded -->
+                <div v-if="expandedExplanations[index]" class="mt-2 p-3 bg-primary-50 rounded">
+                  <!-- Loading Indicator -->
+                  <div v-if="explanations[index] === 'loading'" class="flex space-x-2 text-sm text-gray-600">
+                     <BaseAnimation type="loading" :size="16" /> 
+                     <span>Generating explanation...</span>
+                  </div>
+                  <!-- Explanation Text or Error -->
+                  <p v-else class="text-sm text-gray-700">
+                    {{ explanations[index] || 'Could not load explanation.' }} 
+                  </p>
                 </div>
               </div>
             </div>
@@ -540,6 +597,7 @@ export default {
     const quizAttempts = ref({});
     const quizAttemptsWithBadges = ref({});
     const explanations = ref({});
+    const expandedExplanations = ref({});
     const quizStartTime = ref(0);
     const error = ref(null);
     const { showSuccess, showError } = useNotification();
@@ -922,10 +980,21 @@ export default {
       return Math.round((completedQuizzes / totalQuizzes) * 100);
     };
 
+    const toggleExplanation = (index) => {
+      expandedExplanations.value[index] = !expandedExplanations.value[index];
+      // Fetch explanation only if expanding and not already fetched
+      if (expandedExplanations.value[index] && !explanations.value[index]) {
+        getExplanation(index);
+      }
+    };
+
     const reviewQuiz = async (classId, quizId) => {
       try {
         loading.value = true;
         showReviewModal.value = true;
+        explanations.value = {}; // Clear previous explanations
+        expandedExplanations.value = {}; // Clear expanded state
+        reviewData.value = null; // Clear previous review data
         
         // Get the most recent quiz attempt
         const attempt = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);
@@ -936,7 +1005,7 @@ export default {
           return;
         }
         
-        // Get quiz details
+        // Get quiz details (contains the canonical questions and correct answers)
         const quizData = await FirebaseService.getQuiz(quizId);
         
         if (!quizData) {
@@ -945,7 +1014,7 @@ export default {
           return;
         }
         
-        // Get class details - check both enrolled and open classes
+        // Get class details
         let classData = enrolledClasses.value.find(c => c.id === classId);
         if (!classData) {
           classData = openClasses.value.find(c => c.id === classId);
@@ -957,31 +1026,46 @@ export default {
           return;
         }
 
-        // Check if badge exists in the badges collection
+        // Check for badge
         const badges = await FirebaseService.getUserBadges(user.value.uid);
         const hasBadge = badges.some(badge => 
           badge.metadata.quizId === quizId && 
           badge.metadata.userId === user.value.uid
         );
         
-        // Set the review data
+        // Construct reviewData
         reviewData.value = {
           quiz: {
             ...quizData,
-            questions: quizData.questions.map((q, index) => ({
-              ...q,
-              userAnswer: attempt.answers?.[index],
-              isCorrect: attempt.questionResults?.[index]?.isCorrect,
-              selectedOption: attempt.questionResults?.[index]?.selectedOption,
-              correctIndex: q.correctIndex
-            }))
+            questions: quizData.questions.map((canonicalQuestion, index) => {
+              // Find the corresponding question result within the `attempt.questions` array
+              // Let's assume it can be matched by index or a `questionIndex` property
+              const attemptQuestionData = attempt.questions?.find(q => q.questionIndex === index) || attempt.questions?.[index];
+
+              // Extract the user's selected answer index from the `selectedAnswer` property WITHIN the attempt's question data
+              const userAnswer = attemptQuestionData ? attemptQuestionData.selectedAnswer : undefined;
+              const correctIndex = canonicalQuestion.correctIndex; // Use correct index from the canonical quiz data
+              
+              // Re-calculate isCorrect based on the comparison
+              const isCorrect = (typeof userAnswer === 'number' && userAnswer === correctIndex);
+
+               // Debug log to verify calculation
+               console.log(`   Idx ${index}: User answered ${userAnswer} (from attempt.questions[${index}].selectedAnswer), Correct is ${correctIndex}, Calculated Correct: ${isCorrect}`);
+               // -------------------------------------
+
+              return {
+                ...canonicalQuestion, 
+                userAnswer: userAnswer, // Assign the extracted userAnswer to the reviewData question object
+                isCorrect: isCorrect,   // Newly calculated correctness
+              };
+            })
           },
           attempt: {
             score: attempt.score,
             correctAnswers: attempt.correctAnswers,
             totalQuestions: attempt.questionCount,
             timeSpent: attempt.timeSpent,
-            submittedAt: attempt.timestamp
+            submittedAt: attempt.timestamp // Use the attempt's timestamp
           },
           class: {
             id: classId,
@@ -989,8 +1073,7 @@ export default {
           },
           hasBadge
         };
-        
-        
+
       } catch (error) {
         console.error('Error loading quiz review:', error);
         showError('Failed to load quiz review');
@@ -1000,13 +1083,47 @@ export default {
     };
 
     const getExplanation = async (questionIndex) => {
-      if (!reviewData.value?.quiz) return;
+      // Add loading state immediately for feedback
+      explanations.value[questionIndex] = 'loading'; 
+      // Ensure reviewData and the specific question exist
+      if (!reviewData.value?.quiz?.questions?.[questionIndex]) {
+        explanations.value[questionIndex] = "Error: Question data is missing.";
+        console.error("Missing question data for explanation at index:", questionIndex);
+        return;
+      }
+
       try {
         const question = reviewData.value.quiz.questions[questionIndex];
-        const userAnswer = reviewData.value.quiz.questions[questionIndex].userAnswer;
-        const prompt = `Explain in simple, concise language why "${question.options[question.correctIndex].text}" is the correct answer 
-        to the question: "${question.text}". Only address how the correct answer is different from the student's chosen answer:
-         "${question.options[userAnswer].text}". Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
+        const userAnswerIndex = question.userAnswer; // May be undefined
+        const correctIndex = question.correctIndex;
+
+        // --- Enhanced Validation --- 
+        // 1. Check if userAnswerIndex is a valid number first
+        if (typeof userAnswerIndex !== 'number') {
+            explanations.value[questionIndex] = "Error: User answer not recorded for this question in the attempt.";
+            console.error("Invalid user answer index for explanation:", { question, userAnswerIndex, correctIndex });
+            return; // Exit early
+        }
+
+        // 2. Check other indices and options array existence
+        if (typeof correctIndex !== 'number' ||
+            !question.options || 
+            !question.options[correctIndex] ||
+            !question.options[userAnswerIndex]) { // Now userAnswerIndex is guaranteed to be a number
+            
+            explanations.value[questionIndex] = "Error: Could not retrieve valid answer/option details for explanation.";
+            console.error("Invalid correctIndex or options data for explanation:", { question, userAnswerIndex, correctIndex });
+            return;
+        }
+        // --- End Enhanced Validation ---
+
+        // Safe to access .text now
+        const correctAnswerText = question.options[correctIndex].text;
+        const userAnswerText = question.options[userAnswerIndex].text;
+
+        const prompt = `Explain in simple, concise language why \"${correctAnswerText}\" is the correct answer \
+        to the question: \"${question.text}\". Only address how the correct answer is different from the student's chosen answer:\
+         \"${userAnswerText}\". Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
         
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite"});
         const result = await model.generateContent(prompt);
@@ -1039,6 +1156,7 @@ export default {
     const closeReviewModal = () => {
       showReviewModal.value = false;
       explanations.value = {};
+      expandedExplanations.value = {}; // Clear expanded state on close
     };
 
     const calculateImprovement = async (classId, quizId, currentScore) => {
@@ -1279,6 +1397,7 @@ export default {
       quizCompleted,
       quizScore,
       explanations,
+      expandedExplanations,
       loadClasses,
       leaveClass,
       startQuiz,
@@ -1311,7 +1430,8 @@ export default {
       joinClassWithCode,
       joiningClass,
       attemptToReview,
-      hasMounted
+      hasMounted,
+      toggleExplanation
     };
   }
 };

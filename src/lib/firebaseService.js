@@ -1277,6 +1277,8 @@ class FirebaseService {
         };
       }
       const quizData = quizDoc.data();
+      // Use the quiz's badgeImage, or the default if not present
+      const badgeImageUrl = quizData.badgeImage || 'https://res.cloudinary.com/front-end-foxes/image/upload/v1745952718/differentest-lesson-images/grlih7sjws2vfu5as7dx.png';
 
       // Get class details
       const classDoc = await getDoc(doc(db, 'classes', classId));
@@ -1318,7 +1320,7 @@ class FirebaseService {
         studentName: userData.name || 'Student',
         name: `${quizData.title} Master`,
         description: `Awarded for completing ${quizData.title} with a perfect score`,
-        image: 'https://badges.beanpotstudio.com/badges/default-badge.png',
+        image: badgeImageUrl, // Use the fetched or default image URL
         score: score
       };
 

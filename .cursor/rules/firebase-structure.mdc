@@ -30,19 +30,17 @@ enrollments
     studentId
 
 quizAttempts
-    answers
-        array in answers includes the answer given as a number
     classId
     correctAnswers
     questionCount
-    questionResults
-        correctIndex
+    questions [array]
+        correctIndex [number]
+        id
         isCorrect
-        questionIndex
-        questionText
-        selectedOption
+        options [array]
             text
-        userAnswer
+        selectedAnswer [number]
+        text
 
 quizzes
     createdAt
