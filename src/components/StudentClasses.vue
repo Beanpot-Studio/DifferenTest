@@ -152,17 +152,31 @@
                   </div>
                 </div>
               </div>
-              <!--<button
-                @click="leaveClass(classItem.id)"
-                :disabled="classItem.enrollmentStatus !== 'accepted'"
-                :class="{
-                  'bg-red-600 hover:bg-red-700': classItem.enrollmentStatus === 'accepted',
-                  'bg-gray-400 cursor-not-allowed': classItem.enrollmentStatus !== 'accepted'
-                }"
-                class="px-4 py-2 text-white rounded-lg transition-colors flex items-center space-x-1"
-              >
-                <span>Leave Class</span>
-              </button>-->
+              <!-- Certificate Button Area -->
+              <div class="mt-3 flex-shrink-0 ml-4">
+                <!-- Show View Button if certificate HAS been claimed -->
+                <a 
+                    v-if="classItem.hasClaimedCertificate && user" 
+                    :href="`/certificates/${user.uid}_${classItem.id}`" 
+                    :key="`view-cert-${classItem.id}`" 
+                    class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-green-600 hover:to-emerald-700 transition duration-300 flex items-center space-x-2"
+                >
+                    <IconService name="star" size="5" /> 
+                    <span>View Certificate</span>
+                </a>
+
+                <!-- Show Claim Button if eligible AND certificate has NOT been claimed -->
+                <button 
+                    v-else-if="classItem.isComplete && hasMetQuizRequirements(classItem) && user"
+                    @click="claimCertificate(classItem)" 
+                    :disabled="isMintingBadge" 
+                    :key="`claim-cert-${classItem.id}`"
+                    class="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-yellow-500 hover:to-orange-600 transition duration-300 flex items-center space-x-2 disabled:opacity-60"
+                >
+                    <IconService name="award" size="5" />
+                    <span>{{ isMintingBadge ? 'Claiming...' : 'Claim Certificate' }}</span>
+                </button>
+              </div>
             </div>
 
             <!-- Class Progress -->
@@ -638,7 +652,7 @@ export default {
         loading.value = true;
         error.value = null;
         
-        // Get enrolled classes
+        // Get enrolled classes (includes isComplete)
         const { classes: loadedClasses = [] } = await FirebaseService.getClasses({
           studentId: user.value.uid,
           includeQuizzes: true,
@@ -646,50 +660,66 @@ export default {
           includeEnrollmentInfo: true
         });
 
-        // Separate classes by enrollment status
-        enrolledClasses.value = (loadedClasses || [])
+        // Filter accepted enrollments
+        const acceptedClasses = (loadedClasses || [])
           .filter(classItem => classItem?.enrollment?.status === 'accepted')
           .map(classItem => ({
             ...classItem,
-            enrollmentStatus: classItem.enrollment?.status
-          }))
-          .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+            enrollmentStatus: classItem.enrollment?.status,
+            hasClaimedCertificate: false // Initialize flag
+          }));
 
-        pendingClasses.value = (loadedClasses || [])
-          .filter(classItem => classItem?.enrollment?.status === 'pending')
-          .map(classItem => ({
-            ...classItem,
-            enrollmentStatus: classItem.enrollment?.status
-          }))
-          .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
-
-        // Get open classes where user has quiz attempts
-        const { classes: openClassesList = [] } = await FirebaseService.getClasses({
-          isPublic: true,
-          includeQuizzes: true,
-          includeTeacherInfo: true
+        // Check for existing certificates for completed classes
+        const certificateChecks = acceptedClasses.map(async (classItem) => {
+            if (classItem.isComplete) { // Only check if class is marked complete by teacher
+                 const certificateId = `${user.value.uid}_${classItem.id}`;
+                try {
+                    const existingCertificate = await FirebaseService.getCertificate(certificateId);
+                    if (existingCertificate) {
+                        classItem.hasClaimedCertificate = true;
+                    }
+                } catch (certError) {
+                     console.warn(`Error checking for certificate ${certificateId}:`, certError);
+                     // Assume not claimed if error occurs during check
+                }
+            }
+            return classItem;
         });
 
-        // Get all quiz attempts
-        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
-        const attemptedClassIds = new Set((attempts || []).map(attempt => attempt.classId));
-
-        // Filter open classes to only include those where user has attempted quizzes
-        openClasses.value = (openClassesList || [])
-          .filter(classItem => 
-            classItem?.id && 
-            attemptedClassIds.has(classItem.id) && 
-            !enrolledClasses.value.some(c => c.id === classItem.id) &&
-            !pendingClasses.value.some(c => c.id === classItem.id)
-          )
-          .map(classItem => ({
-            ...classItem,
-            enrollmentStatus: 'open'
-          }))
+        enrolledClasses.value = (await Promise.all(certificateChecks))
           .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
 
-        // Load quiz attempts
-        await loadQuizAttempts();
+        // --- Keep the rest of the logic for pending/open classes ---
+        pendingClasses.value = (loadedClasses || [])
+              .filter(classItem => classItem?.enrollment?.status === 'pending')
+              .map(classItem => ({
+                ...classItem,
+                enrollmentStatus: classItem.enrollment?.status
+              }))
+              .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+    
+        const { classes: openClassesList = [] } = await FirebaseService.getClasses({
+              isPublic: true,
+              includeQuizzes: true,
+              includeTeacherInfo: true
+        });
+        const attempts = await FirebaseService.getQuizAttemptsByUser(user.value.uid);
+        const attemptedClassIds = new Set((attempts || []).map(attempt => attempt.classId));
+        openClasses.value = (openClassesList || [])
+              .filter(classItem => 
+                classItem?.id && 
+                attemptedClassIds.has(classItem.id) && 
+                !enrolledClasses.value.some(c => c.id === classItem.id) &&
+                !pendingClasses.value.some(c => c.id === classItem.id)
+              )
+              .map(classItem => ({
+                ...classItem,
+                enrollmentStatus: 'open'
+              }))
+              .sort((a, b) => (b.createdAt?.toDate?.() || 0) - (a.createdAt?.toDate?.() || 0));
+        // ------------------------------------------------------------
+
+        await loadQuizAttempts(); // Load attempts after class processing
           
       } catch (err) {
         console.error('Error loading classes:', err);
@@ -1355,6 +1385,88 @@ export default {
       }
     };
 
+    // --- Certificate Claim Logic ---
+    const hasMetQuizRequirements = (classItem) => {
+      if (!classItem || !classItem.quizzes || classItem.quizzes.length === 0) {
+        return false; // No quizzes assigned
+      }
+
+      const requiredQuizIds = classItem.quizzes.map(q => q.id);
+      
+      // Check if the student has a 100% attempt for EACH required quiz
+      for (const quizId of requiredQuizIds) {
+        // Ensure quizAttempts for the class exists before accessing by quizId
+        const attemptsForClass = quizAttempts.value[classItem.id];
+        if (!attemptsForClass) return false; // No attempts recorded for this class yet
+
+        const attemptsForQuiz = (attemptsForClass[quizId] || []).filter(attempt => attempt.quizId === quizId); 
+        const hasPerfectAttempt = attemptsForQuiz.some(attempt => 
+          attempt.score === 100 || 
+          (attempt.correctAnswers && attempt.questionCount && attempt.correctAnswers === attempt.questionCount)
+        );
+        
+        if (!hasPerfectAttempt) {
+          return false; // Missing a 100% score for at least one quiz
+        }
+      }
+
+      return true; // All quiz requirements met
+    };
+
+    const claimCertificate = async (classItem) => {
+      if (!user.value || !classItem) {
+        showError("Cannot claim certificate. User or class data missing.");
+        return;
+      }
+
+      // Double-check eligibility just before claiming
+      if (!hasMetQuizRequirements(classItem)) {
+          showError("Eligibility requirements not met.");
+          return;
+      }
+
+      isMintingBadge.value = true; 
+      showSuccess(`Generating certificate for ${classItem.name}...`);
+
+      try {
+          // Fetch user profile to get the full name
+          const userProfile = await FirebaseService.getUserProfile(user.value.uid);
+          const studentFullName = userProfile?.name || user.value.displayName || 'Student'; // Fallback logic
+
+          const certificateData = {
+              userId: user.value.uid,
+              studentName: studentFullName, // Use fetched full name
+              classId: classItem.id,
+              className: classItem.name,
+              teacherId: classItem.teacherId,
+              teacherName: classItem.teacherName,
+              // Add any other relevant details, e.g., list of quiz IDs passed
+              quizIds: classItem.quizzes.map(q => q.id),
+          };
+
+          const result = await FirebaseService.createCertificate(certificateData);
+
+          if (result.alreadyExists) {
+              showSuccess('Certificate already claimed!');
+              // Redirect to the existing certificate page
+              window.location.href = `/certificates/${result.id}`;
+          } else {
+              showSuccess('Certificate successfully claimed!');
+              // Refresh data to potentially hide the button
+              await loadClasses();
+              // Optionally redirect to the new certificate page
+               window.location.href = `/certificates/${result.id}`;
+          }
+
+      } catch (error) {
+          console.error("Error claiming certificate:", error);
+          showError("Failed to claim certificate. Please try again.");
+      } finally {
+          isMintingBadge.value = false; // Turn off loading state
+      }
+    };
+    // --- End Certificate Claim Logic ---
+
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
         await loadClasses();
@@ -1431,7 +1543,10 @@ export default {
       joiningClass,
       attemptToReview,
       hasMounted,
-      toggleExplanation
+      toggleExplanation,
+      hasMetQuizRequirements,
+      claimCertificate,
+      user
     };
   }
 };

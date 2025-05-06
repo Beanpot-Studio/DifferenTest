@@ -111,7 +111,7 @@
                 class="appearance-none block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white"
               >
                 <option value="" disabled>-- Select a Class --</option>
-                <option v-for="cls in classes" :key="cls.id" :value="cls.id">
+                <option v-for="cls in availableClassesForNewQuiz" :key="cls.id" :value="cls.id">
                   {{ cls.name }}
                 </option>
               </select>
@@ -416,6 +416,9 @@ export default {
     const generatingQuestions = ref(false);
     const generationError = ref(null);
 
+    // Filtered classes for the dropdown (excluding completed)
+    const availableClassesForNewQuiz = computed(() => classes.value.filter(c => !c.isComplete));
+
     // Computed property for paid status
     const isPaidUser = computed(() => user.value?.paid === true);
 
@@ -718,17 +721,7 @@ export default {
 
       printingQuizId.value = quiz.id;
       try {
-        // 1. Create HTML content
-        // Remove lessonContentHtml generation
-        // let lessonContentHtml = '';
-        // if (quiz.lessonType === 'steps' && quiz.lessonSteps && quiz.lessonSteps.length > 0) {
-        //   lessonContentHtml = '<h2>Lesson Steps</h2><ol>' +
-        //     quiz.lessonSteps.map(step => `<li>${step.replace(/\n/g, '<br/>')}</li>`).join('') +
-        //     '</ol>';
-        // } else if (quiz.lessonPlan) {
-        //   lessonContentHtml = `<h2>Lesson Plan</h2><p>${quiz.lessonPlan.replace(/\n/g, '<br/>')}</p>`;
-        // }
-
+        
         let quizContentHtml = '';
         if (quiz.questions && quiz.questions.length > 0) {
           quizContentHtml = '<h2>Quiz Questions</h2><ol>' +
@@ -974,6 +967,7 @@ export default {
       removeQuestion,
       addManualOption,
       removeManualOption,
+      availableClassesForNewQuiz,
     };
   }
 };

@@ -28,11 +28,7 @@ const { title, metaTags = [] } = Astro.props;
       content="DifferenTest - Personalized Learning Platform"
     />
     <meta name="viewport" content="width=device-width" />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="/favicon.svg"
-    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | DifferenTest</title>
 
@@ -46,6 +42,12 @@ const { title, metaTags = [] } = Astro.props;
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+      integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
   </head>
   <body
     class="flex flex-col min-h-screen bg-gradient-to-t from-primary-300 to-white text-secondary-900 font-sans"
@@ -62,15 +64,10 @@ const { title, metaTags = [] } = Astro.props;
     <Footer />
 
     <div class="absolute w-full top-5 max-h-12 z-0">
-      <img
-        src="/wave.svg"
-        alt="Wave"
-        class="w-full h-full object-cover"
-      />
+      <img src="/wave.svg" alt="Wave" class="w-full h-full object-cover" />
     </div>
 
     <script>
-     
       import { useAuth } from "../stores/auth";
       const { initialize, cleanup } = useAuth();
 

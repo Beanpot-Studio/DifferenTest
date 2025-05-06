@@ -189,6 +189,7 @@ class FirebaseService {
         teacherId: classData.teacherId,
         teacherName: teacherName,
         isPublic: classData.isPublic || false,
+        isComplete: classData.isComplete || false,
         skinId: classData.skinId || 'default',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -205,10 +206,44 @@ class FirebaseService {
   static async updateClass(classId, data) {
     try {
       const classRef = doc(db, 'classes', classId);
-      await updateDoc(classRef, { 
-        ...data, 
-        updatedAt: serverTimestamp() 
+      const classDoc = await getDoc(classRef);
+      
+      if (!classDoc.exists()) {
+        throw new Error('Class not found');
+      }
+
+      const classData = classDoc.data();
+      
+      // Explicitly merge fields, prioritizing incoming 'data' if defined
+      const updateData = {
+        name: data.name !== undefined ? data.name : classData.name,
+        isPublic: data.isPublic !== undefined ? data.isPublic : classData.isPublic,
+        isComplete: data.isComplete !== undefined ? data.isComplete : classData.isComplete,
+        skinId: data.skinId !== undefined ? data.skinId : classData.skinId,
+        // customCertificateBadgeUrl handled below
+        updatedAt: serverTimestamp(),
+      };
+
+       // Explicitly handle customCertificateBadgeUrl based on incoming 'data'
+       if (data.customCertificateBadgeUrl === null) {
+         // If null was passed, set it to null for deletion/reset in Firestore
+         updateData.customCertificateBadgeUrl = null;
+       } else if (data.customCertificateBadgeUrl !== undefined) {
+         // If a new URL was passed, use it
+         updateData.customCertificateBadgeUrl = data.customCertificateBadgeUrl;
+       } 
+       // If data.customCertificateBadgeUrl was undefined (not passed), 
+       // we don't add it to updateData, preserving the existing Firestore value.
+
+
+      // Remove undefined fields (but keep explicit null for badge URL)
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+           delete updateData[key];
+        }
       });
+
+      await updateDoc(classRef, updateData);
       return true;
     } catch (error) {
       console.error('Error updating class:', error);
@@ -1662,6 +1697,93 @@ class FirebaseService {
     );
     
     return classes;
+  }
+
+  static async createCertificate(certificateData) {
+    try {
+      if (!certificateData.userId || !certificateData.classId) {
+        throw new Error("User ID and Class ID are required.");
+      }
+      // Use a consistent ID, e.g., userId_classId
+      const certificateId = `${certificateData.userId}_${certificateData.classId}`;
+      const certificateRef = doc(db, 'certificates', certificateId);
+
+      // Check if certificate already exists
+      const docSnap = await getDoc(certificateRef);
+      if (docSnap.exists()) {
+        console.log("Certificate already exists:", certificateId);
+        // Return existing certificate data or just the ID
+        return { id: certificateId, ...docSnap.data(), alreadyExists: true };
+      }
+
+      // --- Fetch Class Data ---
+      let badgeImageUrl = '/certification-badge.png'; // Default badge
+      try {
+          const classDoc = await getDoc(doc(db, 'classes', certificateData.classId));
+          if (classDoc.exists()) {
+              const classData = classDoc.data();
+              // Use custom badge URL from class if it exists
+              if (classData.customCertificateBadgeUrl) {
+                  badgeImageUrl = classData.customCertificateBadgeUrl;
+              }
+          }
+      } catch(err) {
+          console.warn(`Could not fetch class data (${certificateData.classId}) to check for custom badge:`, err);
+          // Proceed with default badge
+      }
+      // --- End Fetch Class Data ---
+
+      const dataToSave = {
+        ...certificateData,
+        badgeImageUrl: badgeImageUrl, // Store the determined badge URL
+        claimedAt: serverTimestamp() // Add a timestamp
+      };
+
+      await setDoc(certificateRef, dataToSave);
+      console.log("Certificate created:", certificateId);
+      return { id: certificateId, ...dataToSave, alreadyExists: false };
+
+    } catch (error) {
+      console.error("Error creating certificate:", error);
+      throw error;
+    }
+  }
+
+  static async getCertificate(certificateId) {
+    try {
+      const certificateRef = doc(db, 'certificates', certificateId);
+      const certificateDoc = await getDoc(certificateRef);
+
+      if (!certificateDoc.exists()) {
+        return null;
+      }
+      const data = certificateDoc.data();
+      // Convert timestamp if needed
+      const claimedAt = data.claimedAt?.toDate ? data.claimedAt.toDate() : null;
+      return {
+        id: certificateDoc.id,
+        ...data,
+        claimedAt: claimedAt // Include the converted Date object
+      };
+    } catch (error) {
+      console.error('Error getting certificate:', error);
+      throw error;
+    }
+  }
+
+  static async getAllCertificates() {
+    try {
+      const certificatesRef = collection(db, 'certificates');
+      const certificatesSnapshot = await getDocs(certificatesRef);
+      
+      return certificatesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error getting all certificates:', error);
+      throw error;
+    }
   }
 }
 
