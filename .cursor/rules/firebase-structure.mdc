@@ -22,6 +22,10 @@ classes
     name
     teacherId
     updatedAt
+    isPublic
+    skinId
+    customCertificateBadgeUrl
+
 
 enrollments
     classId
@@ -36,21 +40,34 @@ quizAttempts
     questions [array]
         correctIndex [number]
         id
-        isCorrect
         options [array]
             text
         selectedAnswer [number]
         text
+    quizId
+    quizTitle
+    score
+    timeSpent
+    timestamp
+    userId
+
 
 quizzes
     createdAt
+    classId
     id
     questions
         correctIndex
-            options
+            options (this holds all possible answers)
                 text
-        text
+        text (this is for question)
     teacherId
+    title
+    updatedAt
+    badgeImage
+    lessonPlan
+    lessonSteps
+    lessonType (full or stepped)
 
 users 
     bio

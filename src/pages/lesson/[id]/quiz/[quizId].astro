@@ -27,9 +27,7 @@ export async function getStaticPaths() {
     props: PageProps;
   }> = [];
 
-  console.log(
-    "getStaticPaths (lesson route): Starting path generation from ALL quizzes..."
-  );
+  
 
   // Fetch ALL quizzes directly
   // Ensure this function returns quizzes with their classId populated
@@ -41,9 +39,7 @@ export async function getStaticPaths() {
     );
     return [];
   }
-  console.log(
-    `getStaticPaths (lesson route): Found ${allQuizzes.length} total quizzes.`
-  );
+  
 
   // Loop through ALL quizzes now
   for (const quiz of allQuizzes) {
@@ -56,9 +52,7 @@ export async function getStaticPaths() {
       continue;
     }
 
-    console.log(
-      `getStaticPaths (lesson route): >>> Generating path for class ${quiz.classId}, quiz ${quiz.id}`
-    );
+   
 
     paths.push({
       params: {
@@ -71,9 +65,7 @@ export async function getStaticPaths() {
       },
     });
   }
-  console.log(
-    `getStaticPaths (lesson route): Finished. Generated ${paths.length} paths.`
-  );
+ 
   return paths;
 }
 

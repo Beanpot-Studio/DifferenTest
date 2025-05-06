@@ -1079,10 +1079,7 @@ export default {
               // Re-calculate isCorrect based on the comparison
               const isCorrect = (typeof userAnswer === 'number' && userAnswer === correctIndex);
 
-               // Debug log to verify calculation
-               console.log(`   Idx ${index}: User answered ${userAnswer} (from attempt.questions[${index}].selectedAnswer), Correct is ${correctIndex}, Calculated Correct: ${isCorrect}`);
-               // -------------------------------------
-
+               
               return {
                 ...canonicalQuestion, 
                 userAnswer: userAnswer, // Assign the extracted userAnswer to the reviewData question object

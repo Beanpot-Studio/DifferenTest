@@ -10,7 +10,6 @@ import { nextTick, ref } from 'vue';
 const teacherId = 'teacher123';
 const mockUser = { uid: teacherId, displayName: 'Test Teacher', role: 'teacher' };
 const mockUseAuth = vi.hoisted(() => {
-  // console.log('--- Hoisted mockUseAuth function executed ---'); // Removed log
   return {
     useAuth: vi.fn(() => ({
       user: ref(mockUser),

@@ -673,9 +673,7 @@ class FirebaseService {
       await setDoc(articleRef, {
         [ratingField]: increment(1)
       }, { merge: true });
-      console.log(`Rating updated for article ${articleId}. Field: ${ratingField}`);
     } catch (error) {
-      console.error(`Error updating rating for article ${articleId}:`, error);
       throw error; // Re-throw the error to be caught by the caller if needed
     }
   }
@@ -1711,7 +1709,6 @@ class FirebaseService {
       // Check if certificate already exists
       const docSnap = await getDoc(certificateRef);
       if (docSnap.exists()) {
-        console.log("Certificate already exists:", certificateId);
         // Return existing certificate data or just the ID
         return { id: certificateId, ...docSnap.data(), alreadyExists: true };
       }
@@ -1740,7 +1737,6 @@ class FirebaseService {
       };
 
       await setDoc(certificateRef, dataToSave);
-      console.log("Certificate created:", certificateId);
       return { id: certificateId, ...dataToSave, alreadyExists: false };
 
     } catch (error) {

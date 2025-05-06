@@ -470,16 +470,12 @@ export default {
     const completedClasses = computed(() => classes.value.filter(c => c.isComplete));
 
     const createClass = async () => {
-      console.log('Creating class...');
       if (!user.value) {
-          console.log('User not available, returning.');
           return;
       }
-      console.log('User ID:', user.value.uid);
       
       if (!newClass.value.name.trim()) {
         showError('Please enter a class name');
-        console.log('Class name empty, returning.');
         return;
       }
       
@@ -495,11 +491,8 @@ export default {
           createdAt: new Date(), // Replaced by serverTimestamp in service
           updatedAt: new Date(), // Replaced by serverTimestamp in service
         };
-        console.log('Prepared classData:', classData);
         
-        console.log('Calling FirebaseService.createClass...');
         const newClassId = await FirebaseService.createClass(classData);
-        console.log('FirebaseService.createClass call returned ID:', newClassId);
         
         // Reset form
         newClass.value = {
@@ -515,10 +508,8 @@ export default {
         // Emit event to refresh stats
         window.dispatchEvent(new CustomEvent('refreshStats'));
       } catch (error) {
-        console.error('Error caught during class creation:', error);
         showError('Failed to create class');
       } finally {
-        console.log('Class creation attempt finished.');
         loading.value = false;
       }
     };
@@ -618,14 +609,11 @@ export default {
         let customBadgeUrl = editingClass.value.customCertificateBadgeUrl;
 
         if (editingBadgeImageFile.value) {
-          console.log("Uploading new badge image...");
           customBadgeUrl = await uploadToCloudinary(editingBadgeImageFile.value);
           if (!customBadgeUrl) {
             throw new Error('Failed to upload new badge image.');
           }
-          console.log("Upload complete, URL:", customBadgeUrl);
         } else if (editingClass.value.customCertificateBadgeUrl === null) {
-          console.log("Removing custom badge image.");
           customBadgeUrl = null;
         }
 
@@ -649,7 +637,6 @@ export default {
           delete updateData.customCertificateBadgeUrl;
         }
 
-        console.log("Saving class with updateData:", updateData);
         await FirebaseService.updateClass(editingClass.value.id, updateData);
 
         editingClass.value = null;
@@ -657,7 +644,6 @@ export default {
         await fetchClasses();
         window.dispatchEvent(new CustomEvent('refreshStats'));
       } catch (error) {
-        console.error('Error saving class:', error);
         showError(`Error saving class: ${error.message || 'Please try again.'}`);
       } finally {
         loading.value = false;
@@ -794,20 +780,14 @@ export default {
 
     onMounted(() => {
       hasMounted.value = true;
-      console.log('ClassManager onMounted: user.value =', user.value);
-      console.log('ClassManager onMounted: isPaidUser.value =', isPaidUser.value);
       fetchClasses();
       fetchQuizzes();
     });
 
     // Optional: Watcher for debugging state changes
     watch(user, (newUser) => {
-      console.log('ClassManager user watcher: newUser =', newUser);
-      console.log('ClassManager user watcher: isPaidUser now =', newUser?.paid === true);
     }, { deep: true });
 
-    console.log('ClassManager setup: user.value =', user.value);
-    console.log('ClassManager setup: isPaidUser.value =', isPaidUser.value);
 
     return {
       user,

@@ -102,7 +102,6 @@ test.describe('Teacher Quiz Management', () => {
     */
    
     // Check if the quiz title appears in the assigned list *within* the class container
-    console.log(`Checking for quiz "${uniqueQuizTitle}" in assigned list...`); // Add log
     const assignedQuizList = classContainer.locator('div:has(> h4:has-text("Quizzes")) div.space-y-2'); 
     await expect(assignedQuizList).toBeVisible(); // Ensure the list container itself is visible
     await expect(assignedQuizList).toContainText(uniqueQuizTitle, { timeout: 10000 }); // Allow time for list to update
