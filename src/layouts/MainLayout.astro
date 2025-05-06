@@ -27,10 +27,46 @@ const { title, metaTags = [] } = Astro.props;
       name="description"
       content="DifferenTest - Personalized Learning Platform"
     />
+    <meta
+      name="keywords"
+      content="personalized learning, education, platform, students, teachers, adaptive learning, online courses, differentiated assessments, free online courses, premium online learning, upskilling"
+    />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title} | DifferenTest</title>
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content={`${title} | DifferenTest`} />
+    <meta
+      property="og:description"
+      content="DifferenTest - Personalized Learning Platform for students and teachers."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/linkedin.jpg" />
+    <meta property="og:url" content={Astro.url.href} />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} | DifferenTest`} />
+    <meta
+      name="twitter:description"
+      content="DifferenTest - Personalized Learning Platform for students and teachers."
+    />
+    <meta name="twitter:image" content="/twitter.jpg" />
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L2S7BFGPSG"
+    ></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-L2S7BFGPSG");
+    </script>
 
     <!-- Dynamic Meta Tags -->
     {metaTags.map((tag) => <meta {...tag} />)}
