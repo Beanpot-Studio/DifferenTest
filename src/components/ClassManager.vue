@@ -134,7 +134,16 @@
                 <p class="text-xs text-gray-500 mt-1">
                   Marking a class as complete prevents an instructor from adding new quizzes and allows students to claim certificates upon completion of all quizzes..
                 </p>
-                <p class="text-sm text-gray-600 mt-1">Code: <code class="font-mono bg-gray-200 px-1.5 py-0.5 rounded">{{ classItem.code }}</code></p>
+                <p class="text-sm text-gray-600 mt-1">Code: 
+                    <code class="font-mono bg-gray-200 px-1.5 py-0.5 rounded">{{ classItem.code }}</code>
+                    <button 
+                        @click="openInviteModal(classItem)"
+                        class="ml-2 text-primary-600 hover:text-primary-800 hover:underline text-xs font-medium"
+                        title="Generate Invitation Text"
+                    >
+                        (Invite Students)
+                    </button>
+                </p>
                 <p class="text-sm text-gray-500">
                   Created: {{ formatDate(classItem.createdAt) }}
                 </p>
@@ -245,7 +254,16 @@
                     <span class="ml-2 text-sm font-medium text-gray-700">Reopen class</span>
                   </label>
                 </div>
-                <p class="text-sm text-gray-500 mt-1">Code: <code class="font-mono bg-gray-200 px-1.5 py-0.5 rounded">{{ classItem.code }}</code></p>
+                <p class="text-sm text-gray-500 mt-1">Code: 
+                    <code class="font-mono bg-gray-200 px-1.5 py-0.5 rounded">{{ classItem.code }}</code>
+                    <button 
+                        @click="openInviteModal(classItem)"
+                        class="ml-2 text-primary-600 hover:text-primary-800 hover:underline text-xs font-medium"
+                        title="Generate Invitation Text"
+                    >
+                        (Invite Students)
+                    </button>
+                </p>
                 <p class="text-sm text-gray-400">
                   Created: {{ formatDate(classItem.createdAt) }}
                 </p>
@@ -321,14 +339,16 @@
               <input
                 v-model="editingClass.code"
                 type="text"
-                class="w-full p-2 border rounded-lg"
+                class="w-full p-2 border rounded-lg bg-gray-100 text-gray-700"
                 readonly
               />
               <button
                 @click="copyClassCode"
-                class="px-3 py-2 bg-primary-600 text-white rounded hover:bg-primary-700"
+                class="px-3 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 w-24 text-center"
+                :class="{ 'bg-green-600': editModalCopyButtonText === 'Copied!', 'bg-red-600': editModalCopyButtonText === 'Failed' || editModalCopyButtonText === 'Error' }"
+                :disabled="editModalCopyButtonText !== 'Copy'"
               >
-                Copy
+                {{ editModalCopyButtonText }}
               </button>
             </div>
           </div>
@@ -420,11 +440,18 @@
         </div>
       </div>
     </div>
+
+    <!-- NEW: Invite Student Modal -->
+    <InviteStudentModal 
+      :show="showInviteModal" 
+      :classData="selectedClassForInvite" 
+      @close="showInviteModal = false"
+    />
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useAuth } from '../stores/auth';
 import ClassRoster from './ClassRoster.vue';
 import { useNotification } from '../composables/useNotification';
@@ -432,11 +459,12 @@ import IconService from './IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 import { useSkin } from '../composables/useSkin';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
+import InviteStudentModal from './InviteStudentModal.vue';
 
 export default {
   name: 'ClassManager',
   components: {
-    ClassRoster, IconService
+    ClassRoster, IconService, InviteStudentModal
   },
   setup() {
     const { user } = useAuth();
@@ -461,6 +489,10 @@ export default {
     const editingBadgeImageFile = ref(null);
     const editingBadgeImagePreview = ref(null);
     const editingBadgeImageName = ref('');
+    const showInviteModal = ref(false);
+    const selectedClassForInvite = ref(null);
+    const editModalCopyButtonText = ref('Copy');
+    let editModalCopyTimeout = null;
 
     // Computed property for paid status
     const isPaidUser = computed(() => user.value?.paid === true);
@@ -593,6 +625,11 @@ export default {
       if (!editingClass.value.skinId) {
         editingClass.value.skinId = 'default';
       }
+      editModalCopyButtonText.value = 'Copy';
+      if (editModalCopyTimeout) {
+        clearTimeout(editModalCopyTimeout);
+        editModalCopyTimeout = null;
+      }
     };
 
     const saveClass = async () => {
@@ -712,10 +749,26 @@ export default {
       }
     };
 
-    const copyClassCode = () => {
+    const copyClassCode = async () => {
       if (!editingClass.value?.code) return;
-      navigator.clipboard.writeText(editingClass.value.code);
-      showSuccess('Class code copied to clipboard!');
+      if (!navigator.clipboard) {
+        console.error('Clipboard API not available');
+        editModalCopyButtonText.value = 'Error';
+        if (editModalCopyTimeout) clearTimeout(editModalCopyTimeout);
+        editModalCopyTimeout = setTimeout(() => { editModalCopyButtonText.value = 'Copy'; }, 2500);
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(editingClass.value.code);
+        editModalCopyButtonText.value = 'Copied!';
+        if (editModalCopyTimeout) clearTimeout(editModalCopyTimeout);
+        editModalCopyTimeout = setTimeout(() => { editModalCopyButtonText.value = 'Copy'; }, 2500);
+      } catch (err) {
+        console.error('Failed to copy class code: ', err);
+        editModalCopyButtonText.value = 'Failed';
+        if (editModalCopyTimeout) clearTimeout(editModalCopyTimeout);
+        editModalCopyTimeout = setTimeout(() => { editModalCopyButtonText.value = 'Copy'; }, 2500);
+      }
     };
 
     const formatDate = (timestamp) => {
@@ -778,10 +831,27 @@ export default {
       }
     };
 
+    const openInviteModal = (classItem) => {
+      console.log("Opening invite modal for:", classItem);
+      selectedClassForInvite.value = { 
+        id: classItem.id, 
+        name: classItem.name, 
+        code: classItem.code 
+      }; // Pass only necessary data
+      showInviteModal.value = true;
+    };
+
     onMounted(() => {
       hasMounted.value = true;
       fetchClasses();
       fetchQuizzes();
+    });
+
+    // NEW: Cleanup timeout on unmount
+    onUnmounted(() => {
+      if (editModalCopyTimeout) {
+        clearTimeout(editModalCopyTimeout);
+      }
     });
 
     // Optional: Watcher for debugging state changes
@@ -818,7 +888,11 @@ export default {
       editingBadgeImagePreview,
       editingBadgeImageName,
       handleEditBadgeImageUpload,
-      removeCustomCertificateBadge
+      removeCustomCertificateBadge,
+      showInviteModal,
+      selectedClassForInvite,
+      openInviteModal,
+      editModalCopyButtonText
     };
   }
 };
