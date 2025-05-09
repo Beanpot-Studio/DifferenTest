@@ -100,10 +100,11 @@ await initialize();
 
 <Layout title={`${quiz.title} - ${classData.name}`}>
   <main class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-4">{classData.name}</h1>
     <div class="bg-white rounded-lg shadow-md p-6">
       <div class="mb-6">
         <a
-          href={import.meta.env.PUBLIC_BASE_URL + "/curricula"}
+          href="/curricula"
           class="text-blue-600 hover:text-blue-800"
         >
           ← Back to curricula
@@ -128,10 +129,6 @@ await initialize();
 
   
   <script define:vars={{ skinToApply: initialSkinId }}>
-    // Directly set the attribute instead of importing the composable here
-    // import { useSkin } from '../../../../composables/useSkin';
-    // const { applySkin } = useSkin();
-    // applySkin(skinToApply);
     if (skinToApply && typeof document !== "undefined") {
       const validSkins = ["default", "cats"]; // Maintain a list of valid skins
       const finalSkin = validSkins.includes(skinToApply)

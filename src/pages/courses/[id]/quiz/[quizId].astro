@@ -1,10 +1,7 @@
 ---
-// Removed Layout import
-// import Layout from "../../../../layouts/MainLayout.astro";
 import SteppedLessonQuiz from "../../../../components/SteppedLessonQuiz.vue"; // Import the new component
 import FirebaseService from "../../../../lib/firebaseService";
-// Removed useAuth import as it's likely not needed directly on this static page if Layout is gone
-// import { useAuth } from "../../../../stores/auth";
+import "../../../../styles/global.css"; // <--- IMPORTED global.css
 
 // Define Interfaces for stricter typing
 interface QuizData {
@@ -27,8 +24,6 @@ export async function getStaticPaths() {
     props: PageProps;
   }> = [];
 
-  
-
   // Fetch ALL quizzes directly
   // Ensure this function returns quizzes with their classId populated
   const allQuizzes: QuizData[] = await FirebaseService.getAllQuizzes(); // <--- MODIFIED SERVICE CALL
@@ -39,7 +34,6 @@ export async function getStaticPaths() {
     );
     return [];
   }
-  
 
   // Loop through ALL quizzes now
   for (const quiz of allQuizzes) {
@@ -52,8 +46,6 @@ export async function getStaticPaths() {
       continue;
     }
 
-   
-
     paths.push({
       params: {
         id: quiz.classId, // Use classId for the [id] parameter
@@ -65,7 +57,7 @@ export async function getStaticPaths() {
       },
     });
   }
- 
+
   return paths;
 }
 
@@ -84,25 +76,30 @@ const { id, quizId } = Astro.params; // id is the classId, quizId is the quizId
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{quiz.title} - Lesson</title>
-    {
-      /* Add any essential minimal styles here if needed, or link a specific stylesheet */
-    }
-    <style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:inline>
       body {
+        /* Reset default margin if global.css doesn't handle it fully for a plain body */
         margin: 0;
-        font-family: sans-serif;
       }
-      .lesson-container {
+      main.lesson-container {
+        /* Style the main container */
         padding: 1rem;
         max-width: 800px;
         margin: auto;
+        /* Ensure it has a min-height if the SVG background needs space to show on short content pages */
+        /* min-height: 100vh; */
       }
     </style>
   </head>
   <body>
-    <div class="lesson-container">
+    <main class="lesson-container">
       <SteppedLessonQuiz client:load quiz={quiz} classId={id} />
-    </div>
-   
+    </main>
   </body>
 </html>

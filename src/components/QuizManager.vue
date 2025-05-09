@@ -403,7 +403,7 @@ export default {
       badgeImage: null,
       lessonPlan: '',
       lessonType: 'full',
-      lessonSteps: [''],
+      lessonSteps: [{ content: '' }],
       questions: [],
       questionCount: 5
     });
@@ -424,7 +424,7 @@ export default {
 
     // Computed property to get combined content from steps
     const lessonStepsContent = computed(() => {
-      return newQuiz.value.lessonSteps.join('\\n\\n---\\n\\n'); // Combine steps with a separator
+      return newQuiz.value.lessonSteps.map(step => step.content).join('\n\n---\n\n');
     });
 
     // Default badge URL
@@ -602,7 +602,7 @@ export default {
         badgeImage: null,
         lessonPlan: '',
         lessonType: 'full',
-        lessonSteps: [''],
+        lessonSteps: [{ content: '' }],
         questions: [],
         questionCount: 5
       };
@@ -621,7 +621,7 @@ export default {
 
     // Function to add a new lesson step
     const addLessonStep = () => {
-      newQuiz.value.lessonSteps.push('');
+      newQuiz.value.lessonSteps.push({ content: '' });
     };
 
     // Function to remove a lesson step
@@ -816,7 +816,7 @@ export default {
          }
          finalLessonPlan = newQuiz.value.lessonPlan.trim();
        } else if (newQuiz.value.lessonType === 'steps') {
-         finalLessonSteps = newQuiz.value.lessonSteps.map(step => step.trim()).filter(step => step !== '');
+         finalLessonSteps = newQuiz.value.lessonSteps.map(step => step.content.trim()).filter(step => step !== '');
          if (finalLessonSteps.length === 0) {
            showError('Please add content to at least one lesson step.');
            return;
@@ -868,7 +868,7 @@ export default {
           badgeImage: null,
           lessonPlan: '',
           lessonType: 'full',
-          lessonSteps: [''],
+          lessonSteps: [{ content: '' }],
           questions: [],
           questionCount: 5
         };

@@ -17,47 +17,56 @@ const isStudent = computed(() => role.value === 'student');
 
 // Actions
 async function login(email, password) {
+  loading.value = true;
+  error.value = null;
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    user.value = userCredential.user;
-    await fetchUserRole(userCredential.user.uid);
-    error.value = null;
+    // user.value will be set by onAuthStateChanged listener
+    // await fetchUserRole(userCredential.user.uid); // This will also be handled by onAuthStateChanged
     return { success: true };
-  } catch (error) {
-    error.value = error.message;
-    return { success: false, error: error.message };
+  } catch (err) {
+    error.value = err.message;
+    return { success: false, error: err.message };
+  } finally {
+    loading.value = false;
   }
 }
 
 async function logout() {
+  loading.value = true;
+  error.value = null;
   try {
     await signOut(auth);
-    clearAuthState();
+    // user.value and role.value will be cleared by onAuthStateChanged
     window.location.href = import.meta.env.PUBLIC_BASE_URL || '/';
     return { success: true };
   } catch (err) {
     error.value = err.message;
     return { success: false, error: err.message };
+  } finally {
+    loading.value = false;
   }
 }
 
 async function register(email, password, userRole) {
+  loading.value = true;
+  error.value = null;
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    user.value = userCredential.user;
-    role.value = userRole;
-    
+    // user.value will be set by onAuthStateChanged
+    // Set the role in Firestore immediately
     await setDoc(doc(db, 'users', userCredential.user.uid), {
       role: userRole,
       email,
       createdAt: new Date()
     });
-    
-    error.value = null;
+    // role.value will be updated by onAuthStateChanged after fetching
     return { success: true };
-  } catch (error) {
-    error.value = error.message;
-    return { success: false, error: error.message };
+  } catch (err) {
+    error.value = err.message;
+    return { success: false, error: err.message };
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -66,85 +75,93 @@ async function updateUserRole(newRole) {
     error.value = 'No user logged in';
     return { success: false, error: 'No user logged in' };
   }
-  
+  loading.value = true;
+  error.value = null;
   try {
-    role.value = newRole;
     await setDoc(doc(db, 'users', user.value.uid), {
       role: newRole
     }, { merge: true });
-    error.value = null;
+    role.value = newRole; // Optimistic update, will be confirmed by onAuthStateChanged if it re-fetches role
+    if(user.value) user.value.role = newRole; // Optimistic update for user object
     return { success: true };
-  } catch (error) {
-    error.value = error.message;
-    return { success: false, error: error.message };
-  }
-}
-
-async function handleAuthStateChanged(newUser) {
-  if (newUser) {
-    // Create a new user object with the auth data
-    user.value = {
-      uid: newUser.uid,
-      email: newUser.email,
-      // Other auth properties will be added by fetchUserRole
-    };
-    await fetchUserRole(newUser.uid);
-    // Update user object with role after fetching it
-    if (user.value) {
-      user.value = {
-        ...user.value,
-        role: role.value
-      };
-    }
-  } else {
-    clearAuthState();
+  } catch (err) {
+    error.value = err.message;
+    return { success: false, error: err.message };
+  } finally {
+    loading.value = false;
   }
 }
 
 async function fetchUserRole(uid) {
+  // This function is now primarily internal to handleAuthStateChanged
   try {
     const userDoc = await getDoc(doc(db, 'users', uid));
     if (userDoc.exists()) {
       const userData = userDoc.data();
       role.value = userData.role;
-      // Update the user object with the name, role, and paid status from Firestore
-      if (user.value) {
+      // Update the user object with details from Firestore
+      if (user.value) { // Ensure user.value still exists (might have logged out during async op)
         user.value = {
-          ...user.value,
+          ...user.value, // Keep existing auth properties like email, uid
           name: userData.name,
           role: userData.role,
-          paid: userData.paid || false // Include paid status, default to false if undefined
+          paid: userData.paid || false 
         };
       }
+    } else {
+      // User document doesn't exist in Firestore, might be an issue or new registration
+      role.value = null; // Or a default role
+      if(user.value) user.value.role = null; // Or default
     }
-    error.value = null;
-  } catch (error) {
-    error.value = error.message;
+  } catch (err) {
+    console.error("Error fetching user role:", err);
+    error.value = "Error fetching user details.";
+    // Potentially clear role or set to a default if fetch fails
+    role.value = null;
+    if(user.value) user.value.role = null;
   }
 }
 
 function clearAuthState() {
   user.value = null;
   role.value = null;
-  error.value = null;
+  // error.value = null; // Decide if errors should be cleared on logout
 }
 
-async function initialize() {
-  if (initialized.value) return;
-  
-  loading.value = true;
+// This is the core listener function for Firebase Auth state changes
+async function handleAuthStateChangedCallback(firebaseUser) {
+  loading.value = true; // Indicate auth processing has started
   try {
-    onAuthStateChanged(auth, handleAuthStateChanged);
-    initialized.value = true;
-  } catch (error) {
-    error.value = error.message;
+    if (firebaseUser) {
+      user.value = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        // Other initial auth data from firebaseUser if needed
+      };
+      await fetchUserRole(firebaseUser.uid); // Fetch role and other details from Firestore
+    } else {
+      clearAuthState();
+    }
+  } catch (e) {
+    console.error("Error in handleAuthStateChangedCallback:", e);
+    error.value = "Error processing authentication state.";
+    clearAuthState(); // Ensure a clean state on error
   } finally {
-    loading.value = false;
+    initialized.value = true; // Crucial: mark auth as initialized AFTER processing
+    loading.value = false; // Auth processing finished
+    console.log('Auth state processed. Initialized:', initialized.value, 'User:', user.value);
   }
 }
 
-function cleanup() {
-  // Cleanup any listeners or subscriptions if needed
+// Set up the Firebase onAuthStateChanged listener when the store is initialized.
+// This is self-invoking and ensures it runs once.
+const unsubscribeAuthStateListener = onAuthStateChanged(auth, handleAuthStateChangedCallback);
+
+// Optional: A cleanup function if you need to manually stop listening (e.g., for HMR in Vite or specific test scenarios)
+function cleanupAuthListener() {
+  if (unsubscribeAuthStateListener) {
+    unsubscribeAuthStateListener();
+  }
 }
 
 // Export the store
@@ -167,10 +184,8 @@ export function useAuth() {
     logout,
     register,
     updateUserRole,
-    handleAuthStateChanged,
     fetchUserRole,
     clearAuthState,
-    initialize,
-    cleanup
+    cleanupAuthListener
   };
 } 

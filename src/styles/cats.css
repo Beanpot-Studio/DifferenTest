@@ -14,9 +14,6 @@
   --color-info: var(--cat-accent);
   --color-warning: 251, 191, 36; /* Adjust warning if needed */
 
-  /* Custom Properties */
-  --cat-paw-cursor: url('/skins/cats/assets/cat-cursor.svg') 16 16, auto; /* Added hotspot */
-  --cat-loading-animation: url('/skins/cats/assets/cat-loading.svg');
 }
 
 /* Base Styles */
@@ -31,10 +28,12 @@
 }
 
 /* Example: Apply background pattern to main content area */
-[data-theme="cats"] main {
+/* [data-theme="cats"] main { */ /* Removing from main */
+[data-theme="cats"] body { /* Applying to body instead */
    background-image: url('/skins/cats/assets/cat-background.svg');
    background-repeat: repeat;
    background-size: 200px;
+   background-color: rgb(var(--cat-background)); /* Ensure body also has the base color */
 }
 
 

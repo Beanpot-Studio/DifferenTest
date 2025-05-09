@@ -194,7 +194,15 @@
                 >
                   <!-- Always show quiz title and details -->
                   <div>
-                    <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
+                    <h4 class="font-medium text-gray-800">
+                      <a 
+                        href="#" 
+                        @click.prevent="openQuizInNewWindow(classItem.id, quiz.id)" 
+                        class="hover:text-primary-600 hover:underline cursor-pointer"
+                      >
+                        {{ quiz.title }}
+                      </a>
+                    </h4>
                     <p class="text-sm text-gray-600 mt-1">
                       Questions: {{ quiz.questionCount || quiz.questions?.length || 0 }}
                     </p>
@@ -329,7 +337,15 @@
                   >
                     <!-- Always show quiz title and details -->
                      <div>
-                        <h4 class="font-medium text-gray-800">{{ quiz.title }}</h4>
+                        <h4 class="font-medium text-gray-800">
+                          <a 
+                            href="#" 
+                            @click.prevent="openQuizInNewWindow(classItem.id, quiz.id)" 
+                            class="hover:text-primary-600 hover:underline cursor-pointer"
+                          >
+                            {{ quiz.title }}
+                          </a>
+                        </h4>
                         <p class="text-sm text-gray-600 mt-1">
                            Questions: {{ quiz.questionCount || quiz.questions?.length || 0 }}
                         </p>
@@ -1464,6 +1480,13 @@ export default {
     };
     // --- End Certificate Claim Logic ---
 
+    const openQuizInNewWindow = (classId, quizId) => {
+      const url = `/courses/${classId}/quiz/${quizId}`;
+      const windowName = `quizLesson_${classId}_${quizId}`.replace(/[^a-zA-Z0-9_]/g, '_'); // Ensure valid window name
+      const windowFeatures = 'width=900,height=700,resizable=yes,scrollbars=yes,status=yes';
+      window.open(url, windowName, windowFeatures);
+    };
+
     onMounted(async () => {
       if (user.value?.uid && initialized.value) {
         await loadClasses();
@@ -1543,7 +1566,8 @@ export default {
       toggleExplanation,
       hasMetQuizRequirements,
       claimCertificate,
-      user
+      user,
+      openQuizInNewWindow
     };
   }
 };

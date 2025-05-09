@@ -3,8 +3,6 @@
     <div class="p-6">
       
 
-      <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ curriculum.title }}</h2>
-      <p class="text-sm text-gray-500 mb-4">Teacher: {{ curriculum.teacherName }}</p>
       <div class="mb-6">
         <div class="flex justify-between items-center mb-2">
           <span class="text-sm font-medium text-gray-700">Progress</span>
@@ -35,7 +33,7 @@
                   <img :src="quiz.badgeImage" class="w-10 h-10" />
                 </td>
                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                  <a :href="`/classes/${curriculum.id}/quiz/${quiz.id}`" class="text-blue-600 hover:text-blue-800">
+                  <a :href="`/openclasses/${curriculum.id}/quiz/${quiz.id}`" class="text-blue-600 hover:text-blue-800">
                     {{ quiz.title }}
                   </a>
                 </td>

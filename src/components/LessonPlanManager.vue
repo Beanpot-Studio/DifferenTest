@@ -38,7 +38,7 @@
                 <!-- Conditional Link -->
                 <a 
                   v-if="classItem.isPublic" 
-                  :href="`/classes/${classItem.id}/quiz/${quiz.id}`"
+                  :href="`/openclasses/${classItem.id}/quiz/${quiz.id}`"
                   class="text-lg font-bold text-gray-900 hover:text-gray-950 underline"
                   :title="`View Public Quiz: ${quiz.title}`"
                 >
@@ -46,9 +46,10 @@
                 </a>
                 <a 
                   v-else 
-                  :href="`/lesson/${classItem.id}/quiz/${quiz.id}`" 
+                  target="_blank"
+                  :href="`/courses/${classItem.id}/quiz/${quiz.id}`" 
                   class="text-lg font-bold text-gray-900 hover:text-gray-950 underline"
-                  :title="`View Lesson/Quiz: ${quiz.title}`"
+                  :title="`View Course/Quiz: ${quiz.title}`"
                 >
                   {{ quiz.title }}
                 </a>

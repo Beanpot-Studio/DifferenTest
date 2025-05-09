@@ -54,10 +54,10 @@ const publicClasses = await FirebaseService.getPublicClasses();
                   quizzes: classData.quizzes.map((quiz) => ({
                     ...quiz,
                     teacherId: classData.teacherId,
-                    link: `/classes/${classData.id}/quiz/${quiz.id}`,
+                    link: `/openclasses/${classData.id}/quiz/${quiz.id}`,
                   })),
                 }}
-                basePath='/classes'
+                basePath='/openclasses'
               />
             </div>
           </div>

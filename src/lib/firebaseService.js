@@ -52,6 +52,7 @@ class FirebaseService {
     return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
   }
 
+  
   static async getClasses(options = {}) {
     const { 
       teacherId, 
@@ -1646,6 +1647,31 @@ class FirebaseService {
       return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
     } catch (error) {
       console.error('Error getting public classes:', error);
+      throw error;
+    }
+  }
+
+  static async getAllClasses(userId = null) {
+    try {
+      // Get all classes
+      const classesQuery = query(
+        collection(db, 'classes'),
+        orderBy('createdAt', 'asc')
+      );
+      const classesSnapshot = await getDocs(classesQuery);
+      const classIds = classesSnapshot.docs.map(doc => doc.id);
+
+      // Get all quizzes for public classes
+      const quizzesQuery = query(
+        collection(db, 'quizzes'),
+        where('classId', 'in', classIds),
+        orderBy('createdAt', 'asc')
+      );
+      const quizzesSnapshot = await getDocs(quizzesQuery);
+
+      return await this._formatClassesWithQuizzes(classIds, quizzesSnapshot);
+    } catch (error) {
+      console.error('Error getting classes:', error);
       throw error;
     }
   }

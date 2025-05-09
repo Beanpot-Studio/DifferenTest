@@ -9,6 +9,12 @@
       <BaseAnimation type="loading" :size="50" />
     </div>
     
+    <!-- New: Loading authentication state -->
+    <div v-else-if="!authInitialized" class="text-center py-8">
+      <p class="text-gray-500">Checking authentication...</p>
+      <BaseAnimation type="loading" :size="50" class="mx-auto" />
+    </div>
+    
     <div v-else-if="error" class="p-4 bg-red-50 rounded-lg">
       <p class="text-red-600">{{ error }}</p>
     </div>
@@ -220,8 +226,9 @@ export default {
       default: false
     }
   },
-  setup(props) {
-    const { user, role } = useAuth();
+  emits: ['quiz-completed'],
+  setup(props, { emit }) {
+    const { user, role, initialized: authInitialized } = useAuth();
     const { showSuccess, showError } = useNotification();
     const quizData = ref(null);
     const loading = ref(true);
@@ -359,6 +366,7 @@ export default {
           const attemptData = {
             userId: user.value.uid,
             quizId: quizData.value.id,
+            classId: props.classId,
             score: score.value,
             correctAnswers: correctCount,
             questionCount: quizData.value.questions.length,
@@ -369,19 +377,17 @@ export default {
             }))
           };
           
-          // Use submitQuizAttempt instead of createQuizAttempt
           await FirebaseService.submitQuizAttempt(attemptData);
           
-          // Dispatch quiz completed event
-          window.dispatchEvent(new CustomEvent('quizCompleted'));
+          emit('quiz-completed', attemptData);
 
           showSuccess(`Quiz completed! Score: ${score.value}%`);
         } catch (error) {
           console.error('Error submitting quiz:', error);
           showError('Failed to submit quiz. Please try again.');
-        } finally {
-          loading.value = false;
         }
+      } else {
+        showError('User not authenticated. Cannot submit quiz.');
       }
     };
 
@@ -421,7 +427,14 @@ export default {
       }
     };
 
-    onMounted(loadQuiz);
+    onMounted(async () => {
+      // Wait for auth to be initialized before loading quiz if quiz loading depends on user state
+      // or if you want to avoid loading data unnecessarily if user is not logged in.
+      // However, loadQuiz itself doesn't seem to directly use 'user' for fetching,
+      // so it might be okay to call it before auth is fully initialized if the quiz data is public.
+      // For now, we are primarily fixing the display logic.
+      await loadQuiz();
+    });
 
     return {
       quizData,
@@ -442,6 +455,7 @@ export default {
       showConfetti,
       user,
       role,
+      authInitialized,
       currentPage,
       totalPages,
       currentQuestionIndex,

@@ -1,0 +1,161 @@
+---
+// teacher-built classes - all can view, few can take quiz
+import Layout from "../../layouts/MainLayout.astro";
+import FirebaseService from "../../lib/firebaseService";
+
+interface Quiz {
+  id: string;
+  title?: string;
+  // Add other quiz properties if known, e.g., questionCount, lessonPlan, etc.
+  [key: string]: any;
+}
+
+interface Teacher {
+  name?: string;
+  // Add other teacher properties if known
+  [key: string]: any;
+}
+
+interface PageClassData {
+  id: string;
+  name?: string;
+  description?: string;
+  teacherName?: string;
+  teacher?: Teacher; // For summary.teacher.name access
+  quizzes?: Quiz[];
+  isPublic?: boolean;
+  code?: string;
+  teacherId?: string;
+  [key: string]: any;
+}
+
+export async function getStaticPaths() {
+  const classDataResult = await FirebaseService.getClasses({
+    includeTeacherInfo: true,
+    includeQuizzes: true,
+  });
+
+  const richClassSummaries = classDataResult.classes || [];
+
+  const paths = richClassSummaries.map((summaryUntyped) => {
+    // Assert the type of summary to help TypeScript understand its shape
+    const summary = summaryUntyped as PageClassData;
+
+    if (!summary || !summary.id) {
+      return null;
+    }
+
+    const pageClassData: PageClassData = {
+      ...summary, // Spread all fields from the now-asserted summary
+      id: summary.id, // Ensure id is present and correctly typed
+      name: summary.name || "Unnamed Course", // Provide fallback for name
+      teacherName: summary.teacher?.name, // Access teacher.name
+      quizzes: summary.quizzes || [],
+      description: summary.description || "",
+      isPublic: summary.isPublic === undefined ? true : summary.isPublic,
+    };
+    return {
+      params: { id: summary.id },
+      props: { classData: pageClassData },
+    };
+  });
+  return paths.filter((path) => path !== null);
+}
+
+const { id } = Astro.params;
+const { classData } = Astro.props as { classData: PageClassData };
+
+if (!classData) {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout title={classData.name || "Course Details"}>
+  <main class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6" id="course-content">
+      <h1 class="text-3xl font-bold text-gray-900 mb-4">
+        {classData.name || "Course Title Not Available"}
+      </h1>
+      <p class="text-gray-600 mb-6">{classData.description}</p>
+      <div class="flex items-center text-sm text-gray-500 mb-8">
+        <span class="mr-4">Author: {classData.teacherName || "N/A"}</span>
+      </div>
+      <div class="mb-8 quiz-navigation-section">
+        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Quizzes</h2>
+        <div class="flex space-x-4 mb-6">
+          {
+            classData.quizzes && classData.quizzes.length > 0 ? (
+              classData.quizzes.map((quiz) => (
+                <a
+                  href={`/courses/${id}/quiz/${quiz.id}`}
+                  class="quiz-link px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+                >
+                  {quiz.title || "Unnamed Quiz"}
+                </a>
+              ))
+            ) : (
+              <p class="text-gray-500">
+                No quizzes available for this course yet.
+              </p>
+            )
+          }
+        </div>
+      </div>
+    </div>
+    <div id="auth-message" class="text-center py-8" style="display: none;">
+      {/* This will be shown if auth is required and fails */}
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import FirebaseService from "../../lib/firebaseService";
+
+  // Minimal interface for client-side type assertion
+  interface ClientPageClassData {
+    isPublic?: boolean;
+    // Add other properties if they are accessed directly in this script,
+    // but for now, only isPublic is critical for the script's logic.
+  }
+
+  const astroPropsClassData = Astro.props.classData as ClientPageClassData;
+  const courseContentEl = document.getElementById("course-content");
+  const authMessageEl = document.getElementById("auth-message");
+
+  async function performAccessCheck() {
+    if (!astroPropsClassData) {
+      if (courseContentEl) courseContentEl.style.display = "none";
+      if (authMessageEl) {
+        authMessageEl.style.display = "block";
+        authMessageEl.textContent = "Error: Course data is missing.";
+      }
+      return;
+    }
+
+    if (astroPropsClassData.isPublic === false) {
+      const user = await FirebaseService.checkAuth();
+      if (!user) {
+        if (courseContentEl) courseContentEl.style.display = "none";
+        if (authMessageEl) {
+          authMessageEl.style.display = "block";
+          authMessageEl.innerHTML = `
+            <div class="flex items-center justify-center space-x-2 mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              <h3 class="text-lg font-semibold text-gray-900">Access Denied</h3>
+            </div>
+            <p class="text-gray-500 mb-4">This course requires you to be logged in. Please log in to view this content.</p>
+            <a href="/login?returnUrl=${encodeURIComponent(window.location.pathname)}" 
+               class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Log In</a>
+          `;
+        }
+      } else {
+        if (authMessageEl) authMessageEl.style.display = "none";
+        if (courseContentEl) courseContentEl.style.display = "block";
+      }
+    } else {
+      if (authMessageEl) authMessageEl.style.display = "none";
+      if (courseContentEl) courseContentEl.style.display = "block";
+    }
+  }
+  performAccessCheck();
+</script>

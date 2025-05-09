@@ -165,53 +165,6 @@
                 </button>
               </div>
             </div>
-
-            <!-- Class Quizzes (Only for Active Classes) -->
-            <div class="mt-4">
-              <h4 class="font-medium mb-2">Quizzes</h4>
-              <div v-if="classItem.quizzes?.length === 0" class="text-gray-500 text-sm">
-                No quizzes in this class yet.
-              </div>
-              <div v-else class="space-y-2" :data-testid="`assigned-quiz-list-${classItem.id}`">
-                <div
-                  v-for="quiz in classItem.quizzes"
-                  :key="quiz.id"
-                  class="rounded-lg shadow p-3 bg-gradient-to-br from-green-50 to-teal-100 hover:shadow-md transition-shadow duration-200"
-                >
-                  <div class="flex justify-between items-start">
-                    <div class="text-lg font-bold text-gray-900 text-left"
-                      >
-                        {{ quiz.title }}
-                    </div>            
-                  </div>
-                  <div class="flex space-x-2">
-                    <button
-                      @click="removeQuizFromClass(classItem.id, quiz.id)"
-                      class="text-red-600 hover:text-red-800 p-1"
-                      title="Remove from class"
-                    >
-                      <IconService name="trash" size="5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Add Quiz to Class (Only for Active Classes) -->
-            <div class="mt-4">
-              <select
-                v-model="selectedQuiz"
-                class="w-full p-2 border rounded-lg"
-                @change="addQuizToClass(classItem.id)"
-                :data-testid="`add-quiz-select-${classItem.id}`"
-              >
-                <option value="">Select a quiz to add</option>
-                <option v-for="quiz in availableQuizzes" :key="quiz.id" :value="quiz.id">
-                  {{ quiz.title }}
-                </option>
-              </select>
-            </div>
-
             <!-- Class Roster -->
             <div class="mt-6">
               <ClassRoster :classId="classItem.id" :className="classItem.name" />
@@ -571,52 +524,7 @@ export default {
       }
     };
 
-    const fetchQuizzes = async () => {
-      if (!user.value) return;
-      
-      try {
-        loading.value = true;
-        const response = await FirebaseService.getClasses({
-          teacherId: user.value.uid,
-          includeQuizzes: true,
-          includeTeacherInfo: true
-        });
-        
-        if (!response || !response.classes) {
-          classesWithQuizzes.value = [];
-          return;
-        }
-        
-        // Group quizzes by class
-        const classMap = new Map();
-        
-        for (const classData of response.classes) {
-          if (!classData.id || !classData.name) continue;
-          classMap.set(classData.id, {
-            id: classData.id,
-            name: classData.name,
-            quizzes: []
-          });
-        }
-        
-        for (const classData of response.classes) {
-          if (!classData.quizzes) continue;
-          for (const quiz of classData.quizzes) {
-            if (quiz && quiz.classId && classMap.has(quiz.classId)) {
-              classMap.get(quiz.classId).quizzes.push(quiz);
-            }
-          }
-        }
-        
-        classesWithQuizzes.value = Array.from(classMap.values());
-      } catch (error) {
-        console.error('Error fetching quizzes:', error);
-        showError('Failed to fetch quizzes');
-      } finally {
-        loading.value = false;
-      }
-    };
-
+   
     const editClass = (classItem) => {
       editingBadgeImageFile.value = null;
       editingBadgeImageName.value = '';
@@ -705,49 +613,7 @@ export default {
       }
     };
 
-    const addQuizToClass = async (classId) => {
-      if (!selectedQuiz.value) return;
-
-      try {
-        const quiz = availableQuizzes.value.find(q => q.id === selectedQuiz.value);
-        if (!quiz) return;
-
-        await FirebaseService.addQuizToClass(classId, {
-          id: quiz.id,
-          title: quiz.title
-        });
-
-        const classIndex = classes.value.findIndex(c => c.id === classId);
-        if (classIndex !== -1) {
-          classes.value[classIndex].quizzes = [
-            ...(classes.value[classIndex].quizzes || []),
-            { id: quiz.id, title: quiz.title }
-          ];
-        }
-
-        selectedQuiz.value = '';
-        showSuccess('Quiz added to class successfully');
-      } catch (error) {
-        console.error('Error adding quiz to class:', error);
-        showError('Error adding quiz to class. Please try again.');
-      }
-    };
-
-    const removeQuizFromClass = async (classId, quizId) => {
-      try {
-        await FirebaseService.removeQuizFromClass(classId, quizId);
-
-        const classIndex = classes.value.findIndex(c => c.id === classId);
-        if (classIndex !== -1) {
-          classes.value[classIndex].quizzes = classes.value[classIndex].quizzes.filter(
-            q => q.id !== quizId
-          );
-        }
-        showSuccess('Quiz removed from class successfully');
-      } catch (error) {
-        showError('Error removing quiz from class. Please try again.');
-      }
-    };
+    
 
     const copyClassCode = async () => {
       if (!editingClass.value?.code) return;
@@ -788,16 +654,12 @@ export default {
         loading.value = true;
         await FirebaseService.updateClass(classItem.id, { isComplete: newState });
 
-        // Optimistic update or refetch
-        // Option 1: Optimistic Update (faster UI response)
         const index = classes.value.findIndex(c => c.id === classItem.id);
         if (index !== -1) {
           classes.value[index].isComplete = newState;
           classes.value[index].updatedAt = new Date(); // Simulate update timestamp
         }
-        // Option 2: Refetch (ensures data consistency)
-        // await fetchClasses();
-
+        
         showSuccess(`Class successfully ${newState ? 'marked as complete' : 'reopened'}.`);
       } catch (error) {
         console.error(`Error updating class completion status for ${classItem.id}:`, error);
@@ -844,7 +706,6 @@ export default {
     onMounted(() => {
       hasMounted.value = true;
       fetchClasses();
-      fetchQuizzes();
     });
 
     // NEW: Cleanup timeout on unmount
@@ -864,16 +725,12 @@ export default {
       classes,
       newClass,
       editingClass,
-      selectedQuiz,
       createClass,
       editClass,
       saveClass,
       deleteClass,
-      addQuizToClass,
-      removeQuizFromClass,
       copyClassCode,
       formatDate,
-      availableQuizzes,
       classesWithQuizzes,
       showCreateClassModal,
       loading,
