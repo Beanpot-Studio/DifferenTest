@@ -44,7 +44,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import BaseAnimation from './BaseAnimation.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import FirebaseService from '../lib/firebaseService';
 
 export default {

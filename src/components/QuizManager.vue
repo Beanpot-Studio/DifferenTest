@@ -367,8 +367,8 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
-import BaseAnimation from './BaseAnimation.vue';
-import IconService from './IconService.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 

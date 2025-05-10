@@ -194,9 +194,9 @@
 
 <script>
 import { ref, onMounted, watch, computed } from 'vue';
-import { useAuth } from '../stores/auth';
-import IconService from './IconService.vue';
-import FirebaseService from '../lib/firebaseService';
+import { useAuth } from '../../stores/auth';
+import IconService from '../services/IconService.vue';
+import FirebaseService from '../../lib/firebaseService';
 
 export default {
   name: 'UserProfile',

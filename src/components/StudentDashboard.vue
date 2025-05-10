@@ -49,7 +49,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { auth } from '../lib/firebase';
 import FirebaseService from '../lib/firebaseService';
 import StudentClasses from './StudentClasses.vue';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 
 const activeClassesCount = ref(0);
 const completedQuizzesCount = ref(0);

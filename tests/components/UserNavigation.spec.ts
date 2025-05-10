@@ -49,7 +49,7 @@ describe('UserNavigation.vue', () => {
   // Use async beforeEach for dynamic import
   beforeEach(async () => {
     // Dynamically import the component *after* mocks are set up
-    const module = await import('@/components/UserNavigation.vue');
+    const module = await import('@/components/ui/UserNavigation.vue');
     UserNavigation = module.default;
 
     // Reset mocks and state before each test

@@ -99,8 +99,8 @@ import ClassManager from './ClassManager.vue';
 import TeacherSubmissions from './TeacherSubmissions.vue';
 import TeacherReports from './TeacherReports.vue';
 import FirebaseService from '../lib/firebaseService';
-import IconService from './IconService.vue';
-import BaseAnimation from './BaseAnimation.vue';
+import IconService from './services/IconService.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import LessonPlanManager from './LessonPlanManager.vue';
 
 export default {

@@ -186,8 +186,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
 import FirebaseService from '../lib/firebaseService';
-import IconService from './IconService.vue';
-import BaseAnimation from './BaseAnimation.vue';
+import IconService from './services/IconService.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
 
 export default {
@@ -317,25 +317,49 @@ export default {
       try {
         loading.value = true;
         const quizId = currentLessonPlan.value.id;
-        const updatedContent = editedLessonPlanContent.value;
-
-        await FirebaseService.updateQuiz(quizId, { 
-          lessonPlan: updatedContent,
+        
+        let updatePayload = {
           updatedAt: new Date()
-        });
+        };
+        let newLocalLessonData = {};
 
-        currentLessonPlan.value.lessonPlan = updatedContent;
+        if (editedLessonType.value === 'steps') {
+          // Ensure editedLessonSteps is an array of strings, filter out empty ones if necessary
+          const validSteps = editedLessonSteps.value.filter(step => typeof step === 'string' && step.trim() !== '');
+          updatePayload.lessonSteps = validSteps;
+          updatePayload.lessonPlan = ''; // Clear full lesson plan if saving steps
+          updatePayload.lessonType = 'steps';
+          newLocalLessonData = { lessonSteps: validSteps, lessonPlan: '', lessonType: 'steps' };
+        } else { // 'full' type
+          const updatedContent = editedLessonPlanContent.value;
+          updatePayload.lessonPlan = updatedContent;
+          updatePayload.lessonSteps = []; // Clear steps if saving full lesson
+          updatePayload.lessonType = 'full';
+          newLocalLessonData = { lessonPlan: updatedContent, lessonSteps: [], lessonType: 'full' };
+        }
+
+        await FirebaseService.updateQuiz(quizId, updatePayload);
+
+        // Update local state more comprehensively
+        currentLessonPlan.value = { ...currentLessonPlan.value, ...newLocalLessonData, updatedAt: updatePayload.updatedAt };
+        
         const classIndex = classesWithLessonPlans.value.findIndex(c => c.id === currentLessonPlan.value.classId);
         if (classIndex !== -1) {
           const quizIndex = classesWithLessonPlans.value[classIndex].quizzes.findIndex(q => q.id === quizId);
           if (quizIndex !== -1) {
-            classesWithLessonPlans.value[classIndex].quizzes[quizIndex].lessonPlan = updatedContent;
+            classesWithLessonPlans.value[classIndex].quizzes[quizIndex] = {
+              ...classesWithLessonPlans.value[classIndex].quizzes[quizIndex],
+              ...newLocalLessonData,
+              updatedAt: updatePayload.updatedAt
+            };
           }
         }
 
         isEditing.value = false;
         showSuccess('Lesson plan updated successfully');
+        closeLessonPlanModal(); // Close the modal after successful save
       } catch (err) {
+        console.error("Error saving lesson plan:", err); // Log the actual error
         showError('Failed to save lesson plan. Please try again.');
       } finally {
         loading.value = false;

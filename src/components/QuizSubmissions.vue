@@ -134,7 +134,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../stores/auth';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 
 export default {

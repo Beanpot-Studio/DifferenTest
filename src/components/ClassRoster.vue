@@ -105,7 +105,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 
 export default {

@@ -34,7 +34,7 @@ describe('RegisterModal.vue', () => {
     mockRegisterUser.mockReset()
     
     // Dynamically import the component using @ alias
-    const module = await import('@/components/RegisterModal.vue');
+    const module = await import('@/components/ui/modals/RegisterModal.vue');
     RegisterModal = module.default;
   })
 

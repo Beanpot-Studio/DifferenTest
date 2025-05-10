@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="fixed text-left inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg w-full max-w-md p-6 relative">
       <button 
         @click="$emit('close')" 
@@ -57,8 +57,8 @@
 
 <script>
 import { ref } from 'vue';
-import { useAuth } from '../stores/auth';
-import IconService from './IconService.vue';
+import { useAuth } from '../../../stores/auth';
+import IconService from '../../services/IconService.vue';
 
 export default {
   name: 'LoginModal',

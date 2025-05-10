@@ -143,7 +143,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 import QuizInterface from './QuizInterface.vue';
 import { useAuth } from '../stores/auth';
 import FirebaseService from '../lib/firebaseService';

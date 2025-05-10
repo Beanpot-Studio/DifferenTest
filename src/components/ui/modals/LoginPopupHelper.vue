@@ -19,7 +19,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import LoginModal from "./LoginModal.vue";
 import RegisterModal from "./RegisterModal.vue";
-import { useAuth } from "../stores/auth";
+import { useAuth } from "../../../stores/auth";
 
 // Create a single source of truth for the login popup state
 const state = {

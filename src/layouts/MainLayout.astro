@@ -1,7 +1,7 @@
 ---
 import Header from "../components/ui/Header.vue";
 import Footer from "../components/ui/Footer.vue";
-import NotificationContainer from "../components/NotificationContainer.vue";
+import NotificationContainer from "../components/services/NotificationContainer.vue";
 import "../styles/global.css";
 
 // Import a helper to get initial theme *without* Vue reactivity for SSR
@@ -105,9 +105,8 @@ const { title, metaTags = [] } = Astro.props;
 
     <script>
       import { useAuth } from "../stores/auth";
-      const { initialize, cleanup } = useAuth();
+      const { cleanup } = useAuth();
 
-      initialize();
       window.addEventListener("unload", () => {
         cleanup();
       });

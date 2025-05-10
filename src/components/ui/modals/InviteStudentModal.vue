@@ -58,7 +58,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { useAuth } from '../stores/auth'; 
+import { useAuth } from '../../../stores/auth'; 
 
 const props = defineProps({
   show: { type: Boolean, default: false },

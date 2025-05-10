@@ -61,10 +61,10 @@
 
 <script>
 import { useAuth } from '../stores/auth';
-import { ref, computed, onMounted } from 'vue';
-import LoginModal from './LoginModal.vue';
-import RegisterModal from './RegisterModal.vue';
-import BaseAnimation from './BaseAnimation.vue';
+import { ref, computed } from 'vue';
+import LoginModal from './ui/modals/LoginModal.vue';
+import RegisterModal from './ui/modals/RegisterModal.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 
 export default {
   name: 'RoleBasedContent',
@@ -84,7 +84,7 @@ export default {
     }
   },
   setup(props) {
-    const { isLoggedIn, role, loading, initialized, initialize } = useAuth();
+    const { isLoggedIn, role, loading, initialized } = useAuth();
     
     const showLoginModal = ref(false);
     const showRegisterModal = ref(false);
@@ -102,10 +102,6 @@ export default {
     };
     
     const hasAccess = computed(() => props.requiredRoles.includes(role.value));
-
-    onMounted(async () => {
-      await initialize();
-    });
     
     return {
       loading,

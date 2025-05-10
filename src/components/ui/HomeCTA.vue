@@ -33,9 +33,9 @@
 
 <script>
 import { ref } from 'vue';
-import RegisterModal from './RegisterModal.vue';
-import LoginModal from './LoginModal.vue';
-import { useAuth } from '../stores/auth';
+import RegisterModal from '../ui/modals/RegisterModal.vue';
+import LoginModal from '../ui/modals/LoginModal.vue';
+import { useAuth } from '../../stores/auth';
 
 export default {
   name: 'HomeCTA',

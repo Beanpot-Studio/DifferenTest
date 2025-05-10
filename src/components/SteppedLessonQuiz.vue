@@ -110,9 +110,9 @@ import QuizInterface from './QuizInterface.vue';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import FirebaseService from '../lib/firebaseService';
-import CatSteppedLesson from './CatSteppedLesson.vue';
-import CatQuizResult from './CatQuizResult.vue';
-import BaseAnimation from './BaseAnimation.vue';
+import CatSteppedLesson from './ui/skins/CatSteppedLesson.vue';
+import CatQuizResult from './ui/skins/CatQuizResult.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 
 const props = defineProps({
   quiz: {

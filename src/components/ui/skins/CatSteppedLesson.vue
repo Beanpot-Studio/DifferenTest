@@ -8,7 +8,6 @@
           </svg>
         </button>
         <h1 class="academy-title">aCATemy</h1>
-        <!-- Placeholder for potential right-aligned items -->
         <div class="header-spacer"></div> 
       </div>
       <nav v-if="classQuizzes && classQuizzes.length > 0" class="quiz-links-nav">
@@ -31,8 +30,25 @@
       <div v-if="currentStep" class="lesson-step">
         <img :src="catForStep" alt="Friendly Cat Guide" class="cat-guide" />
         
-        
         <div class="step-content" v-html="renderedStepContent"></div>
+
+        <!-- Paw Print Trail -->
+        <div v-if="lessonSteps.length > 0" class="paw-print-trail">
+          <span 
+            v-for="(_, index) in lessonSteps" 
+            :key="index"
+            class="paw-print"
+            :class="{
+              'paw-print--completed': index < currentStepIndex,
+              'paw-print--current': index === currentStepIndex,
+              'paw-print--future': index > currentStepIndex
+            }"
+            role="img"
+            :aria-label="`Step ${index + 1} ${index === currentStepIndex ? 'current' : (index < currentStepIndex ? 'completed' : 'pending')}`"
+          >
+            🐾
+          </span>
+        </div>
         
         <div class="navigation-buttons mt-6 flex justify-center space-x-4">
           <button 
@@ -83,7 +99,8 @@ const availableCatAssets = [
   '/skins/cats/assets/chasing-cat.gif',
   '/skins/cats/assets/pouncing-cat.gif',
   '/skins/cats/assets/wiggle-cat.gif',
-  '/skins/cats/assets/walking-cat.gif' 
+  '/skins/cats/assets/walking-cat.gif',
+  '/skins/cats/assets/heart-cat.gif' 
 ];
 
 const props = defineProps({
@@ -309,6 +326,7 @@ function restartLesson() {
   background-color: rgba(var(--cat-primary, 255 157 135), 0.05);
   border-radius: 8px;
   min-height: 100px; 
+  margin-bottom: 20px;
 }
 
 .step-content :deep(p) { margin-bottom: 0.8em; line-height: 1.6; }
@@ -356,5 +374,38 @@ function restartLesson() {
     padding: 20px;
     font-size: 1.1em;
     color: rgb(var(--cat-text-color, #333));
+}
+
+/* Paw Print Trail Styles */
+.paw-print-trail {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Space between paw prints */
+  margin-bottom: 20px; /* Space before navigation buttons */
+  flex-wrap: wrap; /* Allow paws to wrap on smaller screens if many steps */
+}
+
+.paw-print {
+  font-size: 1.8em; /* Adjust size as needed */
+  color: rgba(var(--cat-text-color, 51 51 51), 0.3); /* Default for future paws */
+  transition: all 0.3s ease-in-out;
+  user-select: none; /* Prevent text selection */
+}
+
+.paw-print--completed {
+  color: rgb(var(--cat-secondary, 255 181 167)); /* Light Coral for completed */
+  opacity: 0.8;
+}
+
+.paw-print--current {
+  color: rgb(var(--cat-primary, 255 157 135)); /* Main Cat Primary for current */
+  transform: scale(1.25) rotate(-10deg); /* Make current paw stand out */
+  text-shadow: 0 0 5px rgba(var(--cat-primary, 255 157 135), 0.5);
+}
+
+.paw-print--future {
+   /* Uses the default .paw-print color and opacity or can be more specific if needed */
+   opacity: 0.4;
 }
 </style> 

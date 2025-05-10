@@ -118,8 +118,8 @@
 
 <script>
 import { ref, computed } from 'vue';
-import IconService from './IconService.vue';
-import FirebaseService from '../lib/firebaseService';
+import IconService from '../services/IconService.vue';
+import FirebaseService from '../../lib/firebaseService';
 import { marked } from 'marked'; // Import marked if using markdown in content
 
 export default {

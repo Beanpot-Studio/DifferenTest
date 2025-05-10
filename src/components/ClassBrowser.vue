@@ -167,9 +167,9 @@
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { useAuth } from '../stores/auth';
-import BaseAnimation from './BaseAnimation.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 
 export default {

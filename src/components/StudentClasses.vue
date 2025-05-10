@@ -1,56 +1,5 @@
 <template>
   <div class="space-y-8">
-    <!-- Remove Class Search Section --> 
-    <!-- 
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-bold mb-4">Find Classes</h2>
-      <div class="flex gap-4">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search for classes..."
-          class="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-        />
-        <button
-          @click="searchClasses"
-          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          Search
-        </button>
-      </div>
-      
-      <div v-if="searchResults.length > 0" class="mt-4 space-y-4">
-        <div 
-          v-for="classItem in searchResults" 
-          :key="classItem.id" 
-          class="rounded-lg shadow-lg p-6 bg-gradient-to-br from-purple-50 to-indigo-50 hover:shadow-xl transition-shadow duration-300"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-800">{{ classItem.name }}</h3>
-              <p class="text-sm text-gray-700">Teacher: {{ classItem.teacherName }}</p>
-              <p class="text-sm text-gray-700">Class Code: {{ classItem.code }}</p>
-            </div>
-            <button
-              v-if="!isEnrolled(classItem.id)"
-              @click="requestToJoin(classItem)"
-              class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-            >
-              Request to Join
-            </button>
-            <span
-              v-else
-              class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
-            >
-              Enrolled
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-    --> 
-
-   
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold mb-4">Join a Class</h2>
       <p class="text-sm text-gray-600 mb-4">
@@ -590,16 +539,15 @@
 <script>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { useAuth } from '../stores/auth';
-import ClassSearch from './ClassSearch.vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import BaseAnimation from './BaseAnimation.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import { useNotification } from '../composables/useNotification';
 import QuizHistory from './QuizHistory.vue';
 import RecentActivity from './RecentActivity.vue';
 import QuizInterface from './QuizInterface.vue';
-import BaseModal from './BaseModal.vue';
-import BadgeDisplay from './BadgeDisplay.vue';
-import IconService from './IconService.vue';
+import BaseModal from './ui/modals/BaseModal.vue';
+import BadgeDisplay from './ui/BadgeDisplay.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
@@ -607,7 +555,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 export default {
   name: 'StudentClasses',
   components: {
-    ClassSearch, BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay, IconService
+   BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay, IconService
   },
   setup() {
     const { user, initialized } = useAuth();

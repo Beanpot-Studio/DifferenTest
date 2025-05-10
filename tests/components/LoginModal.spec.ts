@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import LoginModal from '@/components/LoginModal.vue'
+import LoginModal from '@/components/ui/modals/LoginModal.vue'
 import { ref } from 'vue' // Import ref for mocks
 
 // Define the core mock function first

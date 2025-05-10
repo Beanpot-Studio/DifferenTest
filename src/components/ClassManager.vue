@@ -408,11 +408,11 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useAuth } from '../stores/auth';
 import ClassRoster from './ClassRoster.vue';
 import { useNotification } from '../composables/useNotification';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 import { useSkin } from '../composables/useSkin';
 import { uploadToCloudinary } from '../utils/cloudinaryUpload';
-import InviteStudentModal from './InviteStudentModal.vue';
+import InviteStudentModal from './ui/modals/InviteStudentModal.vue';
 
 export default {
   name: 'ClassManager',

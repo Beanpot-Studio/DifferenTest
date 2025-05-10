@@ -158,10 +158,10 @@
 
 <script>
 import { ref, onMounted, computed, watch } from 'vue';
-import { useAuth } from '../stores/auth';
-import BaseAnimation from './services/BaseAnimation.vue';
-import IconService from './services/IconService.vue';
-import FirebaseService from '../lib/firebaseService';
+import { useAuth } from '../../stores/auth';
+import BaseAnimation from '../services/BaseAnimation.vue';
+import IconService from '../services/IconService.vue';
+import FirebaseService from '../../lib/firebaseService';
 
 export default {
   components: {

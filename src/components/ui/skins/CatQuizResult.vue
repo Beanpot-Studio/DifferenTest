@@ -74,7 +74,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import BaseAnimation from './BaseAnimation.vue'; // Assuming BaseAnimation is used for loading
+import BaseAnimation from '../../services/BaseAnimation.vue'; // Assuming BaseAnimation is used for loading
 
 const props = defineProps({
   attemptResult: { type: Object, required: true },

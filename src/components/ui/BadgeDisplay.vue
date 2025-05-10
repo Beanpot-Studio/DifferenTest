@@ -55,10 +55,10 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { useAuth } from '../stores/auth';
-import BaseAnimation from './BaseAnimation.vue';
-import IconService from './IconService.vue';
-import FirebaseService from '../lib/firebaseService';
+import { useAuth } from '../../stores/auth';
+import BaseAnimation from '../services/BaseAnimation.vue';
+import IconService from '../services/IconService.vue';
+import FirebaseService from '../../lib/firebaseService';
 
 export default {
   name: 'BadgeDisplay',

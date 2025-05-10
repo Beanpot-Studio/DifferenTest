@@ -57,9 +57,9 @@
 
 <script>
 import { ref, onUnmounted, computed } from 'vue';
-import UserNavigation from '../UserNavigation.vue';
-import LoginModal from '../LoginModal.vue';
-import RegisterModal from '../RegisterModal.vue';
+import UserNavigation from '../ui/UserNavigation.vue';
+import LoginModal from '../ui/modals/LoginModal.vue';
+import RegisterModal from '../ui/modals/RegisterModal.vue';
 import { useAuth } from '../../stores/auth';
 
 export default {

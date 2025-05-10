@@ -949,7 +949,7 @@ class FirebaseService {
         "issuer": {
           "id": issuerId,
           "type": "Profile",
-          "name": badgeData.teacherName || "Quiz Master",
+          "name": badgeData.teacherName || "Instructor",
           "url": window.location.origin,
           "email": badgeData.teacherEmail || "badgeguru@beanpotstudio.com",
           "description": "Issuer of educational badges for quiz achievements",
@@ -995,7 +995,7 @@ class FirebaseService {
           score: badgeData.score || 100,
           completionDate: new Date().toISOString(),
           badgeImage: badgeImageUrl,
-          badgeName: badgeData.name || "Quiz Master Badge",
+          badgeName: badgeData.name || "Badge",
           badgeDescription: badgeData.description || "Awarded for completing a quiz with perfect score",
           verificationUrl: `${window.location.origin}/badges/${badgeId}`,
           issuerUrl: `${window.location.origin}/issuers/${badgeData.teacherId}`,
@@ -1352,7 +1352,7 @@ class FirebaseService {
         teacherName: teacherData?.name || 'Teacher',
         teacherEmail: teacherData?.email || 'teacher@example.com',
         studentName: userData.name || 'Student',
-        name: `${quizData.title} Master`,
+        name: `${quizData.title} Badge`,
         description: `Awarded for completing ${quizData.title} with a perfect score`,
         image: badgeImageUrl, // Use the fetched or default image URL
         score: score

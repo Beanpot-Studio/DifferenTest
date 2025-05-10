@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import IconService from './IconService.vue';
+import IconService from '../../services/IconService.vue';
 export default {
   components: {
     IconService

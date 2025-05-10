@@ -45,9 +45,9 @@
 </template>
 
 <script>
-import { useAuth } from '../stores/auth';
+import { useAuth } from '../../stores/auth';
 import { computed } from 'vue';
-import IconService from './IconService.vue';
+import IconService from '../services/IconService.vue';
 
 export default {
   name: 'UserNavigation',

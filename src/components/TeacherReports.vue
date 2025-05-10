@@ -261,7 +261,7 @@
 <script>
 import { ref, onMounted, watch, nextTick, computed } from 'vue';
 import { useAuth } from '../stores/auth';
-import BaseAnimation from './BaseAnimation.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import FirebaseService from '../lib/firebaseService';
 import Chart from 'chart.js/auto';
 

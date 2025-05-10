@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import { useNotification } from '../composables/useNotification';
+import { useNotification } from '../../composables/useNotification';
 import Notification from './Notification.vue';
 import { watch } from 'vue';
 

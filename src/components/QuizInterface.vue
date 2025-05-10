@@ -200,11 +200,11 @@
 
 <script>
 import { ref, computed, onMounted, watch } from 'vue';
-import BaseAnimation from './BaseAnimation.vue';
+import BaseAnimation from './services/BaseAnimation.vue';
 import { useAuth } from '../stores/auth';
 import { useNotification } from '../composables/useNotification';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import IconService from './IconService.vue';
+import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
 
 export default {
@@ -373,7 +373,8 @@ export default {
             timeSpent: Date.now() - quizStartTime.value,
             questions: quizData.value.questions.map((q, index) => ({
               ...q,
-              selectedAnswer: selectedAnswers.value[index]
+              selectedAnswer: selectedAnswers.value[index],
+              isCorrect: selectedAnswers.value[index] === q.correctIndex
             }))
           };
           
