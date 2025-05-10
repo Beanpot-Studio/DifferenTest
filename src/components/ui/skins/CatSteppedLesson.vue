@@ -183,6 +183,11 @@ function nextStep() {
 function completeLesson() {
   lessonCompletedInternal.value = true;
   emit('lesson-completed');
+
+  // NEW: Call the global function to reveal the quiz on the Astro page
+  if (typeof window.triggerQuizDisplayFromLesson === 'function') {
+    window.triggerQuizDisplayFromLesson();
+  }
 }
 
 function restartLesson() {
@@ -190,6 +195,12 @@ function restartLesson() {
   lessonCompletedInternal.value = false;
 }
 
+</script>
+
+<script>
+// Minimal default export for Astro compatibility
+// The name property is good practice but optional here if script setup handles component registration internally for Vue.
+// name: 'CatSteppedLesson'
 </script>
 
 <style scoped>
