@@ -1,7 +1,17 @@
 <template>
   <div class="cat-quiz-result">
     <h2>Quiz Results!</h2>
-    <img :src="catPoseForScore" alt="Cat reaction to score" class="cat-reaction mx-auto" />
+    <div class="debug-info" style="display: none;">
+      <p>Score: {{ score }}</p>
+      <p>Image Path: {{ catPoseForScore }}</p>
+    </div>
+    <img 
+      :src="catPoseForScore" 
+      alt="Cat reaction to score" 
+      class="cat-reaction mx-auto"
+      @error="handleImageError"
+      @load="handleImageLoad"
+    />
     <p class="score-text">You scored: {{ score }}%</p>
     <p class="cat-message mb-6">{{ catMessage }}</p>
     
@@ -91,7 +101,10 @@ const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 // --- Computed Properties ---
 
 // Extract score for convenience
-const score = computed(() => props.attemptResult?.score ?? 0);
+const score = computed(() => {
+  console.log('Attempt Result:', props.attemptResult);
+  return props.attemptResult?.score ?? 0;
+});
 
 // Cat image logic (uses computed score)
 const scoreCatImagePaths = {
@@ -100,12 +113,17 @@ const scoreCatImagePaths = {
   okay: '/skins/cats/assets/sleeping-cat.gif',
   improvement: '/skins/cats/assets/angry-cat.gif'
 };
+
 const catPoseForScore = computed(() => {
   const currentScore = score.value;
-  if (currentScore === 100) return scoreCatImagePaths.perfect;
-  if (currentScore >= 80) return scoreCatImagePaths.good;
-  if (currentScore >= 50) return scoreCatImagePaths.okay;
-  return scoreCatImagePaths.improvement;
+  console.log('Current Score:', currentScore);
+  let imagePath;
+  if (currentScore === 100) imagePath = scoreCatImagePaths.perfect;
+  else if (currentScore >= 80) imagePath = scoreCatImagePaths.good;
+  else if (currentScore >= 50) imagePath = scoreCatImagePaths.okay;
+  else imagePath = scoreCatImagePaths.improvement;
+  console.log('Selected Image Path:', imagePath);
+  return imagePath;
 });
 
 // Cat message logic (uses computed score)
@@ -121,21 +139,25 @@ const catMessage = computed(() => {
 // Ensure this matches the structure provided by QuizInterface's attemptData
 const detailedResults = computed(() => {
   if (!props.attemptResult?.questions) return [];
-  // Assuming attemptResult.questions contains objects like:
-  // { text: '...', options: [ {text:'...', ...} ], correctIndex: N, selectedAnswer: M }
   return props.attemptResult.questions.map((q) => {
     const isCorrect = q.selectedAnswer === q.correctIndex;
-    const selectedAnswerText = (q.selectedAnswer !== null && q.options[q.selectedAnswer]) 
-                                ? q.options[q.selectedAnswer].text 
-                                : 'No answer';
     const correctAnswerText = q.options[q.correctIndex]?.text || 'N/A';
+    const selectedAnswerText = q.options[q.selectedAnswer]?.text || 'No answer selected';
+    
+    console.log('Question data:', {
+      questionText: q.text,
+      selectedAnswer: q.selectedAnswer,
+      selectedAnswerText,
+      correctIndex: q.correctIndex,
+      correctAnswerText,
+      isCorrect
+    });
     
     return {
       questionText: q.text,
-      selectedAnswerText: selectedAnswerText,
-      correctAnswerText: correctAnswerText,
-      isCorrect: isCorrect,
-      // Include original question object if needed by getExplanation
+      selectedAnswerText,
+      correctAnswerText,
+      isCorrect,
       originalQuestion: q 
     };
   });
@@ -150,7 +172,7 @@ const getExplanation = async (questionIndex) => {
   explanations.value[questionIndex] = 'loading'; // Show loading state
   try {
     const question = resultItem.originalQuestion;
-    const prompt = `Explain in simple, concise language why "${resultItem.correctAnswerText}" is the correct answer to the question: "${question.text}". Focus only on comparing the correct answer to the student's incorrect answer: "${resultItem.selectedAnswerText}". Use simple language for an elementary school student, no formatting, and limit to 2-3 sentences.`;
+    const prompt = `Explain in simple, concise language designed for elementary school aged children why "${resultItem.correctAnswerText}" is the correct answer to the question: "${question.text}". Focus only on comparing the correct answer to the student's incorrect answer: "${resultItem.selectedAnswerText}". Use simple language for an elementary school student, no formatting, and limit to 2-3 sentences.`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     const result = await model.generateContent(prompt);
@@ -170,6 +192,29 @@ const toggleQuestion = (index) => {
   }
 };
 
+const handleImageLoad = (e) => {
+  console.log('Image loaded successfully:', e.target.src);
+  console.log('Image element:', e.target);
+};
+
+const handleImageError = (e) => {
+  console.error('Failed to load cat image:', e.target.src);
+  console.error('Error details:', e);
+  // Try to load the image directly to test if it exists
+  fetch(e.target.src)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log('Image exists but failed to load in img tag');
+    })
+    .catch(error => {
+      console.error('Image does not exist or is not accessible:', error);
+    });
+  // Fallback to a default image if needed
+  e.target.src = '/skins/cats/assets/dancing-cat.gif';
+};
+
 // TODO:
 // - Create or source the actual cat images/animations for different poses.
 // - Style the component to match the playful theme.
@@ -179,19 +224,30 @@ const toggleQuestion = (index) => {
 .cat-quiz-result {
   padding: 25px;
   background-color: rgb(var(--cat-background));
-  border-radius: 20px; /* More rounded */
+  border-radius: 20px;
   text-align: center;
   border: 3px solid rgb(var(--cat-primary));
   box-shadow: 0 6px 15px rgba(var(--cat-primary), 0.2);
-  max-width: 500px; /* Adding max-width for better layout */
-  margin: 20px auto; /* Centering if it's a block */
+  max-width: 500px;
+  margin: 20px auto;
 }
 
 .cat-reaction {
   max-width: 200px;
-  margin-bottom: 20px;
-  /* Add a little pop animation on display? */
-  /* animation: popIn 0.5s ease-out; */
+  width: 100%;
+  height: auto;
+  margin: 20px auto;
+  display: block;
+  object-fit: contain;
+  border: 2px solid rgb(var(--cat-primary));
+  border-radius: 10px;
+  padding: 10px;
+  background-color: rgba(var(--cat-background), 0.5);
+}
+
+/* Add a debug outline to help see the image container */
+.cat-reaction {
+  outline: 2px solid red;
 }
 
 .cat-quiz-result h2 {

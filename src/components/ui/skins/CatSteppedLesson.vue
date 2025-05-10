@@ -283,9 +283,10 @@ function restartLesson() {
 }
 
 .quiz-link-item {
-  color: rgb(var(--cat-accent, 139 211 221));
-  text-decoration: none;
+  color: rgb(var(--cat-accent, 49 111 121));
+  text-decoration: underline;
   font-size: 0.9em;
+  font-weight: bold;
   padding: 4px 8px;
   border-radius: 4px;
   transition: background-color 0.2s, color 0.2s;
@@ -326,8 +327,10 @@ function restartLesson() {
 }
 
 .step-title {
-  color: rgb(var(--cat-accent, 139 211 221));
+  color: rgb(var(--cat-accent, 49 111 121));
   font-size: 1.3em;
+  font-weight: bold;
+  text-decoration: underline;
   margin-bottom: 10px;
 }
 

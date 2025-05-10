@@ -3,7 +3,7 @@
   /* Custom Colors */
   --cat-primary: 255, 157, 135; /* #FF9D87 - Soft coral for main elements (RGB format for Tailwind compatibility) */
   --cat-secondary: 255, 181, 167; /* #FFB5A7 - Lighter coral (RGB) */
-  --cat-accent: 139, 211, 221; /* #8BD3DD - Soft teal (RGB) */
+  --cat-accent: 0, 150, 199; /* #0096C7 - Bold teal (RGB) */
   --cat-background: 255, 245, 242; /* #FFF5F2 - Very light peachy background (RGB) */
   
   /* Override default theme colors - Using RGB values for Tailwind */

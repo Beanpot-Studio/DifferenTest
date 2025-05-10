@@ -374,12 +374,21 @@
             <IconService name="close" size="6" />
           </button>
         </div>
-        <QuizInterface 
-          v-if="selectedQuiz && selectedQuiz.id && selectedClassId"
-          :quiz-id="selectedQuiz.id"
-          :class-id="selectedClassId"
-          @quiz-completed="handleQuizCompleted"
-        />
+        <div>
+          <QuizWithCatResult
+            v-if="selectedClass?.skinId === 'cats' && selectedQuiz && selectedQuiz.id && selectedClassId"
+            :quiz-id="selectedQuiz.id"
+            :class-id="selectedClassId"
+            :quiz-title="selectedQuiz.title"
+            @quiz-completed="handleQuizCompleted"
+          />
+          <QuizInterface 
+            v-else-if="selectedQuiz && selectedQuiz.id && selectedClassId"
+            :quiz-id="selectedQuiz.id"
+            :class-id="selectedClassId"
+            @quiz-completed="handleQuizCompleted"
+          />
+        </div>
       </div>
     </div>
 
@@ -549,13 +558,14 @@ import BaseModal from './ui/modals/BaseModal.vue';
 import BadgeDisplay from './ui/BadgeDisplay.vue';
 import IconService from './services/IconService.vue';
 import FirebaseService from '../lib/firebaseService';
+import QuizWithCatResult from './ui/skins/QuizWithCatResult.vue';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 export default {
   name: 'StudentClasses',
   components: {
-   BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay, IconService
+   BaseAnimation, QuizHistory, RecentActivity, QuizInterface, BaseModal, BadgeDisplay, IconService, QuizWithCatResult
   },
   setup() {
     const { user, initialized } = useAuth();
@@ -827,6 +837,10 @@ export default {
           loading.value = false;
           return;
         }
+
+        // Find the class in either enrolled or open classes
+        selectedClass.value = enrolledClasses.value.find(c => c.id === classId) || 
+                            openClasses.value.find(c => c.id === classId);
         
         selectedClassId.value = classId;
         selectedQuiz.value = quiz;
@@ -989,6 +1003,10 @@ export default {
         explanations.value = {}; // Clear previous explanations
         expandedExplanations.value = {}; // Clear expanded state
         reviewData.value = null; // Clear previous review data
+        
+        // Find the class in either enrolled or open classes
+        selectedClass.value = enrolledClasses.value.find(c => c.id === classId) || 
+                            openClasses.value.find(c => c.id === classId);
         
         // Get the most recent quiz attempt
         const attempt = await FirebaseService.getQuizAttemptsByUser(user.value.uid, quizId);

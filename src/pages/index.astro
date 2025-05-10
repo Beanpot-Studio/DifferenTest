@@ -4,6 +4,47 @@ import HomeCTA from "../components/ui/HomeCTA.vue";
 import BaseAnimation from "../components/services/BaseAnimation.vue";
 import LoginPopupHelper from "../components/ui/modals/LoginPopupHelper.vue";
 import IconService from "../components/services/IconService.vue";
+import FirebaseService from "../lib/firebaseService.js";
+
+interface TeacherInfo {
+  name: string;
+}
+
+interface FeaturedClass {
+  id: string;
+  name: string;
+  teacher?: TeacherInfo;
+  image: string;
+  description: string;
+  // other properties like createdAt are also present from FirebaseService
+}
+
+let featuredClasses: FeaturedClass[] = [];
+try {
+  const { classes } = await FirebaseService.getClasses({
+    isPublic: true,
+    includeTeacherInfo: true,
+  });
+  // getClasses sorts by createdAt desc, so the first 2 are the newest.
+  // Asserting type here for safety, though classes from JS FirebaseService are any
+  const baseClasses = classes.slice(0, 2) as FeaturedClass[];
+
+  // Add manual image URLs and descriptions
+  featuredClasses = baseClasses.map((course, index) => ({
+    ...course,
+    image:
+      index === 0
+        ? "/acatemy-home.png" // First course image
+        : "/webdev-home.png", // Second course image
+    description:
+      index === 0
+        ? "Designed for kids in grades 1-3, a gentle introduction to Artificial Intelligence, hosted by cheerful cats! Join the aCATemy now for free and earn badges and a certificate."
+        : "Learn the fundamentals of web development with our comprehensive project-based curriculum covering HTML, CSS, and JavaScript basics.",
+  }));
+} catch (error) {
+  console.error("Error fetching featured classes:", error);
+  // featuredClasses will remain empty, and the section might not render or show a message
+}
 ---
 
 <MainLayout title="Welcome">
@@ -125,6 +166,60 @@ import IconService from "../components/services/IconService.vue";
         </div>
       </div>
     </section>
+
+    <!-- Featured Curricula Section -->
+    {
+      featuredClasses && featuredClasses.length > 0 && (
+        <section id="featured-curricula" class="py-16">
+          <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-secondary-900 mb-12">
+              Featured Free Curricula
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {featuredClasses.map((course) => (
+                <a
+                  href={`/openclasses/${course.id}`}
+                  class="block bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-200 group"
+                >
+                  <div class="p-6">
+                    <h3 class="text-2xl font-semibold text-primary-700 mb-3 group-hover:text-primary-800">
+                      {course.name}
+                    </h3>
+                    {/* Image callout placeholders */}
+                    <div class="flex space-x-2 mb-4">
+                      <div class="flex items-center justify-center text-sm text-gray-500 w-full">
+                        <img
+                          src={course.image}
+                          alt={course.description}
+                          class="rounded-lg w-full object-contain"
+                        />
+                      </div>
+                    </div>
+                    <p class="text-secondary-700 mb-4">{course.description}</p>
+                    <span class="inline-block bg-primary-600 text-white font-medium py-2 px-5 rounded-lg group-hover:bg-primary-700 transition-colors">
+                      Start Learning for Free Now
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+            {featuredClasses.length === 1 && (
+              <div class="mt-8 text-center text-secondary-600">
+                <p>More featured curricula coming soon!</p>
+              </div>
+            )}
+            {featuredClasses.length === 0 && (
+              <div class="mt-8 text-center text-secondary-600">
+                <p>
+                  No featured curricula available at the moment. Check back
+                  soon!
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      )
+    }
 
     <!-- Features Section -->
     <section id="features" class="py-5">
