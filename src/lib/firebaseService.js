@@ -129,14 +129,28 @@ class FirebaseService {
       // Get total submissions if quizzes are included
       let totalSubmissions = 0;
       if (includeQuizzes) {
-        const quizIds = enhancedClasses.flatMap(c => c.quizzes?.map(q => q.id) || []);
-        if (quizIds.length > 0) {
-          const submissionsQuery = query(
-            collection(db, 'quizAttempts'),
-            where('quizId', 'in', quizIds)
-          );
-          const submissionsSnapshot = await getDocs(submissionsQuery);
-          totalSubmissions = submissionsSnapshot.size;
+        const allQuizIds = enhancedClasses.flatMap(c => c.quizzes?.map(q => q.id).filter(id => id) || []);
+        
+        if (allQuizIds.length > 0) {
+          const CHUNK_SIZE = 30; // Firestore limit for 'in' queries
+          let submissionCountPromises = [];
+
+          for (let i = 0; i < allQuizIds.length; i += CHUNK_SIZE) {
+            const chunk = allQuizIds.slice(i, i + CHUNK_SIZE);
+            if (chunk.length > 0) {
+              const submissionsQuery = query(
+                collection(db, 'quizAttempts'),
+                where('quizId', 'in', chunk)
+                // We only need the count, so we could potentially optimize further 
+                // if Firestore allowed count directly without fetching docs, but it doesn't.
+                // However, fetching with limit(1) and checking size is not what we want here, we want total size.
+              );
+              submissionCountPromises.push(getDocs(submissionsQuery).then(snapshot => snapshot.size));
+            }
+          }
+          
+          const counts = await Promise.all(submissionCountPromises);
+          totalSubmissions = counts.reduce((acc, currentSize) => acc + currentSize, 0);
         }
       }
 

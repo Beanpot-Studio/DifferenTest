@@ -153,12 +153,10 @@ async function fetchClassDetailsAndQuizzes() {
     if (fetchedClassData) {
       classData.value = fetchedClassData;
       skinId.value = fetchedClassData.skinId;
-      console.log("Fetched Class Skin ID:", skinId.value, "CAT_SKIN_ID:", CAT_SKIN_ID);
 
       // Fetch all quizzes for this class
       const quizzes = await FirebaseService.getQuizzesByClass(props.classId);
       classQuizzes.value = quizzes.filter(q => q.id !== props.quiz.id); // Store other quizzes
-      console.log("Fetched other quizzes for class:", classQuizzes.value);
 
     } else {
       console.warn(`SteppedLessonQuiz: Class data not found for ID: ${props.classId}`);
@@ -181,7 +179,6 @@ onMounted(async () => {
 });
 
 watch(skinId, (newSkinId, oldSkinId) => {
-  console.log("Skin ID watcher triggered. New:", newSkinId, "Old:", oldSkinId, "CAT_SKIN_ID:", CAT_SKIN_ID);
   if (typeof document !== 'undefined') {
     if (newSkinId === CAT_SKIN_ID) {
       console.log("Setting data-theme='cats'");

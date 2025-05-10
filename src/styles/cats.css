@@ -169,30 +169,7 @@
   display: inline-block; /* or block */
 }
 
-/* Celebration Animation Container */
-/* This would likely be a dedicated component added on success */
-[data-theme="cats"] .celebration-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  overflow: hidden;
-  z-index: 1000; /* Ensure it's on top */
-}
 
-/* Individual confetti element */
-[data-theme="cats"] .cat-confetti {
-  position: absolute;
-  width: 20px; /* Match SVG size */
-  height: 20px; /* Match SVG size */
-  background-image: url('/skins/cats/assets/cat-icons/celebration.svg');
-  background-size: contain;
-  background-repeat: no-repeat;
-  animation: fall 5s linear infinite; /* Adjust duration */
-  opacity: 0; /* Start hidden */
-}
 
 /* Animations */
 @keyframes bounce {
@@ -225,11 +202,7 @@
   }
 }
 
-/* Add this helper class to trigger the celebration */
-.start-celebration .cat-confetti {
-   /* Use JS to add delays for a staggered effect */
-   /* Example: animation-delay: calc(var(--i) * 0.1s); */
-}
+
 
 /* --- Styling for CurriculumViewer within Cat Theme (Increased Specificity) --- */
 
