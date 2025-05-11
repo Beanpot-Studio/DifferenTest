@@ -21,9 +21,6 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Connect to emulators in development/test mode
-// Assumes import.meta.env.DEV is true during local dev/testing with Astro/Vite
-// Adjust the condition if you use a different environment variable for tests
-/* === EMULATOR CONNECTION DISABLED ===
 if (import.meta.env.DEV) {
   try {
     console.log('Connecting to Firebase Emulators...');
@@ -35,6 +32,5 @@ if (import.meta.env.DEV) {
     console.error('Error connecting to Firebase Emulators:', error);
   }
 }
-=== EMULATOR CONNECTION DISABLED === */
 
 export { app, auth, db, storage };

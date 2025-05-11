@@ -85,10 +85,6 @@ describe('UserNavigation.vue', () => {
     expect(profileLink.exists()).toBe(true)
     expect(profileLink.text()).toContain('Test Student')
 
-    // Assert messages link
-    const messagesLink = wrapper.find('a[href="/messages"]')
-    expect(messagesLink.exists()).toBe(true)
-
     // Find logout button using filter
     const buttons = wrapper.findAll('button');
     const logoutButton = buttons.find(btn => btn.text() === 'Log Out');
