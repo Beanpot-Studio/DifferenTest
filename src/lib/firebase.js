@@ -20,17 +20,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Connect to emulators in development/test mode
-if (import.meta.env.DEV) {
-  try {
-    console.log('Connecting to Firebase Emulators...');
-    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-    connectFirestoreEmulator(db, "localhost", 8080);
-    connectStorageEmulator(storage, "localhost", 9199);
-    console.log('Connected to Firebase Emulators.');
-  } catch (error) {
-    console.error('Error connecting to Firebase Emulators:', error);
-  }
+// Only connect to emulators if USE_FIREBASE_EMULATOR is set to 'true'
+if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  connectAuthEmulator(auth, 'http://localhost:9099');
 }
 
 export { app, auth, db, storage };

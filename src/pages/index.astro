@@ -72,7 +72,7 @@ try {
                 Get Started
               </button>
               <a
-                href="#about"
+                href="#how-it-works"
                 class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
                 Learn More
@@ -92,35 +92,6 @@ try {
     </section>
 
     <LoginPopupHelper client:load />
-
-    <!-- How It Works Infographics Section -->
-    <section id="how-it-works" class="py-16 bg-white">
-      <div class="container mx-auto px-4">
-        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
-          <!-- Teacher Journey -->
-          <div class="flex flex-col items-center">
-            <h3 class="text-2xl font-bold mb-6 text-center">For Teachers</h3>
-            <img
-              src="/teacher-journey.png"
-              alt="How DifferenTest Works for Teachers"
-              class="rounded-lg shadow-md w-full h-auto bg-white border border-gray-200"
-              loading="lazy"
-            />
-          </div>
-          <!-- Student Journey -->
-          <div class="flex flex-col items-center">
-            <h3 class="text-2xl font-bold mb-6 text-center">For Students</h3>
-            <img
-              src="/student-journey.png"
-              alt="How DifferenTest Works for Students"
-              class="rounded-lg shadow-md w-full h-auto bg-white border border-gray-200"
-              loading="lazy"
-            />
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="py-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -168,8 +139,7 @@ try {
               For Students
             </h2>
             <p class="text-secondary-600 mb-4">
-              Access and complete your assignments and communicate with your
-              teachers easily.
+              Access and complete your assignments or join a free, open course.
             </p>
             <ul class="space-y-2 mb-6">
               <li class="flex items-center">
@@ -178,11 +148,11 @@ try {
               </li>
               <li class="flex items-center">
                 <IconService name="check" size="6" color="text-green-500" />
-                Take differentiated assessments
+                Take assisted assessments
               </li>
               <li class="flex items-center">
                 <IconService name="check" size="6" color="text-green-500" />
-                Track your progress
+                Earn badges and certificates
               </li>
             </ul>
             <a
@@ -192,6 +162,23 @@ try {
               Student Portal
             </a>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="py-16 bg-white">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-12 max-w-2xl mx-auto">
+          <div class="flex flex-col items-center">
+            <img
+              src="/pathways.png"
+              alt="How DifferenTest Works for Teachers and Students"
+              class="rounded-lg shadow-md w-full h-auto bg-white border border-gray-200"
+              loading="lazy"
+            />
+          </div>
+         
         </div>
       </div>
     </section>
