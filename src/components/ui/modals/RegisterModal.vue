@@ -13,6 +13,49 @@
       <div v-if="error" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
         {{ error }}
       </div>
+      <div class="mb-6">
+          <label class="block text-secondary-700 text-sm font-bold mb-2">I am a:</label>
+          <div class="flex space-x-4">
+            <label class="flex items-center text-secondary-700">
+              <input 
+                type="radio" 
+                v-model="role" 
+                value="student" 
+                class="mr-2 text-secondary-700"
+                required
+                data-testid="role-student-radio"
+              />
+              Student
+            </label>
+            <label class="flex items-center text-secondary-700">
+              <input 
+                type="radio" 
+                v-model="role" 
+                value="teacher" 
+                class="mr-2 text-secondary-700"
+                data-testid="role-teacher-radio"
+              />
+              Teacher
+            </label>
+          </div>
+        </div>
+      
+      <!-- Google Sign Up Button -->
+      <button
+        @click="handleGoogleSignIn"
+        class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-secondary-800 font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500 transition mb-6"
+        :disabled="loading || googleLoading || !role"
+        data-testid="register-google-button"
+      >
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5 h-5" />
+        <span>{{ googleLoading ? 'Signing in with Google...' : 'Sign up with Google' }}</span>
+      </button>
+      
+      <div class="flex items-center justify-center gap-2">
+        <div class="h-[1px] w-full bg-gray-300"></div>
+        <span class="text-secondary-500 text-sm">OR</span>
+        <div class="h-[1px] w-full bg-gray-300"></div>
+      </div>
       
       <form @submit.prevent="handleRegister">
         <div class="mb-4">
@@ -51,32 +94,7 @@
           <p class="text-xs text-secondary-500 mt-1">Password must be at least 6 characters</p>
         </div>
         
-        <div class="mb-6">
-          <label class="block text-secondary-700 text-sm font-bold mb-2">I am a:</label>
-          <div class="flex space-x-4">
-            <label class="flex items-center text-secondary-700">
-              <input 
-                type="radio" 
-                v-model="role" 
-                value="student" 
-                class="mr-2 text-secondary-700"
-                required
-                data-testid="role-student-radio"
-              />
-              Student
-            </label>
-            <label class="flex items-center text-secondary-700">
-              <input 
-                type="radio" 
-                v-model="role" 
-                value="teacher" 
-                class="mr-2 text-secondary-700"
-                data-testid="role-teacher-radio"
-              />
-              Teacher
-            </label>
-          </div>
-        </div>
+       
         
         <button 
           type="submit" 
@@ -102,7 +120,7 @@
 
 <script>
 import { ref } from 'vue';
-import { registerUser } from '../../../lib/auth';
+import { registerUser, signInWithGoogle } from '../../../lib/auth';
 import IconService from '../../services/IconService.vue';
 export default {
   name: 'RegisterModal',
@@ -118,6 +136,7 @@ export default {
     const role = ref('student'); // Default role
     const loading = ref(false);
     const error = ref('');
+    const googleLoading = ref(false);
     
     const handleRegister = async () => {
       loading.value = true;
@@ -139,6 +158,28 @@ export default {
       }
     };
     
+    const handleGoogleSignIn = async () => {
+      if (!role.value) {
+        error.value = 'Please select whether you are a student or teacher before signing up with Google.';
+        return;
+      }
+      googleLoading.value = true;
+      error.value = '';
+      try {
+        const { success, error: googleError } = await signInWithGoogle(role.value);
+        if (success) {
+          emit('register-success');
+        } else {
+          error.value = googleError?.message || 'Google sign-in failed. Please try again.';
+        }
+      } catch (err) {
+        error.value = 'An unexpected error occurred during Google sign-in.';
+        console.error('Google sign-in error:', err);
+      } finally {
+        googleLoading.value = false;
+      }
+    };
+    
     const switchToLogin = () => {
       emit('close');
       emit('login');
@@ -151,7 +192,9 @@ export default {
       role,
       loading,
       error,
+      googleLoading,
       handleRegister,
+      handleGoogleSignIn,
       switchToLogin
     };
   }

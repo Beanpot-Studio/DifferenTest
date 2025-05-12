@@ -14,6 +14,24 @@
         {{ error }}
       </div>
       
+     
+      
+      <button
+        @click="handleGoogleSignIn"
+        class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-secondary-800 font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-secondary-500 transition mb-6"
+        :disabled="loading || googleLoading"
+        data-testid="login-google-button"
+      >
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5 h-5" />
+        <span>{{ googleLoading ? 'Signing in with Google...' : 'Sign in with Google' }}</span>
+      </button>
+      
+      <div class="flex items-center justify-center gap-2">
+        <div class="h-[1px] w-full bg-gray-300"></div>
+        <span class="text-secondary-500 text-sm">OR</span>
+        <div class="h-[1px] w-full bg-gray-300"></div>
+      </div>
+      
       <form @submit.prevent="handleLogin">
         <div class="mb-4">
           <label for="email" class="block text-secondary-700 text-sm font-bold mb-2">Email</label>
@@ -58,6 +76,7 @@
 <script>
 import { ref } from 'vue';
 import { useAuth } from '../../../stores/auth';
+import { signInWithGoogle } from '../../../lib/auth';
 import IconService from '../../services/IconService.vue';
 
 export default {
@@ -72,6 +91,7 @@ export default {
     const loading = ref(false);
     const error = ref('');
     const { login } = useAuth();
+    const googleLoading = ref(false);
     
     const handleLogin = async () => {
       loading.value = true;
@@ -93,6 +113,24 @@ export default {
       }
     };
     
+    const handleGoogleSignIn = async () => {
+      googleLoading.value = true;
+      error.value = '';
+      try {
+        const { success, error: googleError } = await signInWithGoogle();
+        if (success) {
+          emit('login-success');
+        } else {
+          error.value = googleError?.message || 'Google sign-in failed. Please try again.';
+        }
+      } catch (err) {
+        error.value = 'An unexpected error occurred during Google sign-in.';
+        console.error('Google sign-in error:', err);
+      } finally {
+        googleLoading.value = false;
+      }
+    };
+    
     const switchToRegister = () => {
       emit('close');
       emit('register');
@@ -103,7 +141,9 @@ export default {
       password,
       loading,
       error,
+      googleLoading,
       handleLogin,
+      handleGoogleSignIn,
       switchToRegister
     };
   }
