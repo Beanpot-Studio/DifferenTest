@@ -21,6 +21,7 @@
           <ul class="flex flex-wrap gap-4">
             <li><a href="/privacy" class="text-secondary-300 hover:text-white transition">Privacy Policy</a></li>
             <li><a href="/terms" class="text-secondary-300 hover:text-white transition">Terms of Service</a></li>
+            <li><a href="/credits" class="text-secondary-300 hover:text-white transition">Credits</a></li>
           </ul>
         </div>
       </div>
