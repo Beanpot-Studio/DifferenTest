@@ -20,7 +20,7 @@ import FirebaseService from "../../lib/firebaseService";
   }
 }*/
 
-// Get the badge data for the current page
+// Fetch the badge data for the current page using Astro.params.id
 const { id } = Astro.params;
 const badge = await FirebaseService.getBadge(id);
 
