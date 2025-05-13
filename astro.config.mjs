@@ -9,7 +9,7 @@ export default defineConfig({
     tailwind(),
     vue(),
   ],
-  base: '/DifferenTest/',
+  base: '/',
   server: {
     port: 5000,
     host: '0.0.0.0',
@@ -28,7 +28,7 @@ export default defineConfig({
         strict: false,
       },
       cors: true,
-      allowedHosts: ['localhost', 'beanpot-studio.github.io', 'differentest.club'],
+      allowedHosts: ['localhost', 'beanpot-studio.github.io', 'differentest.club', 'differentest.netlify.app'],
     },
   },
   env: {
