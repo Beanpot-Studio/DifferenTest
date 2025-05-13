@@ -1,8 +1,9 @@
 ---
+export const prerender = false;
 import Layout from "../../layouts/MainLayout.astro";
 import FirebaseService from "../../lib/firebaseService";
 
-export async function getStaticPaths() {
+/*export async function getStaticPaths() {
   try {
     // Get all badges from Firebase
     const badges = await FirebaseService.getAllBadges();
@@ -17,7 +18,7 @@ export async function getStaticPaths() {
     // Return empty array if there's an error
     return [];
   }
-}
+}*/
 
 // Get the badge data for the current page
 const { id } = Astro.params;
