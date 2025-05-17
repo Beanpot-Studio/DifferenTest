@@ -3,23 +3,6 @@ export const prerender = false;
 import Layout from "../../layouts/MainLayout.astro";
 import FirebaseService from "../../lib/firebaseService";
 
-/*export async function getStaticPaths() {
-  try {
-    // Get all badges from Firebase
-    const badges = await FirebaseService.getAllBadges();
-
-    // Return paths for each badge
-    return badges.map((badge) => ({
-      params: { id: badge.id },
-      props: { badge },
-    }));
-  } catch (error) {
-    console.error("Error generating badge paths:", error);
-    // Return empty array if there's an error
-    return [];
-  }
-}*/
-
 // Fetch the badge data for the current page using Astro.params.id
 const { id } = Astro.params;
 const badge = await FirebaseService.getBadge(id);

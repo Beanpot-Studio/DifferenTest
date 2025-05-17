@@ -1,23 +1,12 @@
 ---
 // open classes - all can view, few can take quiz
-
+export const prerender = false;
 import Layout from "../../layouts/MainLayout.astro";
 import FirebaseService from "../../lib/firebaseService";
 import IconService from "../../components/services/IconService.vue";
 
-export async function getStaticPaths() {
-  // Get all public classes to generate paths
-  const publicClasses = await FirebaseService.getPublicClasses();
-
-  // Return paths for each class
-  return publicClasses.map((classData) => ({
-    params: { id: classData.id },
-    props: { classData },
-  }));
-}
-
 const { id } = Astro.params;
-const { classData } = Astro.props;
+const classData = await FirebaseService.getPublicClass(id);
 
 if (!classData) {
   return Astro.redirect("/404");

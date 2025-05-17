@@ -1641,26 +1641,65 @@ class FirebaseService {
 
   static async getPublicClasses(userId = null) {
     try {
-      // Get all public classes
-      const publicClassesQuery = query(
+      const q = query(
         collection(db, 'classes'),
         where('isPublic', '==', true),
-        orderBy('createdAt', 'asc')
+        orderBy('createdAt', 'desc')
       );
-      const publicClassesSnapshot = await getDocs(publicClassesQuery);
-      const publicClassIds = publicClassesSnapshot.docs.map(doc => doc.id);
+      
+      const snapshot = await getDocs(q);
+      const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      // Get all quizzes for public classes
-      const publicQuizzesQuery = query(
-        collection(db, 'quizzes'),
-        where('classId', 'in', publicClassIds),
-        orderBy('createdAt', 'asc')
+      // Get quizzes for each class
+      const classesWithQuizzes = await Promise.all(
+        classes.map(async (classData) => {
+          const quizzesQuery = query(
+            collection(db, 'quizzes'),
+            where('classId', '==', classData.id),
+            orderBy('createdAt', 'asc')
+          );
+          const quizzesSnapshot = await getDocs(quizzesQuery);
+          return {
+            ...classData,
+            quizzes: quizzesSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }))
+          };
+        })
       );
-      const publicQuizzesSnapshot = await getDocs(publicQuizzesQuery);
 
-      return await this._formatClassesWithQuizzes(publicClassIds, publicQuizzesSnapshot);
+      return classesWithQuizzes;
     } catch (error) {
       console.error('Error getting public classes:', error);
+      throw error;
+    }
+  }
+
+  static async getPublicClass(classId) {
+    try {
+      const classDoc = await getDoc(doc(db, 'classes', classId));
+      if (!classDoc.exists() || !classDoc.data().isPublic) {
+        return null;
+      }
+
+      const classData = { id: classDoc.id, ...classDoc.data() };
+
+      // Get quizzes for the class
+      const quizzesQuery = query(
+        collection(db, 'quizzes'),
+        where('classId', '==', classId),
+        orderBy('createdAt', 'asc')
+      );
+      const quizzesSnapshot = await getDocs(quizzesQuery);
+      classData.quizzes = quizzesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      return classData;
+    } catch (error) {
+      console.error('Error getting public class:', error);
       throw error;
     }
   }
