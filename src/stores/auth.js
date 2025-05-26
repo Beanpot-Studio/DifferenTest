@@ -14,6 +14,7 @@ const initialized = ref(false);
 const isLoggedIn = computed(() => !!user.value);
 const isTeacher = computed(() => role.value === 'teacher');
 const isStudent = computed(() => role.value === 'student');
+const isAdmin = computed(() => role.value === 'admin');
 
 // Actions
 async function login(email, password) {
@@ -178,6 +179,7 @@ export function useAuth() {
     isLoggedIn,
     isTeacher,
     isStudent,
+    isAdmin,
     
     // Actions
     login,

@@ -235,6 +235,7 @@ class FirebaseService {
         isPublic: data.isPublic !== undefined ? data.isPublic : classData.isPublic,
         isComplete: data.isComplete !== undefined ? data.isComplete : classData.isComplete,
         skinId: data.skinId !== undefined ? data.skinId : classData.skinId,
+        adminApproved: data.adminApproved !== undefined ? data.adminApproved : classData.adminApproved,
         // customCertificateBadgeUrl handled below
         updatedAt: serverTimestamp(),
       };
@@ -249,7 +250,6 @@ class FirebaseService {
        } 
        // If data.customCertificateBadgeUrl was undefined (not passed), 
        // we don't add it to updateData, preserving the existing Firestore value.
-
 
       // Remove undefined fields (but keep explicit null for badge URL)
       Object.keys(updateData).forEach(key => {
@@ -1644,6 +1644,7 @@ class FirebaseService {
       const q = query(
         collection(db, 'classes'),
         where('isPublic', '==', true),
+        where('adminApproved', '==', true),
         orderBy('createdAt', 'desc')
       );
       
@@ -1679,7 +1680,7 @@ class FirebaseService {
   static async getPublicClass(classId) {
     try {
       const classDoc = await getDoc(doc(db, 'classes', classId));
-      if (!classDoc.exists() || !classDoc.data().isPublic) {
+      if (!classDoc.exists() || !classDoc.data().isPublic || !classDoc.data().adminApproved) {
         return null;
       }
 

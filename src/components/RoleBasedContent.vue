@@ -76,7 +76,7 @@ export default {
   props: {
     requiredRoles: {
       type: Array,
-      default: () => ['student', 'teacher']
+      default: () => ['student', 'teacher', 'admin']
     },
     message: {
       type: String,
@@ -95,6 +95,8 @@ export default {
         window.location.href = '/teacher';
       } else if (role.value === 'student') {
         window.location.href = '/student';
+      } else if (role.value === 'admin') {
+        window.location.href = '/admin';
       } else {
         // If no role is set, redirect to home page
         window.location.href = '/';

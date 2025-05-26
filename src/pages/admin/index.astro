@@ -1,0 +1,53 @@
+---
+import MainLayout from "../../layouts/MainLayout.astro";
+import RoleBasedContent from "../../components/RoleBasedContent.vue";
+import AdminDashboard from "../../components/AdminDashboard.vue";
+---
+
+<MainLayout title="Admin Portal">
+  <div class="max-w-7xl mx-auto px-4" id="admin-portal">
+    <h1 class="text-3xl font-bold mb-6">Admin Portal</h1>
+
+    <RoleBasedContent client:only :required-roles="['admin']">
+      <AdminDashboard client:only />
+    </RoleBasedContent>
+  </div>
+</MainLayout>
+
+<script>
+  // Client-side script for admin portal
+  import { onAuthStateChanged } from "firebase/auth";
+  import { doc, getDoc } from "firebase/firestore";
+  import { auth, db } from "../../lib/firebase";
+
+  // This script will redirect non-admin users away from this page
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      // If not logged in, redirect to home page
+      window.location.href = "/?auth=required";
+      return;
+    }
+
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const role = userDoc.data().role;
+        if (role !== "admin") {
+          // If not an admin, redirect to appropriate page
+          if (role === "teacher") {
+            window.location.href = "/teacher";
+          } else if (role === "student") {
+            window.location.href = "/student";
+          } else {
+            window.location.href = "/";
+          }
+          return;
+        }
+        // If user is an admin, they can stay on the page
+      }
+    } catch (error) {
+      console.error("Error checking user role:", error);
+      window.location.href = "/";
+    }
+  });
+</script>

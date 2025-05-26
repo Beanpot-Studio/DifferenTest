@@ -26,10 +26,10 @@
               class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               data-testid="class-public-checkbox"
             />
-            <span class="text-sm font-medium text-gray-700">Make this class public</span>
+            <span class="text-sm font-medium text-gray-700">Request to make this class public (requires admin approval)</span>
           </label>
           <p class="text-xs text-gray-500 mt-1">
-            Public classes can be discovered and joined by any student.
+            <a href="/curricula">Public classes</a> can be discovered and joined by any student.
           </p>
         </div>
         <!-- Wrap skin selector in v-if="hasMounted" -->

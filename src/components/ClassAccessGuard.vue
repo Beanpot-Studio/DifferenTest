@@ -53,6 +53,12 @@ export default {
 
         // If class is public, allow access
         if (props.classData.isPublic) {
+          // Check if class has been approved by admin
+          if (!props.classData.adminApproved) {
+            hasAccess.value = false;
+            error.value = 'This class is pending admin approval';
+            return;
+          }
           hasAccess.value = true;
           return;
         }

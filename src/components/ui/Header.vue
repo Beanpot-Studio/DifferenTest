@@ -20,6 +20,11 @@
                href="/student" 
                class="hover:text-primary-200 transition text-white"
             >Student Portal</a>
+            <a v-if="role === 'admin'" 
+               href="/admin" 
+               class="hover:text-primary-200 transition text-white"
+               data-testid="admin-portal-link"
+            >Admin Portal</a>
           </template>
          </nav>
 
@@ -84,6 +89,8 @@ export default {
         window.location.href = '/teacher';
       } else if (role.value === 'student') {
         window.location.href = '/student';
+      } else if (role.value === 'admin') {
+        window.location.href = '/admin';
       } else {
         // If no role is set, redirect to home page
         window.location.href = '/'
@@ -96,6 +103,8 @@ export default {
         window.location.href = '/teacher';
       } else if (role.value === 'student') {
         window.location.href = '/student';
+      } else if (role.value === 'admin') {
+        window.location.href = '/admin';
       } else {
         // If no role is set, redirect to home page
         window.location.href = '/';
