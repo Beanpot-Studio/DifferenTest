@@ -87,7 +87,7 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref, computed } from 'vue';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
@@ -103,104 +103,106 @@ const availableCatAssets = [
   '/skins/cats/assets/heart-cat.gif' 
 ];
 
-const props = defineProps({
-  lessonSteps: { 
-    type: Array, 
-    default: () => [] 
-    // Expected: [{ title: 'Step X', content: '...', catAsset: '...' }, ...]
+export default {
+  name: 'CatSteppedLesson',
+  props: {
+    lessonSteps: { 
+      type: Array, 
+      default: () => [] 
+    },
+    lessonTitle: { type: String, default: 'Interactive Lesson' },
+    classQuizzes: { type: Array, default: () => [] },
+    currentClassId: { type: String, default: '' },
+    currentQuizId: { type: String, default: '' }
   },
-  lessonTitle: { type: String, default: 'Interactive Lesson' },
-  classQuizzes: { type: Array, default: () => [] },        // New prop
-  currentClassId: { type: String, default: '' },           // New prop
-  currentQuizId: { type: String, default: '' }             // New prop
-});
+  emits: ['lesson-completed'],
+  setup(props, { emit }) {
+    const currentStepIndex = ref(0);
+    const lessonCompletedInternal = ref(false);
 
-const emit = defineEmits(['lesson-completed']);
+    const currentStep = computed(() => {
+      if (props.lessonSteps && props.lessonSteps.length > currentStepIndex.value) {
+        return props.lessonSteps[currentStepIndex.value];
+      }
+      return null;
+    });
 
-const currentStepIndex = ref(0);
-// Internal state to track if lesson has been marked as completed by this component
-const lessonCompletedInternal = ref(false); 
+    const sanitizeHtml = (htmlContent) => {
+      return typeof document !== 'undefined' ? DOMPurify.sanitize(htmlContent) : htmlContent;
+    };
 
-const currentStep = computed(() => {
-  if (props.lessonSteps && props.lessonSteps.length > currentStepIndex.value) {
-    return props.lessonSteps[currentStepIndex.value];
-  }
-  return null;
-});
-
-const sanitizeHtml = (htmlContent) => {
-  return typeof document !== 'undefined' ? DOMPurify.sanitize(htmlContent) : htmlContent;
-};
-
-const renderMarkdown = (markdownContent) => {
-    if (!markdownContent) return '';
-    try {
+    const renderMarkdown = (markdownContent) => {
+      if (!markdownContent) return '';
+      try {
         marked.setOptions({
-            gfm: true,
-            breaks: true,
-            smartLists: true,
-            pedantic: false,
-            mangle: false,
-            headerIds: false
+          gfm: true,
+          breaks: true,
+          smartLists: true,
+          pedantic: false,
+          mangle: false,
+          headerIds: false
         });
         const rawHtml = marked.parse(markdownContent);
         return sanitizeHtml(rawHtml);
-    } catch (e) {
+      } catch (e) {
         console.error("Error parsing markdown for cat lesson step:", e);
         return sanitizeHtml(`<p>Error rendering content.</p><pre>${markdownContent}</pre>`); 
+      }
+    };
+
+    const renderedStepContent = computed(() => {
+      return renderMarkdown(currentStep.value?.content);
+    });
+
+    const catForStep = computed(() => {
+      if (currentStep.value?.catAsset) {
+        return currentStep.value.catAsset;
+      }
+      if (availableCatAssets.length > 0) {
+        return availableCatAssets[currentStepIndex.value % availableCatAssets.length];
+      }
+      return '/skins/cats/assets/dancing-cat.gif';
+    });
+
+    function previousStep() {
+      if (currentStepIndex.value > 0) {
+        currentStepIndex.value--;
+      }
     }
+
+    function nextStep() {
+      if (currentStepIndex.value < props.lessonSteps.length - 1) {
+        currentStepIndex.value++;
+      }
+    }
+
+    function completeLesson() {
+      lessonCompletedInternal.value = true;
+      emit('lesson-completed');
+
+      if (typeof window.triggerQuizDisplayFromLesson === 'function') {
+        window.triggerQuizDisplayFromLesson();
+      }
+    }
+
+    function restartLesson() {
+      currentStepIndex.value = 0;
+      lessonCompletedInternal.value = false;
+    }
+
+    return {
+      currentStepIndex,
+      lessonCompletedInternal,
+      currentStep,
+      renderedStepContent,
+      catForStep,
+      previousStep,
+      nextStep,
+      completeLesson,
+      restartLesson
+    };
+  }
 };
-
-const renderedStepContent = computed(() => {
-    return renderMarkdown(currentStep.value?.content);
-});
-
-const catForStep = computed(() => {
-  // First, check if the current step data provides a specific catAsset
-  if (currentStep.value?.catAsset) {
-    return currentStep.value.catAsset;
-  }
-  // If not, cycle through the availableCatAssets array
-  if (availableCatAssets.length > 0) {
-    return availableCatAssets[currentStepIndex.value % availableCatAssets.length];
-  }
-  // Fallback if no specific asset and no available assets (should not happen if array is populated)
-  return '/skins/cats/assets/dancing-cat.gif'; 
-});
-
-function previousStep() {
-  if (currentStepIndex.value > 0) {
-    currentStepIndex.value--;
-  }
-}
-
-function nextStep() {
-  if (currentStepIndex.value < props.lessonSteps.length - 1) {
-    currentStepIndex.value++;
-  }
-}
-
-function completeLesson() {
-  lessonCompletedInternal.value = true;
-  emit('lesson-completed');
-
-  // NEW: Call the global function to reveal the quiz on the Astro page
-  if (typeof window.triggerQuizDisplayFromLesson === 'function') {
-    window.triggerQuizDisplayFromLesson();
-  }
-}
-
-function restartLesson() {
-  currentStepIndex.value = 0;
-  lessonCompletedInternal.value = false;
-}
-
-</script>
-
-<script>
-// Minimal default export for Astro compatibility
-// The name property is good practice but optional here if script setup handles component registration internally for Vue.
-// name: 'CatSteppedLesson'
 </script>
 
 <style scoped>

@@ -1,4 +1,5 @@
 ---
+export const prerender = false;
 import Layout from "../../../../layouts/MainLayout.astro";
 import CurriculumViewer from "../../../../components/CurriculumViewer.vue";
 import QuizInterface from "../../../../components/QuizInterface.vue";
@@ -23,80 +24,21 @@ interface ClassInfo {
   // Add other class properties as needed
 }
 
-interface PageProps {
-  classData: ClassInfo;
-  quiz: QuizData;
+const { id, quizId } = Astro.params;
+
+if (!id || !quizId) {
+  return Astro.redirect("/404");
 }
 
-export async function getStaticPaths() {
-  // Type the paths array
-  const paths: Array<{
-    params: { id: string; quizId: string };
-    props: PageProps;
-  }> = [];
+// Fetch class and quiz data
+const classData = (await FirebaseService.getPublicClass(
+  id
+)) as ClassInfo | null;
+const quiz = (await FirebaseService.getQuiz(quizId)) as QuizData | null;
 
-  // Assuming FirebaseService.getPublicClasses returns an array of ClassInfo
-  // and each classData.quizzes is an array of QuizData
-  const publicClasses: ClassInfo[] = await FirebaseService.getPublicClasses();
-
-  if (!Array.isArray(publicClasses)) {
-    console.error("getPublicClasses did not return an array");
-    return []; // Return empty if data is invalid
-  }
-
-  for (const classData of publicClasses) {
-    // Ensure quizzes exist and is an array before iterating
-    const quizRefs = await FirebaseService.getQuizzesByClass(classData.id);
-    if (!Array.isArray(quizRefs)) continue;
-
-    for (const quizRef of quizRefs) {
-      if (!quizRef || !quizRef.id) continue; // Skip invalid quiz reference
-
-      try {
-        // Fetch quiz data
-        const potentialQuiz = await FirebaseService.getQuiz(quizRef.id);
-
-        // Ensure the full quiz data was found and has necessary fields, especially title
-        if (
-          !potentialQuiz ||
-          !potentialQuiz.id ||
-          typeof potentialQuiz["title"] !== "string"
-        ) {
-          console.warn(
-            `Quiz details are incomplete (missing id or title) for quiz ID: ${quizRef.id} in class ${classData.id}`
-          );
-          continue;
-        }
-
-        // Now that we've validated, we can confidently type it
-        const quiz = potentialQuiz as QuizData;
-
-        paths.push({
-          params: {
-            id: classData.id,
-            quizId: quiz.id,
-          },
-          props: {
-            classData,
-            quiz,
-          },
-        });
-      } catch (fetchError) {
-        console.error(
-          `Error fetching full details for quiz ID: ${quizRef.id}`,
-          fetchError
-        );
-        // Decide if you want to skip this path or handle error differently
-        continue;
-      }
-    }
-  }
-  return paths;
+if (!classData || !quiz) {
+  return Astro.redirect("/404");
 }
-
-// Use the defined interface for Astro.props
-const { classData, quiz } = Astro.props as PageProps;
-const { id, quizId } = Astro.params; // Params are strings by default
 
 // Get the skinId from the typed class data
 const initialSkinId = classData?.skinId || "default";
@@ -144,18 +86,8 @@ const isSteppedLesson =
               lessonSteps={formattedLessonSteps}
               lessonTitle={quiz.title}
               classQuizzes={[]}
-              currentClassId={classData.id}
+              currentClassId={id}
               currentQuizId={quiz.id}
-              on:lesson-completed_document={() => {
-                // This custom event name will be dispatched on document
-                // We need to ensure CatSteppedLesson dispatches this event on document or a common parent
-                // For simplicity here, we'll assume it can be listened to.
-                // A more robust way is for CatSteppedLesson to emit, and Astro to forward it to a global function.
-                // However, direct DOM manipulation based on component events is tricky in Astro.
-                // Let's simplify: CatSteppedLesson's button will trigger the global revealQuizAndHideLesson function.
-                // This will require modifying CatSteppedLesson to call a global function.
-                // For now, we will handle it via its own event in the script.
-              }}
             />
           ) : quiz.lessonPlan ? (
             <div class="curriculum-viewer-container">

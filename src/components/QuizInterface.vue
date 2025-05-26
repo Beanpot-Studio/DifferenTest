@@ -32,7 +32,7 @@
         <IconService name="lock" size="6" />
         <h3 class="text-lg font-semibold text-gray-900">Access Restricted</h3>
       </div>
-      <p class="text-gray-500">This quiz is only available to students.</p>
+      <p class="text-gray-500">This quiz is only available to students. Login with as a student using the top nav so you can take quizzes and earn badges.</p>
     </div>
     
     <div v-else-if="quizData">

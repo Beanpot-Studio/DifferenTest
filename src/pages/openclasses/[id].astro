@@ -48,6 +48,10 @@ const CLASS_IMAGES: Record<string, ClassInfo> = {
 };
 
 const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect("/404");
+}
+
 const classData = (await FirebaseService.getPublicClass(
   id
 )) as ClassData | null;
@@ -57,7 +61,7 @@ if (!classData) {
 }
 
 // Get the appropriate image and description based on class ID
-const classInfo = CLASS_IMAGES[id || ""] || {
+const classInfo = CLASS_IMAGES[id] || {
   banner: "/webdev-banner.png",
   home: "/webdev-home.png",
   description: "Learn with DifferenTest",

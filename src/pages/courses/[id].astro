@@ -1,5 +1,6 @@
 ---
 // teacher-built classes - all can view, few can take quiz
+export const prerender = false;
 import Layout from "../../layouts/MainLayout.astro";
 import FirebaseService from "../../lib/firebaseService";
 
@@ -29,63 +30,66 @@ interface PageClassData {
   [key: string]: any;
 }
 
-export async function getStaticPaths() {
-  const classDataResult = await FirebaseService.getClasses({
-    includeTeacherInfo: true,
-    includeQuizzes: true,
-  });
-
-  const richClassSummaries = classDataResult.classes || [];
-
-  const paths = richClassSummaries.map((summaryUntyped) => {
-    // Assert the type of summary to help TypeScript understand its shape
-    const summary = summaryUntyped as PageClassData;
-
-    if (!summary || !summary.id) {
-      return null;
-    }
-
-    const pageClassData: PageClassData = {
-      ...summary, // Spread all fields from the now-asserted summary
-      id: summary.id, // Ensure id is present and correctly typed
-      name: summary.name || "Unnamed Course", // Provide fallback for name
-      teacherName: summary.teacher?.name, // Access teacher.name
-      quizzes: summary.quizzes || [],
-      description: summary.description || "",
-      isPublic: summary.isPublic === undefined ? true : summary.isPublic,
-    };
-    return {
-      params: { id: summary.id },
-      props: { classData: pageClassData },
-    };
-  });
-  return paths.filter((path) => path !== null);
+interface FirebaseClassData {
+  id: string;
+  name?: string;
+  description?: string;
+  teacher?: Teacher;
+  quizzes?: Quiz[];
+  isPublic?: boolean;
+  code?: string;
+  teacherId?: string;
+  [key: string]: any;
 }
 
 const { id } = Astro.params;
-const { classData } = Astro.props as { classData: PageClassData };
+
+if (!id) {
+  return Astro.redirect("/404");
+}
+
+// Fetch class data with teacher info and quizzes
+const classDataResult = await FirebaseService.getClasses({
+  includeTeacherInfo: true,
+  includeQuizzes: true,
+});
+
+const classData = classDataResult.classes?.find((c) => c.id === id) as
+  | FirebaseClassData
+  | undefined;
 
 if (!classData) {
   return Astro.redirect("/404");
 }
+
+// Format the class data
+const pageClassData: PageClassData = {
+  ...classData,
+  id: classData.id,
+  name: classData.name || "Unnamed Course",
+  teacherName: classData.teacher?.name,
+  quizzes: classData.quizzes || [],
+  description: classData.description || "",
+  isPublic: classData.isPublic === undefined ? true : classData.isPublic,
+};
 ---
 
-<Layout title={classData.name || "Course Details"}>
+<Layout title={pageClassData.name || "Course Details"}>
   <main class="container mx-auto px-4 py-8">
     <div class="bg-white rounded-lg shadow-md p-6" id="course-content">
       <h1 class="text-3xl font-bold text-gray-900 mb-4">
-        {classData.name || "Course Title Not Available"}
+        {pageClassData.name || "Course Title Not Available"}
       </h1>
-      <p class="text-gray-600 mb-6">{classData.description}</p>
+      <p class="text-gray-600 mb-6">{pageClassData.description}</p>
       <div class="flex items-center text-sm text-gray-500 mb-8">
-        <span class="mr-4">Author: {classData.teacherName || "N/A"}</span>
+        <span class="mr-4">Author: {pageClassData.teacherName || "N/A"}</span>
       </div>
       <div class="mb-8 quiz-navigation-section">
         <h2 class="text-2xl font-semibold text-gray-900 mb-6">Quizzes</h2>
         <div class="flex space-x-4 mb-6">
           {
-            classData.quizzes && classData.quizzes.length > 0 ? (
-              classData.quizzes.map((quiz) => (
+            pageClassData.quizzes && pageClassData.quizzes.length > 0 ? (
+              pageClassData.quizzes.map((quiz) => (
                 <a
                   href={`/courses/${id}/quiz/${quiz.id}`}
                   class="quiz-link px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
