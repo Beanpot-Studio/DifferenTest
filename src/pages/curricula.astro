@@ -153,10 +153,6 @@ const publicClasses = await FirebaseService.getPublicClasses() as ClassData[];
         content.classList.toggle("hidden");
       }
 
-      // Rotate icon
-      if (icon) {
-        icon.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
-      }
     });
   });
 

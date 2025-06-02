@@ -15,9 +15,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import QuizInterface from '../../QuizInterface.vue';
 import CatQuizResult from './CatQuizResult.vue';
+import FirebaseService from '../../services/FirebaseService';
 
 const props = defineProps({
   quizId: {
@@ -40,9 +41,25 @@ const quizResult = ref({
   questions: []
 });
 
-const handleQuizCompleted = (result) => {
+// Add onMounted to check level when component loads
+onMounted(async () => {
+  const classData = await FirebaseService.getClass(props.classId);
+  
+});
+
+const handleQuizCompleted = async (result) => {
+  
+  
+  // Get class data to include age group
+  const classData = await FirebaseService.getClass(props.classId);
+  
+  
   quizResult.value = {
     score: result.score,
+    class: {
+      id: props.classId,
+      ageGroup: classData?.ageGroup || 'college'
+    },
     questions: result.results.map(result => ({
       text: result.questionText,
       options: result.options.map(option => ({ text: option })),
@@ -50,7 +67,6 @@ const handleQuizCompleted = (result) => {
       selectedAnswer: result.selectedAnswer,
     }))
   };
-  console.log('Quiz result formatted:', quizResult.value);
   showCatResult.value = true;
   document.dispatchEvent(new Event('quiz-completed'));
 };

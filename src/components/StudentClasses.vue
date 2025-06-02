@@ -1105,6 +1105,7 @@ export default {
         const question = reviewData.value.quiz.questions[questionIndex];
         const userAnswerIndex = question.userAnswer; // May be undefined
         const correctIndex = question.correctIndex;
+        const ageGroup = reviewData.value.class?.ageGroup || 'college';
 
         // --- Enhanced Validation --- 
         // 1. Check if userAnswerIndex is a valid number first
@@ -1130,9 +1131,17 @@ export default {
         const correctAnswerText = question.options[correctIndex].text;
         const userAnswerText = question.options[userAnswerIndex].text;
 
-        const prompt = `Explain in simple, concise language why \"${correctAnswerText}\" is the correct answer \
-        to the question: \"${question.text}\". Only address how the correct answer is different from the student's chosen answer:\
-         \"${userAnswerText}\". Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
+        const ageGroupPrompts = {
+          elementary: "Explain in very simple language suitable for ages 5-10 why the correct answer is right and why the student's answer was incorrect. Use short sentences and familiar words. Include a fun example or comparison that a young child would understand. Keep it to 2-3 sentences maximum.",
+          middle: "Explain in clear language suitable for ages 11-13 why the correct answer is right and why the student's answer was incorrect. Use age-appropriate examples and avoid complex terminology. Keep it to 3-4 sentences maximum.",
+          high: "Explain in more sophisticated language suitable for ages 14-18 why the correct answer is right and why the student's answer was incorrect. Use real-world examples and include some critical thinking elements. Keep it to 4-5 sentences maximum.",
+          college: "Explain in professional language suitable for college students and adults why the correct answer is right and why the student's answer was incorrect. Use appropriate terminology and include deeper analysis. Keep it to 4-5 sentences maximum."
+        };
+
+        const prompt = `Explain why "${correctAnswerText}" is the correct answer to the question: "${question.text}". 
+        Compare it with the student's chosen answer: "${userAnswerText}".
+        ${ageGroupPrompts[ageGroup] || ageGroupPrompts.college}
+        Focus on the key concept being tested. Use simple, professional language and no formatting.`;
         
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite"});
         const result = await model.generateContent(prompt);

@@ -208,6 +208,10 @@
                 </button>
               </div>
               <p v-if="generationError" class="text-red-600 text-sm mt-2">{{ generationError }}</p>
+              <!-- Add level display -->
+              <div v-if="generatingQuestions" class="mt-2 text-sm text-gray-600">
+                <p>Generating questions for level: <span class="font-medium">{{ selectedClassAgeGroup }}</span></p>
+              </div>
             </div>
           </div>
 
@@ -492,7 +496,8 @@ export default {
         
         classes.value = response.classes.map(classData => ({
           id: classData.id,
-          name: classData.name
+          name: classData.name,
+          ageGroup: classData.ageGroup || 'college' // Add ageGroup field with default
         }));
       } catch (error) {
         console.error('Error loading classes:', error);
@@ -692,7 +697,15 @@ export default {
         generatingQuestions.value = true; // Set loading state
         generationError.value = null; // Clear previous error
         try {
-            const generatedQuiz = await FirebaseService.generateQuiz(contentToProcess, newQuiz.value.questionCount);
+            // Get the selected class's age group
+            const selectedClass = classes.value.find(c => c.id === newQuiz.value.classId);
+            const ageGroup = selectedClass?.ageGroup || 'college';
+            
+            const generatedQuiz = await FirebaseService.generateQuiz(
+                contentToProcess, 
+                newQuiz.value.questionCount,
+                ageGroup // Pass the age group to the generateQuiz function
+            );
             newQuiz.value.questions = generatedQuiz.questions;
             showSuccess('Questions generated successfully!');
         } catch (error) {
@@ -919,6 +932,12 @@ export default {
     };
     // -------------------------------
 
+    // Add computed property for selected class age group
+    const selectedClassAgeGroup = computed(() => {
+      const selectedClass = classes.value.find(c => c.id === newQuiz.value.classId);
+      return selectedClass?.ageGroup || 'Not specified';
+    });
+
     onMounted(() => {
       loadQuizzes();
       loadClasses();
@@ -968,6 +987,7 @@ export default {
       addManualOption,
       removeManualOption,
       availableClassesForNewQuiz,
+      selectedClassAgeGroup,
     };
   }
 };

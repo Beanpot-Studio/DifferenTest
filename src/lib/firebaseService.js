@@ -206,6 +206,7 @@ class FirebaseService {
         isPublic: classData.isPublic || false,
         isComplete: classData.isComplete || false,
         skinId: classData.skinId || 'default',
+        ageGroup: classData.ageGroup || 'college',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -235,6 +236,7 @@ class FirebaseService {
         isPublic: data.isPublic !== undefined ? data.isPublic : classData.isPublic,
         isComplete: data.isComplete !== undefined ? data.isComplete : classData.isComplete,
         skinId: data.skinId !== undefined ? data.skinId : classData.skinId,
+        ageGroup: data.ageGroup !== undefined ? data.ageGroup : classData.ageGroup,
         adminApproved: data.adminApproved !== undefined ? data.adminApproved : classData.adminApproved,
         // customCertificateBadgeUrl handled below
         updatedAt: serverTimestamp(),
@@ -1070,12 +1072,21 @@ class FirebaseService {
     }
   }
 
-  static async generateQuiz(content, numQuestions = 5) {
+  static async generateQuiz(content, numQuestions = 5, ageGroup = 'college') {
     try {
       // Generate quiz using Gemini API
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
       
+      const ageGroupPrompts = {
+        elementary: "Use simple language and concepts suitable for ages 5-10. Include fun, engaging questions that use concrete examples and avoid abstract concepts. Use shorter sentences and familiar vocabulary. Include visual or real-world examples when possible.",
+        middle: "Use clear language suitable for ages 11-13. Include questions that build on basic concepts and introduce some more complex ideas. Use age-appropriate examples and scenarios. Balance between concrete and abstract thinking.",
+        high: "Use more sophisticated language suitable for ages 14-18. Include questions that explore deeper concepts and require more critical thinking. Use real-world applications and current examples. Include some challenging questions that require analysis.",
+        college: "Use advanced language and concepts suitable for college students and adults. Include questions that require deep understanding and analysis. Use professional terminology and complex scenarios. Include questions that test higher-order thinking skills."
+      };
+
       const prompt = `Generate a ${numQuestions}-question multiple choice quiz based on this lesson plan. 
+      ${ageGroupPrompts[ageGroup] || ageGroupPrompts.college}
+      
       Format the response as a JSON object with this structure:
       {
         "title": "quiz title",

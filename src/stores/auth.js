@@ -150,7 +150,6 @@ async function handleAuthStateChangedCallback(firebaseUser) {
   } finally {
     initialized.value = true; // Crucial: mark auth as initialized AFTER processing
     loading.value = false; // Auth processing finished
-    console.log('Auth state processed. Initialized:', initialized.value, 'User:', user.value);
   }
 }
 

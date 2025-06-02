@@ -301,6 +301,12 @@ export default {
           throw new Error('Quiz has no questions');
         }
 
+        // Fetch class data to get age group
+        let classData = null;
+        if (props.classId) {
+          classData = await FirebaseService.getClass(props.classId);
+        }
+
         // Validate each question
         fetchedQuizData.questions.forEach((question, index) => {
           if (!question.text || !question.options || !Array.isArray(question.options) || question.options.length === 0) {
@@ -308,10 +314,11 @@ export default {
           }
         });
 
-        // Assign to quizData ref
+        // Assign to quizData ref with class data
         quizData.value = {
           id: quizId,
           ...fetchedQuizData,
+          ageGroup: classData?.ageGroup || 'college', // Include age group from class data
           questions: fetchedQuizData.questions.map((q, index) => ({
             ...q,
             id: index + 1,
@@ -406,8 +413,18 @@ export default {
       
       try {
         const question = quizData.value.questions[questionIndex];
-        const prompt = `Explain in simple, concise language why the correct answer is right for the question: "${question.text}". 
-        Focus on the key concept being tested. Use simple, professional language and no formatting. Don't give more than 4-5 sentences.`;
+        const ageGroup = quizData.value.ageGroup || 'college';
+        
+        const ageGroupPrompts = {
+          elementary: "Explain in very simple language suitable for ages 5-10 why the correct answer is right. Use short sentences and familiar words. Include a fun example or comparison that a young child would understand. Keep it to 2-3 sentences maximum.",
+          middle: "Explain in clear language suitable for ages 11-13 why the correct answer is right. Use age-appropriate examples and avoid complex terminology. Keep it to 3-4 sentences maximum.",
+          high: "Explain in more sophisticated language suitable for ages 14-18 why the correct answer is right. Use real-world examples and include some critical thinking elements. Keep it to 4-5 sentences maximum.",
+          college: "Explain in professional language suitable for college students and adults why the correct answer is right. Use appropriate terminology and include deeper analysis. Keep it to 4-5 sentences maximum."
+        };
+
+        const prompt = `Explain why the correct answer is right for the question: "${question.text}". 
+        ${ageGroupPrompts[ageGroup] || ageGroupPrompts.college}
+        Focus on the key concept being tested. Use simple, professional language and no formatting.`;
         
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite"});
         const result = await model.generateContent(prompt);

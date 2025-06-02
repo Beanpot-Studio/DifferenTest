@@ -18,6 +18,21 @@
             data-testid="class-name-input"
           />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Target Age Group
+          </label>
+          <select
+            v-model="newClass.ageGroup"
+            class="w-full p-2 border rounded-lg"
+            data-testid="class-age-group-select"
+          >
+            <option value="elementary">Elementary (Ages 5-10)</option>
+            <option value="middle">Middle School (Ages 11-13)</option>
+            <option value="high">High School (Ages 14-18)</option>
+            <option value="college">College/Adult</option>
+          </select>
+        </div>
         <div class="mb-4 rounded bg-gray-50 p-4">
           <label class="flex items-center space-x-2">
             <input
@@ -115,6 +130,7 @@
                   <IconService v-if="!classItem.isPublic" name="lock" color="text-red-600" size="4" tooltip="This class is private, open only to enrolled students" />
                   <IconService v-if="classItem.isPublic" name="open-lock" color="text-green-600" size="4" tooltip="This class is public, open to all students" />
                   <h3 class="text-xl font-bold text-gray-800">{{ classItem.name }}</h3>
+               
                   <label :for="`complete-toggle-${classItem.id}`" class="flex items-center cursor-pointer ml-4" title="Mark as Complete">
                     <div class="relative">
                       <input 
@@ -143,6 +159,23 @@
                     >
                         (Invite Students)
                     </button>
+                </p>
+                <p class="text-sm text-gray-600 mt-1">Level: 
+                    <span class="px-2 py-1 text-xs font-medium rounded-full" 
+                      :class="{
+                        'bg-blue-100 text-blue-800': classItem.ageGroup === 'elementary',
+                        'bg-green-100 text-green-800': classItem.ageGroup === 'middle',
+                        'bg-purple-100 text-purple-800': classItem.ageGroup === 'high',
+                        'bg-gray-100 text-gray-800': classItem.ageGroup === 'college'
+                      }"
+                    >
+                      {{ 
+                        classItem.ageGroup === 'elementary' ? 'Elementary' :
+                        classItem.ageGroup === 'middle' ? 'Middle School' :
+                        classItem.ageGroup === 'high' ? 'High School' :
+                        'College/Adult'
+                      }}
+                    </span>
                 </p>
                 <p class="text-sm text-gray-500">
                   Created: {{ formatDate(classItem.createdAt) }}
@@ -217,6 +250,23 @@
                         (Invite Students)
                     </button>
                 </p>
+                <p class="text-sm text-gray-500 mt-1">Level: 
+                    <span class="px-2 py-1 text-xs font-medium rounded-full" 
+                      :class="{
+                        'bg-blue-100 text-blue-800': classItem.ageGroup === 'elementary',
+                        'bg-green-100 text-green-800': classItem.ageGroup === 'middle',
+                        'bg-purple-100 text-purple-800': classItem.ageGroup === 'high',
+                        'bg-gray-100 text-gray-800': classItem.ageGroup === 'college'
+                      }"
+                    >
+                      {{ 
+                        classItem.ageGroup === 'elementary' ? 'Elementary' :
+                        classItem.ageGroup === 'middle' ? 'Middle School' :
+                        classItem.ageGroup === 'high' ? 'High School' :
+                        'College/Adult'
+                      }}
+                    </span>
+                </p>
                 <p class="text-sm text-gray-400">
                   Created: {{ formatDate(classItem.createdAt) }}
                 </p>
@@ -283,6 +333,20 @@
               type="text"
               class="w-full p-2 border rounded-lg"
             />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Target Age Group
+            </label>
+            <select
+              v-model="editingClass.ageGroup"
+              class="w-full p-2 border rounded-lg"
+            >
+              <option value="elementary">Elementary (Ages 5-10)</option>
+              <option value="middle">Middle School (Ages 11-13)</option>
+              <option value="high">High School (Ages 14-18)</option>
+              <option value="college">College/Adult</option>
+            </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -429,7 +493,8 @@ export default {
       name: '',
       code: '',
       isPublic: false,
-      skinId: 'default'
+      skinId: 'default',
+      ageGroup: 'college'
     });
     const editingClass = ref(null);
     const selectedQuiz = ref('');
@@ -471,6 +536,7 @@ export default {
           code: newClass.value.code, // Server generates this anyway
           isPublic: newClass.value.isPublic,
           skinId: isPaidUser.value ? newClass.value.skinId : 'default',
+          ageGroup: newClass.value.ageGroup,
           teacherId: user.value.uid,
           teacherName: user.value.displayName || 'Unknown Teacher',
           createdAt: new Date(), // Replaced by serverTimestamp in service
@@ -484,7 +550,8 @@ export default {
           name: '',
           code: '',
           isPublic: false,
-          skinId: 'default'
+          skinId: 'default',
+          ageGroup: 'college'
         };
         
         showCreateClassModal.value = false;
@@ -566,6 +633,7 @@ export default {
           name: editingClass.value.name.trim(),
           isPublic: editingClass.value.isPublic || false,
           skinId: isPaidUser.value ? (editingClass.value.skinId || 'default') : 'default',
+          ageGroup: editingClass.value.ageGroup || 'college',
           customCertificateBadgeUrl: customBadgeUrl,
           updatedAt: new Date()
         };
@@ -694,7 +762,6 @@ export default {
     };
 
     const openInviteModal = (classItem) => {
-      console.log("Opening invite modal for:", classItem);
       selectedClassForInvite.value = { 
         id: classItem.id, 
         name: classItem.name, 

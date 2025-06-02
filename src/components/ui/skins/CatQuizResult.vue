@@ -10,7 +10,6 @@
       alt="Cat reaction to score" 
       class="cat-reaction mx-auto"
       @error="handleImageError"
-      @load="handleImageLoad"
     />
     <p class="score-text">You scored: {{ score }}%</p>
     <p class="cat-message mb-6">{{ catMessage }}</p>
@@ -102,7 +101,6 @@ const genAI = new GoogleGenerativeAI(import.meta.env.PUBLIC_GEMINI_API_KEY);
 
 // Extract score for convenience
 const score = computed(() => {
-  console.log('Attempt Result:', props.attemptResult);
   return props.attemptResult?.score ?? 0;
 });
 
@@ -116,13 +114,11 @@ const scoreCatImagePaths = {
 
 const catPoseForScore = computed(() => {
   const currentScore = score.value;
-  console.log('Current Score:', currentScore);
   let imagePath;
   if (currentScore === 100) imagePath = scoreCatImagePaths.perfect;
   else if (currentScore >= 80) imagePath = scoreCatImagePaths.good;
   else if (currentScore >= 50) imagePath = scoreCatImagePaths.okay;
   else imagePath = scoreCatImagePaths.improvement;
-  console.log('Selected Image Path:', imagePath);
   return imagePath;
 });
 
@@ -144,14 +140,7 @@ const detailedResults = computed(() => {
     const correctAnswerText = q.options[q.correctIndex]?.text || 'N/A';
     const selectedAnswerText = q.options[q.selectedAnswer]?.text || 'No answer selected';
     
-    console.log('Question data:', {
-      questionText: q.text,
-      selectedAnswer: q.selectedAnswer,
-      selectedAnswerText,
-      correctIndex: q.correctIndex,
-      correctAnswerText,
-      isCorrect
-    });
+
     
     return {
       questionText: q.text,
@@ -172,7 +161,19 @@ const getExplanation = async (questionIndex) => {
   explanations.value[questionIndex] = 'loading'; // Show loading state
   try {
     const question = resultItem.originalQuestion;
-    const prompt = `Explain in simple, concise language designed for elementary school aged children why "${resultItem.correctAnswerText}" is the correct answer to the question: "${question.text}". Focus only on comparing the correct answer to the student's incorrect answer: "${resultItem.selectedAnswerText}". Use simple language for an elementary school student, no formatting, and limit to 2-3 sentences.`;
+    const ageGroup = props.attemptResult?.class?.ageGroup || 'college';
+
+    const ageGroupPrompts = {
+      elementary: "Explain in very simple language suitable for ages 5-10 why the correct answer is right and why the student's answer was incorrect. Use short sentences and familiar words. Include a fun example or comparison that a young child would understand. Keep it to 2-3 sentences maximum.",
+      middle: "Explain in clear language suitable for ages 11-13 why the correct answer is right and why the student's answer was incorrect. Use age-appropriate examples and avoid complex terminology. Keep it to 3-4 sentences maximum.",
+      high: "Explain in more sophisticated language suitable for ages 14-18 why the correct answer is right and why the student's answer was incorrect. Use real-world examples and include some critical thinking elements. Keep it to 4-5 sentences maximum.",
+      college: "Explain in professional language suitable for college students and adults why the correct answer is right and why the student's answer was incorrect. Use appropriate terminology and include deeper analysis. Keep it to 4-5 sentences maximum."
+    };
+
+    const prompt = `Explain why "${resultItem.correctAnswerText}" is the correct answer to the question: "${question.text}". 
+    Compare it with the student's chosen answer: "${resultItem.selectedAnswerText}".
+    ${ageGroupPrompts[ageGroup] || ageGroupPrompts.college}
+    Focus on the key concept being tested. Use simple, professional language and no formatting.`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     const result = await model.generateContent(prompt);
@@ -180,7 +181,6 @@ const getExplanation = async (questionIndex) => {
     explanations.value[questionIndex] = explanation;
 
   } catch (error) {
-    console.error('Error getting explanation:', error);
     explanations.value[questionIndex] = "Sorry, couldn't generate an explanation at this time.";
   }
 };
@@ -192,24 +192,15 @@ const toggleQuestion = (index) => {
   }
 };
 
-const handleImageLoad = (e) => {
-  console.log('Image loaded successfully:', e.target.src);
-  console.log('Image element:', e.target);
-};
-
 const handleImageError = (e) => {
-  console.error('Failed to load cat image:', e.target.src);
-  console.error('Error details:', e);
   // Try to load the image directly to test if it exists
   fetch(e.target.src)
     .then(response => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log('Image exists but failed to load in img tag');
     })
     .catch(error => {
-      console.error('Image does not exist or is not accessible:', error);
     });
   // Fallback to a default image if needed
   e.target.src = '/skins/cats/assets/dancing-cat.gif';
