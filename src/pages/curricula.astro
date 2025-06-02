@@ -57,7 +57,11 @@ const publicClasses = await FirebaseService.getPublicClasses() as ClassData[];
           return (
             <div class="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
               <!-- Banner Section -->
-              <div class="relative">
+              <div 
+                class="relative cursor-pointer"
+                data-class-id={classData.id}
+                onclick="const classId = this.getAttribute('data-class-id'); const content = document.getElementById(`class-content-${classId}`); const toggle = document.getElementById(`toggle-${classId}`); const icon = toggle.querySelector('svg'); content.classList.toggle('hidden'); toggle.setAttribute('aria-expanded', content.classList.contains('hidden') ? 'false' : 'true'); icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';"
+              >
                 <img
                   src={classInfo.banner}
                   alt={classInfo.description}
@@ -72,6 +76,7 @@ const publicClasses = await FirebaseService.getPublicClasses() as ClassData[];
 
               <!-- Toggle Button -->
               <button
+                id={`toggle-${classData.id}`}
                 class="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 aria-expanded="false"
                 aria-controls={`class-content-${classData.id}`}
@@ -115,10 +120,11 @@ const publicClasses = await FirebaseService.getPublicClasses() as ClassData[];
                     quizzes: classData.quizzes.map((quiz) => ({
                       ...quiz,
                       teacherId: classData.teacherId,
-                      link: `/openclasses/${classData.id}/quiz/${quiz.id}`,
+                      link: `/courses/${classData.id}/quiz/${quiz.id}`,
+                      onclick: `event.preventDefault(); window.open('/courses/${classData.id}/quiz/${quiz.id}', 'quiz_${classData.id}_${quiz.id}', 'width=900,height=700,resizable=yes,scrollbars=yes,status=yes');`
                     })),
                   }}
-                  basePath='/openclasses'
+                  basePath='/courses'
                 />
               </div>
             </div>
@@ -151,6 +157,17 @@ const publicClasses = await FirebaseService.getPublicClasses() as ClassData[];
       if (icon) {
         icon.style.transform = isExpanded ? "rotate(0deg)" : "rotate(180deg)";
       }
+    });
+  });
+
+  // Add visual feedback for banner hover
+  document.querySelectorAll(".relative.cursor-pointer").forEach((banner) => {
+    const bannerElement = banner as HTMLElement;
+    bannerElement.addEventListener("mouseenter", () => {
+      bannerElement.style.opacity = "0.95";
+    });
+    bannerElement.addEventListener("mouseleave", () => {
+      bannerElement.style.opacity = "1";
     });
   });
 </script>

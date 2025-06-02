@@ -35,24 +35,13 @@
           >
             <div>
               <div class="flex items-center space-x-2">
-                <!-- Conditional Link -->
-                <a 
-                  v-if="classItem.isPublic" 
-                  :href="`/openclasses/${classItem.id}/quiz/${quiz.id}`"
-                  class="text-lg font-bold text-gray-900 hover:text-gray-950 underline"
-                  :title="`View Public Quiz: ${quiz.title}`"
-                >
-                  {{ quiz.title }}
-                </a>
-                <a 
-                  v-else 
-                  target="_blank"
-                  :href="`/courses/${classItem.id}/quiz/${quiz.id}`" 
-                  class="text-lg font-bold text-gray-900 hover:text-gray-950 underline"
+                <div 
+                  class="text-lg font-bold text-gray-900 hover:text-gray-950 underline cursor-pointer"
                   :title="`View Course/Quiz: ${quiz.title}`"
+                  @click="openQuizWindow(classItem.id, quiz.id)"
                 >
                   {{ quiz.title }}
-                </a>
+                </div>
               </div>
             </div>
             <div class="flex space-x-2">
@@ -428,6 +417,10 @@ export default {
       }
     };
 
+    const openQuizWindow = (classId, quizId) => {
+      window.open(`/courses/${classId}/quiz/${quizId}`, `quiz_${classId}_${quizId}`, 'width=900,height=700,resizable=yes,scrollbars=yes,status=yes');
+    };
+
     onMounted(() => {
       loadLessonPlans();
     });
@@ -456,7 +449,8 @@ export default {
       editedLessonPlanContent,
       isPaidUser,
       handleLessonPlanImageUpload,
-      copyMarkdownImage
+      copyMarkdownImage,
+      openQuizWindow
     };
   }
 };
