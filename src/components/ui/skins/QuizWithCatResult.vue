@@ -18,7 +18,8 @@
 import { ref, onMounted } from 'vue';
 import QuizInterface from '../../QuizInterface.vue';
 import CatQuizResult from './CatQuizResult.vue';
-import FirebaseService from '../../services/FirebaseService';
+import FirebaseService from '../../../lib/firebaseService';
+
 
 const props = defineProps({
   quizId: {

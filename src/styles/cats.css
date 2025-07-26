@@ -130,31 +130,11 @@
 
 /* Correct/Wrong Answer Visual Feedback */
 /* Apply these classes dynamically via JS/Vue */
-[data-theme="cats"] .quiz-option.correct-answer {
-  border-color: rgb(var(--color-success));
-  background-color: rgba(var(--color-success), 0.1);
-  animation: bounce 0.5s ease;
-}
-[data-theme="cats"] .quiz-option.correct-answer::after {
-  content: url('/skins/cats/assets/cat-icons/correct-answer.svg'); /* Example using icon */
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%) scale(0.5); /* Adjust scale */
-}
-
 
 [data-theme="cats"] .quiz-option.wrong-answer {
   border-color: rgb(var(--color-danger));
   background-color: rgba(var(--color-danger), 0.1);
   animation: shake 0.5s ease;
-}
-[data-theme="cats"] .quiz-option.wrong-answer::after {
-  content: url('/skins/cats/assets/cat-icons/wrong-answer.svg'); /* Example using icon */
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%) scale(0.5); /* Adjust scale */
 }
 
 
